@@ -8,10 +8,13 @@ import {
   RefreshCw, 
   CheckCircle2, 
   FileSpreadsheet,
-  AlertTriangle
+  AlertTriangle,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { exportRecordsToExcel, exportEscalationsToExcel, exportBranchPerformanceToExcel } from '../utils/excelExporter';
 import { SurveyRecord, BranchPerformance } from '../types/survey';
+import { useTheme } from '../context/ThemeContext';
 
 interface HeaderProps {
   onOpenUpload: () => void;
@@ -35,6 +38,7 @@ export const Header: React.FC<HeaderProps> = ({
   branchPerformance,
 }) => {
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <header className="border-b border-slate-800 bg-[#0c121e]/90 backdrop-blur-md sticky top-0 z-30 transition-all">
@@ -63,6 +67,25 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           
+          {/* Dark / Light Mode Toggle Button */}
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all active:scale-95 bg-slate-800/80 hover:bg-slate-700 text-slate-200 border-slate-700 hover:border-slate-600"
+            title={theme === 'dark' ? 'التبديل إلى الوضع الفاتح (Light Mode)' : 'التبديل إلى الوضع الداكن (Dark Mode)'}
+          >
+            {theme === 'dark' ? (
+              <>
+                <Sun className="w-4 h-4 text-amber-400" />
+                <span>الوضع الفاتح</span>
+              </>
+            ) : (
+              <>
+                <Moon className="w-4 h-4 text-indigo-500" />
+                <span>الوضع الداكن</span>
+              </>
+            )}
+          </button>
+
           {/* Supabase Cloud Sync Badge */}
           <button
             onClick={onOpenSupabase}

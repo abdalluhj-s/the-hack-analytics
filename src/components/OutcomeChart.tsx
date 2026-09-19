@@ -7,6 +7,7 @@ import {
 } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { KPIStats } from '../types/survey';
+import { useTheme } from '../context/ThemeContext';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -15,6 +16,9 @@ interface OutcomeChartProps {
 }
 
 export const OutcomeChart: React.FC<OutcomeChartProps> = ({ kpis }) => {
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
+
   const data = {
     labels: [
       'تم الرد (Answered)',
@@ -37,9 +41,9 @@ export const OutcomeChart: React.FC<OutcomeChartProps> = ({ kpis }) => {
           '#f59e0b', // Amber for No Answer
           '#8b5cf6', // Violet for Switched Off
           '#f43f5e', // Rose for Refused
-          '#334155', // Slate for Pending
+          isLight ? '#94a3b8' : '#334155', // Pending color
         ],
-        borderColor: '#0f172a',
+        borderColor: isLight ? '#ffffff' : '#0f172a',
         borderWidth: 2,
         hoverOffset: 6,
       },
@@ -55,7 +59,7 @@ export const OutcomeChart: React.FC<OutcomeChartProps> = ({ kpis }) => {
         position: 'bottom' as const,
         rtl: true,
         labels: {
-          color: '#94a3b8',
+          color: isLight ? '#475569' : '#94a3b8',
           font: {
             family: 'Cairo',
             size: 11,

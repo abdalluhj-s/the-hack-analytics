@@ -10,6 +10,7 @@ import {
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import { BranchPerformance } from '../types/survey';
+import { useTheme } from '../context/ThemeContext';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -19,6 +20,9 @@ interface BranchCSATChartProps {
 }
 
 export const BranchCSATChart: React.FC<BranchCSATChartProps> = ({ branchPerformance, onClickBranch }) => {
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
+
   // Sort branches by CSAT descending
   const sorted = [...branchPerformance].sort((a, b) => b.csat - a.csat);
 
@@ -61,17 +65,17 @@ export const BranchCSATChart: React.FC<BranchCSATChartProps> = ({ branchPerforma
         min: 0,
         max: 100,
         ticks: {
-          color: '#94a3b8',
+          color: isLight ? '#475569' : '#94a3b8',
           callback: (val: any) => `${val}%`,
           font: { family: 'Cairo', size: 10 },
         },
         grid: {
-          color: 'rgba(255, 255, 255, 0.05)',
+          color: isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.05)',
         },
       },
       y: {
         ticks: {
-          color: '#e2e8f0',
+          color: isLight ? '#1e293b' : '#e2e8f0',
           font: { family: 'Cairo', size: 11, weight: 'bold' as const },
         },
         grid: {
