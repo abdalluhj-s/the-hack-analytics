@@ -128,6 +128,12 @@ export function calculateKPIs(records: SurveyRecord[]): KPIStats {
   const ratedAnsweredTotal = satisfied + unsatisfied;
   const csat = ratedAnsweredTotal > 0 ? (satisfied / ratedAnsweredTotal) * 100 : 0;
 
+  // Dissatisfaction Rate (Answered): (Unsatisfied / Answered) * 100
+  const dissatisfactionRateAnswered = answered > 0 ? Math.round((unsatisfied / answered) * 1000) / 10 : 0;
+
+  // Dissatisfaction Rate (Total Calls): (Unsatisfied / TotalWorkload) * 100
+  const dissatisfactionRateTotal = totalWorkload > 0 ? Math.round((unsatisfied / totalWorkload) * 1000) / 10 : 0;
+
   return {
     totalWorkload,
     contacted,
@@ -141,6 +147,8 @@ export function calculateKPIs(records: SurveyRecord[]): KPIStats {
     satisfied,
     unsatisfied,
     csat: Math.round(csat * 10) / 10,
+    dissatisfactionRateAnswered,
+    dissatisfactionRateTotal,
     actionRequiredCount,
     resolvedComplaintsCount,
   };
@@ -172,6 +180,8 @@ export function calculateBranchPerformance(records: SurveyRecord[]): BranchPerfo
       satisfied: kpis.satisfied,
       unsatisfied: kpis.unsatisfied,
       csat: kpis.csat,
+      dissatisfactionRateAnswered: kpis.dissatisfactionRateAnswered,
+      dissatisfactionRateTotal: kpis.dissatisfactionRateTotal,
     });
   }
 

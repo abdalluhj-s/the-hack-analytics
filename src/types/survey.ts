@@ -41,6 +41,8 @@ export interface KPIStats {
   satisfied: number;         // راضى (فقط من المجاب عليهم)
   unsatisfied: number;       // غير راضى (فقط من المجاب عليهم)
   csat: number;              // (Satisfied / (Satisfied + Unsatisfied)) * 100
+  dissatisfactionRateAnswered: number; // (Unsatisfied / Answered) * 100
+  dissatisfactionRateTotal: number;    // (Unsatisfied / TotalWorkload) * 100
   actionRequiredCount: number; // عدد غير الراضين المطلوب متابعتهم
   resolvedComplaintsCount: number; // عدد الحالات التي تم معالجتها
 }
@@ -55,6 +57,8 @@ export interface BranchPerformance {
   satisfied: number;
   unsatisfied: number;
   csat: number;
+  dissatisfactionRateAnswered: number; // نسبة عدم الرضا من المكالمات المجابة
+  dissatisfactionRateTotal: number;    // نسبة عدم الرضا من إجمالي مكالمات الفرع
 }
 
 export interface FilterOptions {

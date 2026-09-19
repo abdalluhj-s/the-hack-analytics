@@ -52,8 +52,8 @@ export const BranchPerformanceTable: React.FC<BranchPerformanceTableProps> = ({
               <th className="py-3 px-3 text-center">تم الرد</th>
               <th className="py-3 px-3 text-center">نسبة الاستجابة</th>
               <th className="py-3 px-3 text-center text-emerald-400">راضى</th>
-              <th className="py-3 px-3 text-center text-rose-400">غير راضى</th>
-              <th className="py-3 px-3 text-center">CSAT</th>
+              <th className="py-3 px-3 text-center text-rose-400">غير راضى (الشكاوى)</th>
+              <th className="py-3 px-3 text-center">معدل CSAT</th>
               <th className="py-3 px-3 text-center">Dashboard</th>
             </tr>
           </thead>
@@ -93,19 +93,35 @@ export const BranchPerformanceTable: React.FC<BranchPerformanceTableProps> = ({
                     </span>
                   </td>
                   <td className="py-3.5 px-3 text-center font-bold text-emerald-400">{b.satisfied}</td>
-                  <td className="py-3.5 px-3 text-center font-bold text-rose-400">{b.unsatisfied}</td>
                   <td className="py-3.5 px-3 text-center">
-                    <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black border ${
-                        b.csat >= 85
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                          : b.csat >= 70
-                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                          : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                      }`}
-                    >
-                      {b.csat}%
-                    </span>
+                    <div className="flex flex-col items-center">
+                      <span className="font-bold text-rose-400">{b.unsatisfied}</span>
+                      {b.unsatisfied > 0 ? (
+                        <span className="text-[10px] text-rose-300/80 font-medium" title={`${b.unsatisfied} شكوى تمثل ${b.dissatisfactionRateTotal}% من إجمالي مكالمات الفرع (${b.totalWorkload})، و ${b.dissatisfactionRateAnswered}% من المكالمات المجابة`}>
+                          {b.dissatisfactionRateTotal}% من الفرع
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-slate-500">0% شكاوى</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-3 text-center">
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-black border ${
+                          b.csat >= 85
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                            : b.csat >= 70
+                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                            : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                        }`}
+                      >
+                        {b.csat}%
+                      </span>
+                      <span className="text-[9px] text-slate-400 font-medium">
+                        {b.satisfied + b.unsatisfied > 0 ? `من ${b.satisfied + b.unsatisfied} مقيمين` : 'لا تقييم'}
+                      </span>
+                    </div>
                   </td>
                   <td className="py-3.5 px-3 text-center">
                     <button

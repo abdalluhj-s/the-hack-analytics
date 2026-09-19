@@ -4,6 +4,7 @@ import { KPIStats } from '../types/survey';
 
 interface KPICardsProps {
   kpis: KPIStats;
+  totalRecords?: number;
   onFilterActionRequired?: () => void;
   onFilterPending?: () => void;
   onFilterAnswered?: () => void;
@@ -77,9 +78,10 @@ const KPICard: React.FC<CardProps> = ({
   </div>
 );
 
-export const KPICards: React.FC<KPICardsProps> = ({ kpis, onFilterActionRequired, onFilterPending, onFilterAnswered }) => {
+export const KPICards: React.FC<KPICardsProps> = ({ kpis, totalRecords, onFilterActionRequired, onFilterPending, onFilterAnswered }) => {
   const contactPct = kpis.totalWorkload > 0 ? Math.round((kpis.contacted / kpis.totalWorkload) * 100) : 0;
-  const pendingPct = kpis.totalWorkload > 0 ? Math.round((kpis.pending / kpis.totalWorkload) * 100) : 0;
+  const isFiltered = totalRecords && totalRecords > 0 && kpis.totalWorkload < totalRecords;
+  const filteredPct = totalRecords && totalRecords > 0 ? Math.round((kpis.totalWorkload / totalRecords) * 100) : 100;
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 stagger">
@@ -92,8 +94,8 @@ export const KPICards: React.FC<KPICardsProps> = ({ kpis, onFilterActionRequired
         sub="عميل"
         footer={
           <div className="flex items-center justify-between">
-            <span>حجم الشيت الكلي</span>
-            <span className="text-blue-400 font-bold">100%</span>
+            <span>{isFiltered ? `مفلتر من ${totalRecords}` : 'حجم الشيت الكلي'}</span>
+            <span className="text-blue-400 font-bold">{isFiltered ? `${filteredPct}%` : '100%'}</span>
           </div>
         }
         accent="border-blue-900/40"
@@ -132,7 +134,7 @@ export const KPICards: React.FC<KPICardsProps> = ({ kpis, onFilterActionRequired
         progressColor="bg-cyan-400"
         footer={
           <div className="flex items-center justify-between">
-            <span>من {kpis.contacted} اتصال</span>
+            <span>من {kpis.contacted} تم الاتصال بهم</span>
             <span className="text-amber-300 font-semibold">{kpis.noAnswer} مردوش</span>
           </div>
         }
@@ -149,8 +151,11 @@ export const KPICards: React.FC<KPICardsProps> = ({ kpis, onFilterActionRequired
         progressColor={kpis.csat >= 85 ? 'bg-emerald-400' : kpis.csat >= 70 ? 'bg-amber-400' : 'bg-rose-500'}
         footer={
           <div className="flex items-center justify-between">
-            <span className="text-emerald-400 font-bold">{kpis.satisfied} ✓ راضى</span>
-            <span className="text-rose-400 font-bold">{kpis.unsatisfied} ✗ غير راضى</span>
+            <span className="text-emerald-400 font-bold">{kpis.satisfied} راضى</span>
+            <span className="text-rose-400 font-bold">{kpis.unsatisfied} غير راضى</span>
+            <span className="text-[10px] text-slate-500">
+              ({kpis.satisfied + kpis.unsatisfied} تم تقييمهم)
+            </span>
           </div>
         }
         accent="border-emerald-900/40"
@@ -163,9 +168,13 @@ export const KPICards: React.FC<KPICardsProps> = ({ kpis, onFilterActionRequired
         value={kpis.unsatisfied}
         sub="شكوى"
         badge={kpis.unsatisfied > 0 ? 'تدخل فوري' : undefined}
+        progress={kpis.dissatisfactionRateTotal}
+        progressColor="bg-rose-500"
         footer={
           <div className="flex items-center justify-between">
-            <span>معالجة: {kpis.resolvedComplaintsCount}</span>
+            <span>
+              {kpis.totalWorkload > 0 ? `${kpis.dissatisfactionRateTotal}% من إجمالي المكالمات` : `معالجة: ${kpis.resolvedComplaintsCount}`}
+            </span>
             {onFilterActionRequired && (
               <span className="text-rose-400 font-bold underline">عرض الشكاوى</span>
             )}

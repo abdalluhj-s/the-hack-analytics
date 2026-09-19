@@ -221,7 +221,8 @@ export function App() {
         {/* ── KPI Summary ── */}
         <KPICards
           kpis={kpis}
-          onFilterActionRequired={() => { setFilters(p => ({ ...p, onlyActionRequired: true })); setActiveTab('escalations'); }}
+          totalRecords={records.length}
+          onFilterActionRequired={() => setActiveTab('escalations')}
           onFilterPending={() => { setFilters(p => ({ ...p, callOutcome: 'قيد الانتظار', onlyActionRequired: false })); setActiveTab('calls'); }}
           onFilterAnswered={() => { setFilters(p => ({ ...p, callOutcome: 'تم الرد', onlyActionRequired: false })); setActiveTab('calls'); }}
         />

@@ -143,7 +143,10 @@ export const BranchDashboardModal: React.FC<BranchDashboardModalProps> = ({
                   <Smile className="w-5 h-5 text-emerald-400" />
                   <span className="text-sm font-bold text-emerald-300">العملاء الراضون ({answeredSatisfied.length})</span>
                 </div>
-                <span className="text-lg font-black text-emerald-400">{kpis.csat}%</span>
+                <div className="text-left">
+                  <div className="text-lg font-black text-emerald-400">{kpis.csat}%</div>
+                  <div className="text-[10px] text-slate-400">من المقيمين ({kpis.totalWorkload > 0 ? Math.round((kpis.satisfied / kpis.totalWorkload) * 100) : 0}% من إجمالي الفرع)</div>
+                </div>
               </div>
               <div className="space-y-1.5 max-h-40 overflow-y-auto">
                 {answeredSatisfied.length === 0 ? (
@@ -171,9 +174,10 @@ export const BranchDashboardModal: React.FC<BranchDashboardModalProps> = ({
                   <Frown className="w-5 h-5 text-rose-400" />
                   <span className="text-sm font-bold text-rose-300">غير الراضين وشكاواهم ({answeredUnsatisfied.length})</span>
                 </div>
-                <span className="text-xs px-2 py-0.5 bg-rose-500/20 text-rose-300 rounded-full border border-rose-500/30 font-bold">
-                  تدخل فوري
-                </span>
+                <div className="text-left">
+                  <div className="text-lg font-black text-rose-400">{kpis.dissatisfactionRateTotal}%</div>
+                  <div className="text-[10px] text-rose-300/80">من إجمالي مكالمات الفرع ({kpis.dissatisfactionRateAnswered}% من المجابة)</div>
+                </div>
               </div>
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {answeredUnsatisfied.length === 0 ? (
@@ -274,36 +278,48 @@ export const BranchDashboardModal: React.FC<BranchDashboardModalProps> = ({
           <div className="rounded-xl bg-slate-800/40 border border-slate-700/60 p-4">
             <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-amber-400" />
-              <span>التحليل الفوري للفرع</span>
+              <span>التحليل الفوري الدقيق للفرع</span>
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              {/* Response Rate */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+              {/* 1. Response Rate */}
               <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
-                <div className="text-slate-400 mb-1">نسبة الاستجابة</div>
+                <div className="text-slate-400 mb-1 font-semibold">نسبة الاستجابة</div>
                 <div className="text-xl font-black text-cyan-400">{kpis.responseRate}%</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">({kpis.answered} رد من {kpis.contacted} اتصال)</div>
-                <div className={`mt-1.5 text-[10px] font-semibold ${kpis.responseRate >= 50 ? 'text-emerald-400' : kpis.responseRate >= 30 ? 'text-amber-400' : 'text-rose-400'}`}>
-                  {kpis.responseRate >= 50 ? '✓ ممتاز' : kpis.responseRate >= 30 ? '⚠ متوسط – يحتاج متابعة' : '✗ منخفض – مطلوب تدخل'}
+                <div className="text-[10px] text-slate-400 mt-0.5">({kpis.answered} رد من {kpis.contacted} تم الاتصال بهم)</div>
+                <div className={`mt-2 text-[10px] font-bold ${kpis.responseRate >= 50 ? 'text-emerald-400' : kpis.responseRate >= 30 ? 'text-amber-400' : 'text-rose-400'}`}>
+                  {kpis.responseRate >= 50 ? '✓ استجابة ممتازة' : kpis.responseRate >= 30 ? '⚠ استجابة متوسطة' : '✗ استجابة ضعيفة'}
                 </div>
               </div>
-              {/* CSAT Analysis */}
+
+              {/* 2. CSAT Analysis */}
               <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-700/60">
-                <div className="text-slate-400 mb-1">تقييم CSAT</div>
+                <div className="text-slate-400 mb-1 font-semibold">معدل CSAT (من المقيمين)</div>
                 <div className={`text-xl font-black ${csatColor}`}>{kpis.csat}%</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">({kpis.satisfied} راضى / {kpis.unsatisfied} غير راضى)</div>
-                <div className={`mt-1.5 text-[10px] font-semibold ${kpis.csat >= 85 ? 'text-emerald-400' : kpis.csat >= 70 ? 'text-amber-400' : 'text-rose-400'}`}>
-                  {kpis.csat >= 85 ? '✓ أداء مميز' : kpis.csat >= 70 ? '⚠ جيد – مجال للتحسين' : '✗ يحتاج مراجعة عاجلة'}
+                <div className="text-[10px] text-slate-400 mt-0.5">({kpis.satisfied} راضى / {kpis.unsatisfied} غير راضى)</div>
+                <div className="mt-2 text-[10px] text-amber-400 font-medium leading-tight">
+                  * تمثل {kpis.totalWorkload > 0 ? Math.round((kpis.satisfied / kpis.totalWorkload) * 100) : 0}% من إجمالي مكالمات الفرع
                 </div>
               </div>
-              {/* Pending Alert */}
+
+              {/* 3. Real Complaint / Dissatisfaction Rate */}
+              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                <div className="text-rose-300 mb-1 font-semibold">نسبة الشكاوى الحقيقية</div>
+                <div className="text-xl font-black text-rose-400">{kpis.dissatisfactionRateTotal}%</div>
+                <div className="text-[10px] text-rose-200/80 mt-0.5">({kpis.unsatisfied} شكوى من إجمالي {kpis.totalWorkload} عميل)</div>
+                <div className="mt-2 text-[10px] text-rose-300 font-medium leading-tight">
+                  * تمثل {kpis.dissatisfactionRateAnswered}% من المكالمات المجابة
+                </div>
+              </div>
+
+              {/* 4. Pending Alert */}
               <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-700/60">
-                <div className="text-slate-400 mb-1">المكالمات المعلقة</div>
+                <div className="text-slate-400 mb-1 font-semibold">مكالمات قيد الانتظار</div>
                 <div className="text-xl font-black text-slate-300">{kpis.pending}</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">
+                <div className="text-[10px] text-slate-400 mt-0.5">
                   ({kpis.totalWorkload > 0 ? Math.round((kpis.pending / kpis.totalWorkload) * 100) : 0}% من إجمالي الفرع)
                 </div>
-                <div className={`mt-1.5 text-[10px] font-semibold ${kpis.pending === 0 ? 'text-emerald-400' : kpis.pending <= 10 ? 'text-amber-400' : 'text-rose-400'}`}>
-                  {kpis.pending === 0 ? '✓ لا يوجد معلق' : kpis.pending <= 10 ? '⚠ يجب إنهاؤها قريباً' : '✗ كم كبير – أولوية قصوى'}
+                <div className={`mt-2 text-[10px] font-bold ${kpis.pending === 0 ? 'text-emerald-400' : kpis.pending <= 15 ? 'text-amber-400' : 'text-rose-400'}`}>
+                  {kpis.pending === 0 ? '✓ تم التواصل مع الجميع' : '⚠ متبقي للتواصل'}
                 </div>
               </div>
             </div>
