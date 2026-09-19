@@ -5,6 +5,7 @@ import { FilterBar } from './components/FilterBar';
 import { OutcomeChart } from './components/OutcomeChart';
 import { BranchCSATChart } from './components/BranchCSATChart';
 import { BranchPerformanceTable } from './components/BranchPerformanceTable';
+import { BranchDashboardModal } from './components/BranchDashboardModal';
 import { EscalationsTable } from './components/EscalationsTable';
 import { WorkloadTable } from './components/WorkloadTable';
 import { QuickEntryModal } from './components/QuickEntryModal';
@@ -77,6 +78,13 @@ export function App() {
   const [recordToEdit, setRecordToEdit] = useState<SurveyRecord | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isSupabaseOpen, setIsSupabaseOpen] = useState(false);
+  const [branchDashboardBranch, setBranchDashboardBranch] = useState<string>('');
+  const [isBranchDashboardOpen, setIsBranchDashboardOpen] = useState(false);
+
+  const openBranchDashboard = (branch: string) => {
+    setBranchDashboardBranch(branch);
+    setIsBranchDashboardOpen(true);
+  };
 
   // Available unique branches & agents
   const availableBranches = useMemo(() => {
@@ -331,7 +339,7 @@ export function App() {
             {/* Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <OutcomeChart kpis={kpis} />
-              <BranchCSATChart branchPerformance={branchPerformance} />
+              <BranchCSATChart branchPerformance={branchPerformance} onClickBranch={openBranchDashboard} />
             </div>
 
             {/* Branch Performance Table Preview */}
@@ -339,6 +347,7 @@ export function App() {
               branches={branchPerformance}
               selectedBranch={filters.branch}
               onSelectBranch={(branch) => setFilters((prev) => ({ ...prev, branch }))}
+              onOpenBranchDashboard={openBranchDashboard}
             />
 
             {/* Non-Satisfied Escalations Preview */}
@@ -377,6 +386,7 @@ export function App() {
               branches={branchPerformance}
               selectedBranch={filters.branch}
               onSelectBranch={(branch) => setFilters((prev) => ({ ...prev, branch }))}
+              onOpenBranchDashboard={openBranchDashboard}
             />
           </div>
         )}
@@ -428,6 +438,17 @@ export function App() {
           setIsSupabaseConnected(!!(cfg.url && cfg.anonKey));
         }}
         currentRecords={records}
+      />
+      <BranchDashboardModal
+        isOpen={isBranchDashboardOpen}
+        branch={branchDashboardBranch}
+        allRecords={records}
+        onClose={() => setIsBranchDashboardOpen(false)}
+        onContactRecord={(rec) => {
+          setRecordToEdit(rec);
+          setIsQuickEntryOpen(true);
+          setIsBranchDashboardOpen(false);
+        }}
       />
 
     </div>

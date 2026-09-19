@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -15,9 +15,10 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 interface BranchCSATChartProps {
   branchPerformance: BranchPerformance[];
+  onClickBranch?: (branch: string) => void;
 }
 
-export const BranchCSATChart: React.FC<BranchCSATChartProps> = ({ branchPerformance }) => {
+export const BranchCSATChart: React.FC<BranchCSATChartProps> = ({ branchPerformance, onClickBranch }) => {
   // Sort branches by CSAT descending
   const sorted = [...branchPerformance].sort((a, b) => b.csat - a.csat);
 
@@ -106,7 +107,10 @@ export const BranchCSATChart: React.FC<BranchCSATChartProps> = ({ branchPerforma
       <div className="flex items-center justify-between mb-2">
         <div>
           <h3 className="text-sm font-bold text-white">مقارنة معدل الرضا CSAT % لكل فرع</h3>
-          <p className="text-xs text-slate-400">محدد للأداء العالي (أخضر ≥ 85%) والمتوسط والمنخفض</p>
+          <p className="text-xs text-slate-400">
+            محدد للأداء العالي (أخضر ≥ 85%) والمتوسط والمنخفض ·{' '}
+            {onClickBranch && <span className="text-amber-400 font-bold">اضغط على أي فرع لعرض Dashboard مفصل</span>}
+          </p>
         </div>
         <div className="flex items-center gap-3 text-[11px]">
           <span className="flex items-center gap-1 text-emerald-400">
@@ -121,8 +125,22 @@ export const BranchCSATChart: React.FC<BranchCSATChartProps> = ({ branchPerforma
         </div>
       </div>
 
-      <div className="relative flex-1 mt-2">
-        <Bar data={data} options={options} />
+      <div className="relative flex-1 mt-2" style={{ cursor: onClickBranch ? 'pointer' : 'default' }}>
+        <Bar
+          data={data}
+          options={{
+            ...options,
+            onClick: onClickBranch
+              ? (_event: any, elements: any[]) => {
+                  if (elements.length > 0) {
+                    const idx = elements[0].index;
+                    const branch = sorted[idx]?.branch;
+                    if (branch) onClickBranch(branch);
+                  }
+                }
+              : undefined,
+          }}
+        />
       </div>
     </div>
   );
