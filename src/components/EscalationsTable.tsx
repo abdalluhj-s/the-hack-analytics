@@ -18,16 +18,20 @@ import { SurveyRecord } from '../types/survey';
 interface EscalationsTableProps {
   records: SurveyRecord[];
   onToggleActionTaken: (id: string, actionNotes?: string) => void;
+  limit?: number;
 }
 
 export const EscalationsTable: React.FC<EscalationsTableProps> = ({
   records,
   onToggleActionTaken,
+  limit,
 }) => {
   // Filter for unsatisfied customers or records with severe complaint notes
-  const unsatisfiedRecords = records.filter(
+  const allUnsatisfied = records.filter(
     (r) => r.satisfaction.includes('غير') || (r.callStatus === 'تم الرد' && r.satisfaction === 'غير راضى')
   );
+  const unsatisfiedRecords = limit ? allUnsatisfied.slice(0, limit) : allUnsatisfied;
+
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingNotesId, setEditingNotesId] = useState<string | null>(null);

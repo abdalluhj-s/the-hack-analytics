@@ -7,41 +7,90 @@
     @apply bg-[#080C14] text-slate-100 font-sans antialiased;
     font-family: 'Cairo', system-ui, -apple-system, sans-serif;
   }
+
+  * {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 
-/* Custom modern scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+/* ── Animations ── */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-::-webkit-scrollbar-track {
-  background: #0D1321;
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
-::-webkit-scrollbar-thumb {
-  background: #1E293B;
-  border-radius: 4px;
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+.animate-fade-in { animation: fadeSlideIn 0.3s ease both; }
+.animate-scale-in { animation: scaleIn 0.25s ease both; }
+
+/* Stagger children */
+.stagger > *:nth-child(1) { animation-delay: 0.03s; }
+.stagger > *:nth-child(2) { animation-delay: 0.07s; }
+.stagger > *:nth-child(3) { animation-delay: 0.11s; }
+.stagger > *:nth-child(4) { animation-delay: 0.15s; }
+.stagger > *:nth-child(5) { animation-delay: 0.19s; }
+
+/* ── Glassmorphism ── */
+.glass {
+  background: rgba(13, 18, 32, 0.85);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Glassmorphism and glow effects */
-.glass-panel {
-  background: rgba(19, 26, 38, 0.85);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* ── Card base ── */
+.card {
+  @apply rounded-2xl border border-slate-800 bg-[#111724] shadow-lg;
+}
+.card:hover {
+  @apply border-slate-700;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
 }
 
-.glass-panel-hover:hover {
-  border-color: rgba(245, 158, 11, 0.3);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-}
-
-.gold-gradient-text {
-  background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 50%, #D97706 100%);
+/* ── Gold text ── */
+.gold-text {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24 50%, #d97706);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Progress bar ── */
+.progress-bar {
+  @apply w-full bg-slate-900 rounded-full overflow-hidden;
+  height: 6px;
+}
+.progress-fill {
+  @apply h-full rounded-full;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Ping dot ── */
+@keyframes ping {
+  75%, 100% { transform: scale(2); opacity: 0; }
+}
+.animate-ping { animation: ping 1.2s cubic-bezier(0,0,0.2,1) infinite; }
+
+/* ── Modal overlay ── */
+.modal-overlay {
+  animation: fadeSlideIn 0.2s ease both;
+}
+.modal-panel {
+  animation: scaleIn 0.25s ease both;
 }

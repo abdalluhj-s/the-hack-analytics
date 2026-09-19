@@ -7,6 +7,7 @@ interface BranchPerformanceTableProps {
   selectedBranch: string;
   onSelectBranch: (branch: string) => void;
   onOpenBranchDashboard: (branch: string) => void;
+  compact?: boolean;
 }
 
 export const BranchPerformanceTable: React.FC<BranchPerformanceTableProps> = ({
@@ -14,6 +15,7 @@ export const BranchPerformanceTable: React.FC<BranchPerformanceTableProps> = ({
   selectedBranch,
   onSelectBranch,
   onOpenBranchDashboard,
+  compact = false,
 }) => {
   return (
     <div className="bg-[#111724] border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
@@ -25,8 +27,15 @@ export const BranchPerformanceTable: React.FC<BranchPerformanceTableProps> = ({
             <Building2 className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white">مصفوفة أداء الفروع (Branch Performance Matrix)</h3>
-            <p className="text-xs text-slate-400">تحليل تفصيلي لكل فرع · اضغط <span className="text-amber-400 font-bold">زر التحليل</span> لعرض Dashboard مفصل للفرع</p>
+            <h3 className="text-sm font-bold text-white">
+              {compact ? 'أداء الفروع — أعلى النتائج' : 'مصفوفة أداء الفروع (Branch Performance Matrix)'}
+            </h3>
+            <p className="text-xs text-slate-400">
+              {compact
+                ? 'اضغط "تحليل" لعرض Dashboard تفصيلي لأي فرع'
+                : <>تحليل تفصيلي لكل فرع · اضغط <span className="text-amber-400 font-bold">زر التحليل</span> لعرض Dashboard مفصل للفرع</>
+              }
+            </p>
           </div>
         </div>
       </div>
