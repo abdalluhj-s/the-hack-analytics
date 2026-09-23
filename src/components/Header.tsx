@@ -10,10 +10,18 @@ import {
   FileSpreadsheet,
   AlertTriangle,
   Sun,
-  Moon
+  Moon,
+  Printer,
+  Sparkles,
+  BarChart3
 } from 'lucide-react';
-import { exportRecordsToExcel, exportEscalationsToExcel, exportBranchPerformanceToExcel } from '../utils/excelExporter';
-import { SurveyRecord, BranchPerformance } from '../types/survey';
+import { 
+  exportRecordsToExcel, 
+  exportEscalationsToExcel, 
+  exportBranchPerformanceToExcel,
+  exportFullDashboardToExcel 
+} from '../utils/excelExporter';
+import { SurveyRecord, BranchPerformance, KPIStats } from '../types/survey';
 import { useTheme } from '../context/ThemeContext';
 
 interface HeaderProps {
@@ -25,6 +33,7 @@ interface HeaderProps {
   totalRecords: number;
   filteredRecords: SurveyRecord[];
   branchPerformance: BranchPerformance[];
+  kpis: KPIStats;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -36,12 +45,18 @@ export const Header: React.FC<HeaderProps> = ({
   totalRecords,
   filteredRecords,
   branchPerformance,
+  kpis,
 }) => {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
+  const handlePrint = () => {
+    setShowExportMenu(false);
+    window.print();
+  };
+
   return (
-    <header className="border-b border-slate-800 bg-[#0c121e]/90 backdrop-blur-md sticky top-0 z-30 transition-all">
+    <header className="border-b border-slate-800 bg-[#0c121e]/90 backdrop-blur-md sticky top-0 z-30 transition-all print:hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         
         {/* Branding */}
@@ -123,10 +138,10 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="relative">
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 hover:border-slate-600 transition-all"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-bold border border-emerald-500 shadow-md shadow-emerald-500/10 transition-all active:scale-95"
             >
-              <Download className="w-4 h-4 text-emerald-400" />
-              <span>تصدير إكسيل</span>
+              <Download className="w-4 h-4 text-white" />
+              <span>تصدير الشيت والداشبورد</span>
             </button>
 
             {showExportMenu && (
@@ -135,37 +150,91 @@ export const Header: React.FC<HeaderProps> = ({
                   className="fixed inset-0 z-40" 
                   onClick={() => setShowExportMenu(false)}
                 />
-                <div className="absolute left-0 mt-2 w-56 rounded-xl bg-slate-900 border border-slate-700 shadow-2xl py-2 z-50 text-right">
-                  <button
-                    onClick={() => {
-                      exportRecordsToExcel(filteredRecords, `سجل_المكالمات_${Date.now()}.xlsx`);
-                      setShowExportMenu(false);
-                    }}
-                    className="w-full px-4 py-2 text-xs text-slate-200 hover:bg-slate-800 hover:text-white flex items-center justify-between"
-                  >
-                    <span>تصدير البيانات المفلترة</span>
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      exportEscalationsToExcel(filteredRecords, `حالات_عدم_الرضا_${Date.now()}.xlsx`);
-                      setShowExportMenu(false);
-                    }}
-                    className="w-full px-4 py-2 text-xs text-rose-300 hover:bg-slate-800 hover:text-rose-200 flex items-center justify-between"
-                  >
-                    <span>تصدير حالات عدم الرضا</span>
-                    <AlertTriangle className="w-4 h-4 text-rose-400" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      exportBranchPerformanceToExcel(branchPerformance, `تقرير_الفروع_${Date.now()}.xlsx`);
-                      setShowExportMenu(false);
-                    }}
-                    className="w-full px-4 py-2 text-xs text-amber-300 hover:bg-slate-800 hover:text-amber-200 flex items-center justify-between"
-                  >
-                    <span>تصدير ملخص أداء الفروع</span>
-                    <CheckCircle2 className="w-4 h-4 text-amber-400" />
-                  </button>
+                <div className="absolute left-0 mt-2 w-72 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl py-2 z-50 text-right animate-fadeIn divide-y divide-slate-800">
+                  
+                  {/* Primary Option: Full Dashboard Workbook */}
+                  <div className="p-2">
+                    <button
+                      onClick={() => {
+                        exportFullDashboardToExcel(filteredRecords, branchPerformance, kpis);
+                        setShowExportMenu(false);
+                      }}
+                      className="w-full p-2.5 rounded-xl bg-gradient-to-r from-amber-500/15 to-emerald-500/15 border border-amber-500/30 text-xs font-bold text-amber-300 hover:bg-amber-500/25 transition-all text-right flex flex-col gap-1"
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className="flex items-center gap-1.5">
+                          <Sparkles className="w-4 h-4 text-amber-400" />
+                          <span>تحميل الشيت بالداشبورد</span>
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 font-black">
+                          Excel شامل
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-normal">
+                        ملف إكسيل متكامل: ورقة الداشبورد والمؤشرات + سجل المكالمات + الشكاوى
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Standard Exports */}
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        exportRecordsToExcel(filteredRecords, `سجل_المكالمات_${Date.now()}.xlsx`);
+                        setShowExportMenu(false);
+                      }}
+                      className="w-full px-4 py-2 text-xs text-slate-200 hover:bg-slate-800 hover:text-white flex items-center justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                        <span>تصدير سجل المكالمات فقط</span>
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-mono">{filteredRecords.length} سجل</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        exportEscalationsToExcel(filteredRecords, `حالات_عدم_الرضا_${Date.now()}.xlsx`);
+                        setShowExportMenu(false);
+                      }}
+                      className="w-full px-4 py-2 text-xs text-rose-300 hover:bg-slate-800 hover:text-rose-200 flex items-center justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-rose-400" />
+                        <span>تصدير تقرير الشكاوى فقط</span>
+                      </span>
+                      <span className="text-[10px] text-rose-400 font-mono">{kpis.unsatisfied} شكوى</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        exportBranchPerformanceToExcel(branchPerformance, `تقرير_الفروع_${Date.now()}.xlsx`);
+                        setShowExportMenu(false);
+                      }}
+                      className="w-full px-4 py-2 text-xs text-amber-300 hover:bg-slate-800 hover:text-amber-200 flex items-center justify-between"
+                    >
+                      <span className="flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4 text-amber-400" />
+                        <span>تصدير جدول أداء الفروع فقط</span>
+                      </span>
+                      <span className="text-[10px] text-amber-400 font-mono">{branchPerformance.length} فرع</span>
+                    </button>
+                  </div>
+
+                  {/* Print / PDF Option */}
+                  <div className="p-1">
+                    <button
+                      onClick={handlePrint}
+                      className="w-full px-4 py-2 text-xs text-cyan-300 hover:bg-slate-800 hover:text-cyan-200 flex items-center justify-between rounded-lg"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Printer className="w-4 h-4 text-cyan-400" />
+                        <span>طباعة / حفظ الداشبورد كـ PDF</span>
+                      </span>
+                      <span className="text-[10px] text-slate-400">مباشر</span>
+                    </button>
+                  </div>
+
                 </div>
               </>
             )}

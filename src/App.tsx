@@ -92,7 +92,7 @@ export function App() {
   }, [records]);
 
   const pendingRecords = useMemo(
-    () => records.filter(r => !r.callStatus?.trim()),
+    () => records.filter(r => classifyCallOutcome(r.callStatus, r.satisfaction) === 'قيد الانتظار'),
     [records]
   );
 
@@ -102,10 +102,10 @@ export function App() {
       if (filters.branch !== 'all' && record.branch !== filters.branch) return false;
       if (filters.agent  !== 'all' && record.agent  !== filters.agent)  return false;
 
-      const outcome = classifyCallOutcome(record.callStatus);
+      const outcome = classifyCallOutcome(record.callStatus, record.satisfaction);
       if (filters.callOutcome !== 'all' && outcome !== filters.callOutcome) return false;
 
-      const sat = classifySatisfaction(record.satisfaction, outcome);
+      const sat = classifySatisfaction(record.satisfaction, outcome, record.customerNotes);
       if (filters.satisfaction !== 'all') {
         if (filters.satisfaction === 'بدون تقييم' && sat !== 'بدون تقييم') return false;
         if (filters.satisfaction !== 'بدون تقييم' && sat !== filters.satisfaction) return false;
@@ -214,6 +214,7 @@ export function App() {
         totalRecords={records.length}
         filteredRecords={filteredRecords}
         branchPerformance={branchPerformance}
+        kpis={kpis}
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-8 pt-6 space-y-5">

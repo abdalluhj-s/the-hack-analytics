@@ -262,3 +262,64 @@ html.light .bg-slate-900.border.border-slate-700 button:hover {
   background-color: #f1f5f9 !important;
   color: #0f172a !important;
 }
+
+/* ══════════════════════════════════════
+   Print / PDF Export Styles
+══════════════════════════════════════ */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11pt !important;
+  }
+
+  header,
+  nav,
+  .print\:hidden,
+  button,
+  input,
+  select,
+  .fixed {
+    display: none !important;
+  }
+
+  main {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .bg-\[\#111724\],
+  .bg-\[\#0d1220\],
+  .bg-\[\#080c14\],
+  .bg-\[\#0A0E17\] {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  .text-white,
+  .text-slate-100,
+  .text-slate-200,
+  .text-slate-300 {
+    color: #0f172a !important;
+  }
+
+  .text-slate-400,
+  .text-slate-500 {
+    color: #475569 !important;
+  }
+
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  th, td {
+    border: 1px solid #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+}
+

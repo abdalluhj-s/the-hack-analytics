@@ -25,19 +25,19 @@ export const BranchDashboardModal: React.FC<BranchDashboardModalProps> = ({
 
   // Segment records by outcome
   const answeredSatisfied = branchRecords.filter(r => {
-    const o = classifyCallOutcome(r.callStatus);
-    const s = classifySatisfaction(r.satisfaction, o);
+    const o = classifyCallOutcome(r.callStatus, r.satisfaction);
+    const s = classifySatisfaction(r.satisfaction, o, r.customerNotes);
     return o === 'تم الرد' && s === 'راضى';
   });
   const answeredUnsatisfied = branchRecords.filter(r => {
-    const o = classifyCallOutcome(r.callStatus);
-    const s = classifySatisfaction(r.satisfaction, o);
+    const o = classifyCallOutcome(r.callStatus, r.satisfaction);
+    const s = classifySatisfaction(r.satisfaction, o, r.customerNotes);
     return o === 'تم الرد' && s === 'غير راضى';
   });
-  const noAnswer = branchRecords.filter(r => classifyCallOutcome(r.callStatus) === 'لم يتم الرد');
-  const switchedOff = branchRecords.filter(r => classifyCallOutcome(r.callStatus) === 'مغلق أو غير متاح');
-  const refused = branchRecords.filter(r => classifyCallOutcome(r.callStatus) === 'ممتنع');
-  const pending = branchRecords.filter(r => classifyCallOutcome(r.callStatus) === 'قيد الانتظار');
+  const noAnswer = branchRecords.filter(r => classifyCallOutcome(r.callStatus, r.satisfaction) === 'لم يتم الرد');
+  const switchedOff = branchRecords.filter(r => classifyCallOutcome(r.callStatus, r.satisfaction) === 'مغلق أو غير متاح');
+  const refused = branchRecords.filter(r => classifyCallOutcome(r.callStatus, r.satisfaction) === 'ممتنع');
+  const pending = branchRecords.filter(r => classifyCallOutcome(r.callStatus, r.satisfaction) === 'قيد الانتظار');
 
   const csatColor = kpis.csat >= 85 ? 'text-emerald-400' : kpis.csat >= 70 ? 'text-amber-400' : 'text-rose-400';
   const csatBg = kpis.csat >= 85 ? 'from-emerald-500/10' : kpis.csat >= 70 ? 'from-amber-500/10' : 'from-rose-500/10';

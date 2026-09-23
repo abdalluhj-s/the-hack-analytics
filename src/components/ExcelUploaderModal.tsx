@@ -5,11 +5,15 @@ import {
   FileSpreadsheet, 
   CheckCircle2, 
   AlertCircle, 
-  Layers, 
-  RefreshCw,
-  Table
+  Download, 
+  Phone, 
+  PhoneOff, 
+  Clock, 
+  Smile, 
+  Frown, 
+  Info 
 } from 'lucide-react';
-import { parseExcelFile, ParseResult } from '../utils/excelParser';
+import { parseExcelFile, downloadExcelTemplate, ParseResult } from '../utils/excelParser';
 import { SurveyRecord } from '../types/survey';
 
 interface ExcelUploaderModalProps {
@@ -71,7 +75,7 @@ export const ExcelUploaderModal: React.FC<ExcelUploaderModalProps> = ({
               <span>رفع وتحليل شيت إكسيل جديد</span>
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              يدعم ملفات (.xlsx, .xls) مع التعرف التلقائي على الأعمدة العربية
+              يدعم ملفات (.xlsx, .xls) مع اكتشاف ذكي لسطر العناوين والأعمدة
             </p>
           </div>
           <button
@@ -85,13 +89,32 @@ export const ExcelUploaderModal: React.FC<ExcelUploaderModalProps> = ({
         {/* Modal Content */}
         <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
           
+          {/* Action Row: Template Download Banner */}
+          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <Info className="w-4 h-4 text-amber-400 flex-shrink-0" />
+              <div className="text-xs text-slate-200">
+                <span className="font-bold text-amber-300">للحصول على أعلى دقة حسابية:</span>{' '}
+                يمكنك تحميل نموذج الإكسيل الرسمي المعتمد جاهزاً بالأعمدة والأمثلة.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={downloadExcelTemplate}
+              className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 whitespace-nowrap shadow-sm transition-all active:scale-95"
+            >
+              <Download className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>تحميل النموذج المعتمد</span>
+            </button>
+          </div>
+
           {/* Dropzone */}
           <div
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${
+            className={`border-2 border-dashed rounded-2xl p-7 text-center cursor-pointer transition-all ${
               isDragging
                 ? 'border-amber-500 bg-amber-500/10'
                 : 'border-slate-700 hover:border-amber-500/50 bg-slate-900/40 hover:bg-slate-900/70'
@@ -108,11 +131,11 @@ export const ExcelUploaderModal: React.FC<ExcelUploaderModalProps> = ({
                 }
               }}
             />
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center mx-auto mb-3">
-              <UploadCloud className="w-7 h-7" />
+            <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center mx-auto mb-2.5">
+              <UploadCloud className="w-6 h-6" />
             </div>
             <p className="text-sm font-bold text-white">
-              اسحب ملف الإكسيل هنا أو انقر للاختيار من جهازك
+              {isProcessing ? 'جاري قراءة ومعالجة الملف بدقة...' : 'اسحب ملف الإكسيل هنا أو انقر للاختيار'}
             </p>
             <p className="text-xs text-slate-400 mt-1">
               الامتدادات المدعومة: XLSX, XLS
@@ -120,20 +143,19 @@ export const ExcelUploaderModal: React.FC<ExcelUploaderModalProps> = ({
           </div>
 
           {/* Expected Columns Info */}
-          <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-slate-300">
-            <div className="font-bold text-amber-400 mb-2 flex items-center gap-1.5">
-              <span>الأعمدة القياسية المدعومة بالشيت:</span>
+          <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-slate-300">
+            <div className="font-bold text-slate-200 mb-2 flex items-center gap-1.5">
+              <span>الأعمدة المدعومة وتعرف النظام عليها تلقائياً:</span>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-slate-400">
-              <span className="p-1 rounded bg-slate-950">✓ الفرع</span>
-              <span className="p-1 rounded bg-slate-950">✓ المنتج / الخدمة</span>
-              <span className="p-1 rounded bg-slate-950">✓ حالة التواصل</span>
-              <span className="p-1 rounded bg-slate-950">✓ حالة العميل</span>
-              <span className="p-1 rounded bg-slate-950">✓ مسئول الاستبيان</span>
-              <span className="p-1 rounded bg-slate-950">✓ الفني والبائع</span>
-              <span className="p-1 rounded bg-slate-950">✓ ملاحظات العميل</span>
-              <span className="p-1 rounded bg-slate-950">✓ ملاحظات الفرع</span>
-              <span className="p-1 rounded bg-slate-950">✓ العميل والهاتف</span>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-[11px] text-slate-400">
+              <span className="p-1 px-2 rounded bg-slate-950/70">✓ الفرع</span>
+              <span className="p-1 px-2 rounded bg-slate-950/70">✓ المنتج / الخدمة</span>
+              <span className="p-1 px-2 rounded bg-slate-950/70">✓ حالة التواصل</span>
+              <span className="p-1 px-2 rounded bg-slate-950/70">✓ حالة العميل</span>
+              <span className="p-1 px-2 rounded bg-slate-950/70">✓ مسئول الاستبيان</span>
+              <span className="p-1 px-2 rounded bg-slate-950/70">✓ الفني والبائع</span>
+              <span className="p-1 px-2 rounded bg-slate-950/70">✓ ملاحظات العميل والفرع</span>
+              <span className="p-1 px-2 rounded bg-slate-950/70">✓ اسم العميل ورقم الهاتف</span>
             </div>
           </div>
 
@@ -145,14 +167,48 @@ export const ExcelUploaderModal: React.FC<ExcelUploaderModalProps> = ({
                   <CheckCircle2 className="w-4 h-4" />
                   <span>تم استخراج {parseResult.records.length} سجل بنجاح!</span>
                 </div>
-                <span className="text-xs text-slate-400">{parseResult.fileName}</span>
+                <span className="text-xs text-slate-400 font-mono">{parseResult.fileName}</span>
+              </div>
+
+              {/* Instant parsed breakdown badges */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 text-xs">
+                <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-between">
+                  <span className="flex items-center gap-1 text-cyan-300">
+                    <Phone className="w-3 h-3" /> تم الرد
+                  </span>
+                  <span className="font-bold text-cyan-400">{parseResult.stats.answered}</span>
+                </div>
+                <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-between">
+                  <span className="flex items-center gap-1 text-amber-300">
+                    <PhoneOff className="w-3 h-3" /> لم يرد / مغلق
+                  </span>
+                  <span className="font-bold text-amber-400">{parseResult.stats.noAnswer + parseResult.stats.switchedOff}</span>
+                </div>
+                <div className="p-2 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-between">
+                  <span className="flex items-center gap-1 text-slate-300">
+                    <Clock className="w-3 h-3" /> قيد الانتظار
+                  </span>
+                  <span className="font-bold text-slate-300">{parseResult.stats.pending}</span>
+                </div>
+                <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
+                  <span className="flex items-center gap-1 text-emerald-300">
+                    <Smile className="w-3 h-3" /> راضون
+                  </span>
+                  <span className="font-bold text-emerald-400">{parseResult.stats.satisfied}</span>
+                </div>
+                <div className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-between">
+                  <span className="flex items-center gap-1 text-rose-300">
+                    <Frown className="w-3 h-3" /> غير راضين (شكاوى)
+                  </span>
+                  <span className="font-bold text-rose-400">{parseResult.stats.unsatisfied}</span>
+                </div>
               </div>
 
               {parseResult.warnings.length > 0 && (
                 <div className="p-2 rounded bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300 space-y-1">
                   {parseResult.warnings.map((w, i) => (
                     <div key={i} className="flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
+                      <AlertCircle className="w-3 h-3 flex-shrink-0" />
                       <span>{w}</span>
                     </div>
                   ))}

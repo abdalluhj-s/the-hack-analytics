@@ -15,30 +15,125 @@ export function normalizeArabic(text: string | null | undefined): string {
 }
 
 /**
- * Classifies call status according to exact business rules
+ * Classifies call status according to exact business rules with comprehensive Arabic/English variations
  */
-export function classifyCallOutcome(rawStatus: string | null | undefined): CallOutcomeType {
-  if (!rawStatus || rawStatus.toString().trim() === '') {
+export function classifyCallOutcome(
+  rawStatus: string | null | undefined,
+  rawSatisfaction?: string | null | undefined
+): CallOutcomeType {
+  const norm = normalizeArabic(rawStatus);
+
+  // 1. Explicit pending phrases or empty/blank indicators
+  if (
+    !norm ||
+    norm === '' ||
+    norm === '-' ||
+    norm === '--' ||
+    norm === 'na' ||
+    norm === 'n/a' ||
+    norm === 'none' ||
+    norm === '0' ||
+    norm.includes('لم يتم الاتصال') ||
+    norm.includes('لم يتم التواصل') ||
+    norm.includes('لم نتصل') ||
+    norm.includes('لم يتصل') ||
+    norm.includes('انتظار') ||
+    norm.includes('معلق') ||
+    norm.includes('جديد') ||
+    norm.includes('تحت الاتصال') ||
+    norm.includes('لم نتحدث')
+  ) {
+    // If call status was left blank but a clear satisfaction rating is provided,
+    // it implies the customer was reached and gave feedback
+    if (rawSatisfaction) {
+      const normSat = normalizeArabic(rawSatisfaction);
+      if (
+        normSat.includes('راض') ||
+        normSat.includes('شك') ||
+        normSat.includes('ممتاز') ||
+        normSat.includes('جيد') ||
+        normSat.includes('سيء') ||
+        normSat.includes('سئ')
+      ) {
+        return 'تم الرد';
+      }
+    }
     return 'قيد الانتظار';
   }
 
-  const norm = normalizeArabic(rawStatus);
-
-  if (norm.includes('لم يتم') || norm.includes('لم يرد') || norm.includes('لا يرد') || norm.includes('مش بيرد')) {
-    return 'لم يتم الرد';
-  }
-  if (norm.includes('مغلق') || norm.includes('غير متاح') || norm.includes('مفصول') || norm.includes('خارج الخدمه')) {
+  // 2. Unreachable / Switched off / Wrong numbers
+  if (
+    norm.includes('مغلق') ||
+    norm.includes('غير متاح') ||
+    norm.includes('مفصول') ||
+    norm.includes('خارج الخدمه') ||
+    norm.includes('خارج التغطيه') ||
+    norm.includes('مقفول') ||
+    norm.includes('رقم خاطئ') ||
+    norm.includes('خاطي') ||
+    norm.includes('غير صحيح') ||
+    norm.includes('switched') ||
+    norm.includes('unreachable') ||
+    norm.includes('out of service')
+  ) {
     return 'مغلق أو غير متاح';
   }
-  if (norm.includes('ممتنع') || norm.includes('رفض') || norm.includes('امتنع')) {
+
+  // 3. Refused to participate
+  if (
+    norm.includes('ممتنع') ||
+    norm.includes('رفض') ||
+    norm.includes('امتنع') ||
+    norm.includes('قفل السكه') ||
+    norm.includes('اغلق') ||
+    norm.includes('غير راغب') ||
+    norm.includes('مش عايز') ||
+    norm.includes('refuse')
+  ) {
     return 'ممتنع';
   }
-  if (norm.includes('تم الرد') || norm.includes('اجاب') || norm.includes('رد')) {
+
+  // 4. Called but No Answer
+  if (
+    norm.includes('لم يتم الرد') ||
+    norm.includes('لم يرد') ||
+    norm.includes('لا يرد') ||
+    norm.includes('مش بيرد') ||
+    norm.includes('ماردش') ||
+    norm.includes('ما رد') ||
+    norm.includes('رنين') ||
+    norm.includes('جرس') ||
+    norm.includes('مشغول') ||
+    norm.includes('كنسل') ||
+    norm.includes('no answer') ||
+    norm.includes('busy')
+  ) {
+    return 'لم يتم الرد';
+  }
+
+  // 5. Answered / Successfully reached
+  if (
+    norm.includes('تم الرد') ||
+    norm.includes('رد') ||
+    norm.includes('اجاب') ||
+    norm.includes('تواصل') ||
+    norm.includes('تحدث') ||
+    norm.includes('استبيان') ||
+    norm.includes('مكتمل') ||
+    norm.includes('تم') ||
+    norm.includes('ناجح') ||
+    norm.includes('answered') ||
+    norm.includes('complete')
+  ) {
     return 'تم الرد';
   }
 
-  // If there's some text but it's not pending
-  return 'تم الرد';
+  // 6. Fallback: if satisfaction given, they answered; otherwise default to pending
+  if (rawSatisfaction && rawSatisfaction.toString().trim() !== '') {
+    return 'تم الرد';
+  }
+
+  return 'قيد الانتظار';
 }
 
 /**
@@ -47,7 +142,8 @@ export function classifyCallOutcome(rawStatus: string | null | undefined): CallO
  */
 export function classifySatisfaction(
   rawSatisfaction: string | null | undefined,
-  outcome: CallOutcomeType
+  outcome: CallOutcomeType,
+  customerNotes?: string | null | undefined
 ): SatisfactionType {
   // CRITICAL RULE: If a client did not answer or was not contacted,
   // they MUST NOT affect the satisfaction percentage!
@@ -55,16 +151,88 @@ export function classifySatisfaction(
     return 'بدون تقييم';
   }
 
-  if (!rawSatisfaction || rawSatisfaction.toString().trim() === '') {
+  const norm = normalizeArabic(rawSatisfaction);
+
+  // If no satisfaction given in the cell, inspect notes for obvious complaints
+  if (!norm || norm === '' || norm === '-' || norm === 'na') {
+    if (customerNotes) {
+      const normNotes = normalizeArabic(customerNotes);
+      if (
+        normNotes.includes('شكوى') ||
+        normNotes.includes('شكوي') ||
+        normNotes.includes('مشكلة') ||
+        normNotes.includes('مشكله') ||
+        normNotes.includes('عيب') ||
+        normNotes.includes('تالف') ||
+        normNotes.includes('زعلان') ||
+        normNotes.includes('سيء') ||
+        normNotes.includes('سئ') ||
+        normNotes.includes('سيئه') ||
+        normNotes.includes('تاخير') ||
+        normNotes.includes('تاخر')
+      ) {
+        return 'غير راضى';
+      }
+    }
     return 'بدون تقييم';
   }
 
-  const norm = normalizeArabic(rawSatisfaction);
-
-  if (norm.includes('غير راضي') || norm.includes('غير راض') || norm.includes('مش راضي') || norm.includes('مستاء') || norm.includes('شكوي')) {
+  // Check Unsatisfied first (because 'غير راضي' contains 'راضي')
+  if (
+    norm.includes('غير راضي') ||
+    norm.includes('غير راض') ||
+    norm.includes('مش راضي') ||
+    norm.includes('مش راضيه') ||
+    norm.includes('مستاء') ||
+    norm.includes('مستاءه') ||
+    norm.includes('شكوي') ||
+    norm.includes('شكوى') ||
+    norm.includes('سيء') ||
+    norm.includes('سئ') ||
+    norm.includes('سيئه') ||
+    norm.includes('متضرر') ||
+    norm.includes('غير مرضي') ||
+    norm.includes('ضعيف') ||
+    norm.includes('مرفوض') ||
+    norm.includes('زعلان') ||
+    norm.includes('غضبان') ||
+    norm.includes('غاضب') ||
+    norm === 'لا' ||
+    norm === 'no' ||
+    norm === 'bad' ||
+    norm === 'poor' ||
+    norm === '1' ||
+    norm === '2'
+  ) {
     return 'غير راضى';
   }
-  if (norm.includes('راضي') || norm.includes('راض') || norm.includes('ممتاز') || norm.includes('جيد جدا') || norm.includes('جيد')) {
+
+  // Check Satisfied
+  if (
+    norm.includes('راضي') ||
+    norm.includes('راض') ||
+    norm.includes('ممتاز') ||
+    norm.includes('جيد جدا') ||
+    norm.includes('جيد') ||
+    norm.includes('سعيد') ||
+    norm.includes('شاكر') ||
+    norm.includes('تمام') ||
+    norm.includes('ايجابي') ||
+    norm.includes('ايجابيه') ||
+    norm.includes('مبسوط') ||
+    norm.includes('متعاون') ||
+    norm === 'نعم' ||
+    norm === 'yes' ||
+    norm === 'good' ||
+    norm === 'great' ||
+    norm === 'excellent' ||
+    norm === 'satisfied' ||
+    norm === '4' ||
+    norm === '5' ||
+    norm === '8' ||
+    norm === '9' ||
+    norm === '10'
+  ) {
     return 'راضى';
   }
 
@@ -88,8 +256,8 @@ export function calculateKPIs(records: SurveyRecord[]): KPIStats {
   let resolvedComplaintsCount = 0;
 
   for (const record of records) {
-    const outcome = classifyCallOutcome(record.callStatus);
-    const satisfaction = classifySatisfaction(record.satisfaction, outcome);
+    const outcome = classifyCallOutcome(record.callStatus, record.satisfaction);
+    const satisfaction = classifySatisfaction(record.satisfaction, outcome, record.customerNotes);
 
     // Rule: Total Workload = Total rows
     // Rule: Contacted = Call Status is NOT empty / not pending
