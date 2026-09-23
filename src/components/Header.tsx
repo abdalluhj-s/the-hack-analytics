@@ -22,6 +22,7 @@ import {
   exportBranchPerformanceToExcel,
   exportFullDashboardToExcel 
 } from '../utils/excelExporter';
+import { downloadExcelTemplate } from '../utils/excelParser';
 import { SurveyRecord, BranchPerformance, KPIStats } from '../types/survey';
 import { useTheme } from '../context/ThemeContext';
 
@@ -146,6 +147,16 @@ export const Header: React.FC<HeaderProps> = ({
             <span>تسجيل مكالمة سريعة</span>
           </button>
 
+          {/* Download Official Template Button */}
+          <button
+            onClick={downloadExcelTemplate}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30 hover:border-amber-400 transition-all active:scale-95"
+            title="تحميل إسطمبة الإكسيل المعتمدة الجاهزة لتعبئة بيانات الفروع"
+          >
+            <Download className="w-3.5 h-3.5 text-amber-400" />
+            <span>تحميل الإسطمبة (Excel)</span>
+          </button>
+
           {/* Upload Excel Button */}
           <button
             onClick={onOpenUpload}
@@ -261,10 +272,10 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          {/* Reset Demo Data Button */}
+          {/* Reset / Clear Data Button */}
           <button
             onClick={onResetData}
-            title="إعادة تعيين البيانات التجريبية للشيت (271 عميل)"
+            title="مسح وتفريغ البيانات الحالية (Reset)"
             className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border border-slate-700 transition-all"
           >
             <RefreshCw className="w-4 h-4" />

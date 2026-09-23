@@ -96,7 +96,17 @@ export const WorkloadTable: React.FC<WorkloadTableProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60 text-slate-300">
-            {currentRecords.map((r, idx) => {
+            {currentRecords.length === 0 ? (
+              <tr>
+                <td colSpan={9} className="py-12 text-center text-slate-500">
+                  <div className="flex flex-col items-center justify-center gap-1.5">
+                    <p className="text-sm font-semibold text-slate-400">لا توجد سجلات مكالمات مسجلة حالياً</p>
+                    <p className="text-xs text-slate-500">قم برفع شيت إكسيل أو تسجيل مكالمة جديدة للبدء</p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              currentRecords.map((r, idx) => {
               const globalIndex = (page - 1) * pageSize + idx + 1;
               const isPending = !r.callStatus || r.callStatus.trim() === '';
 
@@ -220,7 +230,7 @@ export const WorkloadTable: React.FC<WorkloadTableProps> = ({
 
                 </tr>
               );
-            })}
+            }))}
           </tbody>
         </table>
       </div>

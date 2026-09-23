@@ -25,9 +25,10 @@ import {
   normalizeArabic,
 } from './utils/analytics';
 import { getStoredSupabaseConfig, fetchSurveysFromSupabase, syncSurveysToSupabase } from './utils/supabase';
-import { BarChart3, AlertTriangle, Building2, PhoneCall, Sparkles } from 'lucide-react';
+import { downloadExcelTemplate } from './utils/excelParser';
+import { BarChart3, AlertTriangle, Building2, PhoneCall, Sparkles, FileSpreadsheet, Download, Upload, PlusCircle } from 'lucide-react';
 
-const LOCAL_STORAGE_KEY = 'the_hack_survey_records_v1';
+const LOCAL_STORAGE_KEY = 'the_hack_survey_records_v3';
 
 type Tab = 'dashboard' | 'escalations' | 'branches' | 'calls';
 
@@ -35,13 +36,21 @@ export function App() {
   // ─── Records ───────────────────────────────────────────
   const [records, setRecords] = useState<SurveyRecord[]>(() => {
     try {
+      // Clear legacy storage keys
+      localStorage.removeItem('the_hack_survey_records_v1');
+      localStorage.removeItem('the_hack_survey_records_v2');
+
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Exclude any legacy mock items
+          const realOnly = parsed.filter(r => !r.id?.startsWith('REC-') && !r.id?.startsWith('HACK-'));
+          return realOnly;
+        }
       }
     } catch {}
-    return INITIAL_RECORDS;
+    return [];
   });
 
   useEffect(() => {
@@ -246,6 +255,49 @@ export function App() {
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-8 pt-6 space-y-5">
+
+        {/* ── Empty State Hero Banner when no records exist ── */}
+        {records.length === 0 && (
+          <div className="rounded-2xl p-6 sm:p-8 bg-gradient-to-br from-slate-900 via-[#111724] to-[#0c121e] border-2 border-dashed border-amber-500/40 text-center space-y-4 shadow-2xl animate-fade-in">
+            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto shadow-inner">
+              <FileSpreadsheet className="w-7 h-7 stroke-[2]" />
+            </div>
+            <div className="max-w-xl mx-auto space-y-1.5">
+              <h2 className="text-xl font-black text-white">
+                منظومة The Hack جاهزة لاستقبال بيانات الفروع
+              </h2>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                تم تفريغ البيانات السابقة بالكامل بناءً على طلبك. يمكنك الآن البدء إما بتحميل <strong className="text-amber-400">الإسطمبة المعتمدة</strong> لتعبئتها بإكسيل، أو <strong className="text-amber-400">رفع شيت الإكسيل</strong> الحالي الخاص بمراكز الصيانة لحساب كافة المؤشرات والداشبورد بدقة 100%.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <button
+                onClick={downloadExcelTemplate}
+                className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 transition-all active:scale-95"
+              >
+                <Download className="w-4 h-4 stroke-[2.5]" />
+                <span>تحميل إسطمبة الإكسيل المعتمدة (Template)</span>
+              </button>
+
+              <button
+                onClick={() => setIsUploadOpen(true)}
+                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-600 flex items-center gap-2 transition-all active:scale-95"
+              >
+                <Upload className="w-4 h-4 text-amber-400" />
+                <span>رفع شيت إكسيل جديد</span>
+              </button>
+
+              <button
+                onClick={() => setQuickEntry({ open: true, record: null })}
+                className="px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 flex items-center gap-1.5 transition-all"
+              >
+                <PlusCircle className="w-4 h-4 text-emerald-400" />
+                <span>تسجيل مكالمة سريعة</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── KPI Summary ── */}
         <KPICards

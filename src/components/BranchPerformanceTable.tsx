@@ -58,7 +58,18 @@ export const BranchPerformanceTable: React.FC<BranchPerformanceTableProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60 text-slate-300">
-            {branches.map((b) => {
+            {branches.length === 0 ? (
+              <tr>
+                <td colSpan={10} className="py-12 text-center text-slate-500">
+                  <div className="flex flex-col items-center justify-center gap-1.5">
+                    <Building2 className="w-8 h-8 text-slate-600 mb-1" />
+                    <p className="text-sm font-semibold text-slate-400">لا توجد بيانات فروع مسجلة حالياً</p>
+                    <p className="text-xs text-slate-500">ستظهر مصفوفة أداء الفروع فور رفع شيت الإكسيل</p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              branches.map((b) => {
               const isSelected = selectedBranch === b.branch;
               return (
                 <tr
@@ -135,7 +146,7 @@ export const BranchPerformanceTable: React.FC<BranchPerformanceTableProps> = ({
                   </td>
                 </tr>
               );
-            })}
+            }))}
           </tbody>
         </table>
       </div>

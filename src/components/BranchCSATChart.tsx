@@ -247,22 +247,30 @@ export const BranchCSATChart: React.FC<BranchCSATChartProps> = ({ branchPerforma
       </div>
 
       {/* ── Chart Canvas ── */}
-      <div className="relative flex-1 min-h-[260px]" style={{ cursor: onClickBranch ? 'pointer' : 'default' }}>
-        <Bar
-          data={chartMode === 'csat' ? csatData : distributionData}
-          options={{
-            ...chartOptions,
-            onClick: onClickBranch
-              ? (_event: any, elements: any[]) => {
-                  if (elements.length > 0) {
-                    const idx = elements[0].index;
-                    const branch = sorted[idx]?.branch;
-                    if (branch) onClickBranch(branch);
+      <div className="relative flex-1 min-h-[260px] flex items-center justify-center" style={{ cursor: onClickBranch ? 'pointer' : 'default' }}>
+        {sorted.length === 0 ? (
+          <div className="text-center p-8 text-slate-500">
+            <BarChart3 className="w-10 h-10 mx-auto mb-2 text-slate-600" />
+            <p className="text-xs font-semibold text-slate-400">في انتظار رفع شيت الفروع لعرض المقارنة البيانية</p>
+            <p className="text-[11px] text-slate-500 mt-1">ستظهر المقارنة فور رفع ملف الإكسيل</p>
+          </div>
+        ) : (
+          <Bar
+            data={chartMode === 'csat' ? csatData : distributionData}
+            options={{
+              ...chartOptions,
+              onClick: onClickBranch
+                ? (_event: any, elements: any[]) => {
+                    if (elements.length > 0) {
+                      const idx = elements[0].index;
+                      const branch = sorted[idx]?.branch;
+                      if (branch) onClickBranch(branch);
+                    }
                   }
-                }
-              : undefined,
-          }}
-        />
+                : undefined,
+            }}
+          />
+        )}
       </div>
 
       {/* ── Quick Interactive Branch Chips ── */}
