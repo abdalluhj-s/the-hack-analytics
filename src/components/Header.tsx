@@ -13,7 +13,8 @@ import {
   Moon,
   Printer,
   Sparkles,
-  BarChart3
+  BarChart3,
+  Smartphone
 } from 'lucide-react';
 import { 
   exportRecordsToExcel, 
@@ -29,6 +30,8 @@ interface HeaderProps {
   onOpenQuickEntry: () => void;
   onOpenSupabase: () => void;
   onResetData: () => void;
+  onOpenInstallApp?: () => void;
+  isAppInstalled?: boolean;
   isSupabaseConnected: boolean;
   totalRecords: number;
   filteredRecords: SurveyRecord[];
@@ -41,6 +44,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenQuickEntry,
   onOpenSupabase,
   onResetData,
+  onOpenInstallApp,
+  isAppInstalled,
   isSupabaseConnected,
   totalRecords,
   filteredRecords,
@@ -100,6 +105,22 @@ export const Header: React.FC<HeaderProps> = ({
               </>
             )}
           </button>
+
+          {/* Install as Mobile / Desktop App Button */}
+          {onOpenInstallApp && (
+            <button
+              onClick={onOpenInstallApp}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all active:scale-95 ${
+                isAppInstalled
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                  : 'bg-gradient-to-r from-amber-500/20 to-amber-600/20 hover:from-amber-500/30 hover:to-amber-600/30 text-amber-300 border-amber-500/40 hover:border-amber-400 shadow-sm'
+              }`}
+              title={isAppInstalled ? 'التطبيق مثبت بالفعل على جهازك' : 'تثبيت التطبيق على الجوال أو الكمبيوتر كـ Application'}
+            >
+              <Smartphone className="w-4 h-4 text-amber-400 stroke-[2.5]" />
+              <span>{isAppInstalled ? 'تطبيق مثبت ✓' : 'تثبيت التطبيق 📱'}</span>
+            </button>
+          )}
 
           {/* Supabase Cloud Sync Badge */}
           <button

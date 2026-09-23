@@ -11,6 +11,9 @@ import { WorkloadTable } from './components/WorkloadTable';
 import { QuickEntryModal } from './components/QuickEntryModal';
 import { ExcelUploaderModal } from './components/ExcelUploaderModal';
 import { SupabaseSettingsModal } from './components/SupabaseSettingsModal';
+import { InstallPwaModal } from './components/InstallPwaModal';
+import { usePwaInstall } from './hooks/usePwaInstall';
+import { Smartphone } from 'lucide-react';
 
 import { SurveyRecord, FilterOptions } from './types/survey';
 import { INITIAL_RECORDS } from './data/mockData';
@@ -51,6 +54,10 @@ export function App() {
     const cfg = getStoredSupabaseConfig();
     setIsSupabaseConnected(!!(cfg.url && cfg.anonKey));
   }, []);
+
+  // ─── PWA Mobile Installation ────────────────────────────
+  const { canInstallNative, isStandalone, isIOS, install } = usePwaInstall();
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
 
   // ─── Filters ───────────────────────────────────────────
   const [filters, setFilters] = useState<FilterOptions>({
@@ -210,6 +217,8 @@ export function App() {
         onOpenQuickEntry={() => setQuickEntry({ open: true, record: null })}
         onOpenSupabase={() => setIsSupabaseOpen(true)}
         onResetData={handleReset}
+        onOpenInstallApp={() => setIsInstallModalOpen(true)}
+        isAppInstalled={isStandalone}
         isSupabaseConnected={isSupabaseConnected}
         totalRecords={records.length}
         filteredRecords={filteredRecords}
@@ -388,6 +397,32 @@ export function App() {
           setBranchModal({ open: false, branch: '' });
         }}
       />
+
+      <InstallPwaModal
+        isOpen={isInstallModalOpen}
+        onClose={() => setIsInstallModalOpen(false)}
+        onInstallNative={install}
+        canInstallNative={canInstallNative}
+        isIOS={isIOS}
+      />
+
+      {/* ── Mobile Floating PWA Install Bar ── */}
+      {!isStandalone && (
+        <div className="fixed bottom-3 inset-x-3 sm:hidden z-40">
+          <button
+            onClick={() => setIsInstallModalOpen(true)}
+            className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black text-xs flex items-center justify-between shadow-2xl shadow-amber-500/40 border border-amber-400/50 active:scale-95 transition-all"
+          >
+            <div className="flex items-center gap-2">
+              <Smartphone className="w-4 h-4 stroke-[2.5]" />
+              <span>تثبيت The Hack كتطبيق على الموبايل</span>
+            </div>
+            <span className="bg-slate-950/20 px-2 py-0.5 rounded text-[10px] font-bold">
+              تثبيت 📱
+            </span>
+          </button>
+        </div>
+      )}
 
     </div>
   );
