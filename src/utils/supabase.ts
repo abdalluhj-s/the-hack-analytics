@@ -6,9 +6,12 @@ const STORAGE_KEY_KEY = 'the_hack_supabase_key';
 
 let cachedClient: SupabaseClient | null = null;
 
+const DEFAULT_URL = 'https://drrlngaxzgsjuxzzyyzc.supabase.co';
+const DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRycmxuZ2F4emdzanV4enp5eXpjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMzc0OTQsImV4cCI6MjEwNTYxMzQ5NH0.vnGhWsI0_3GLPEOTT3bVPJ11l50VV23qAIs2-Vqo3RI';
+
 export function getStoredSupabaseConfig() {
-  const url = localStorage.getItem(STORAGE_URL_KEY) || (import.meta as any).env?.VITE_SUPABASE_URL || '';
-  const anonKey = localStorage.getItem(STORAGE_KEY_KEY) || (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
+  const url = localStorage.getItem(STORAGE_URL_KEY) || (import.meta as any).env?.VITE_SUPABASE_URL || DEFAULT_URL;
+  const anonKey = localStorage.getItem(STORAGE_KEY_KEY) || (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || DEFAULT_KEY;
   return { url, anonKey };
 }
 
@@ -64,6 +67,7 @@ export async function fetchSurveysFromSupabase(): Promise<SurveyRecord[] | null>
     const { data, error } = await client
       .from('surveys')
       .select('*')
+      .limit(5000)
       .order('created_at', { ascending: false });
 
     if (error) {

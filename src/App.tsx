@@ -24,7 +24,7 @@ import {
   classifySatisfaction,
   normalizeArabic,
 } from './utils/analytics';
-import { getStoredSupabaseConfig } from './utils/supabase';
+import { getStoredSupabaseConfig, fetchSurveysFromSupabase, syncSurveysToSupabase } from './utils/supabase';
 import { BarChart3, AlertTriangle, Building2, PhoneCall, Sparkles } from 'lucide-react';
 
 const LOCAL_STORAGE_KEY = 'the_hack_survey_records_v1';
@@ -52,7 +52,17 @@ export function App() {
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
   useEffect(() => {
     const cfg = getStoredSupabaseConfig();
-    setIsSupabaseConnected(!!(cfg.url && cfg.anonKey));
+    const hasConfig = !!(cfg.url && cfg.anonKey);
+    setIsSupabaseConnected(hasConfig);
+
+    if (hasConfig) {
+      fetchSurveysFromSupabase().then(cloudRecords => {
+        if (cloudRecords && cloudRecords.length > 0) {
+          setRecords(cloudRecords);
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cloudRecords));
+        }
+      });
+    }
   }, []);
 
   // ─── PWA Mobile Installation ────────────────────────────
@@ -141,18 +151,27 @@ export function App() {
       const exists = prev.some(r => r.id === updated.id);
       return exists ? prev.map(r => r.id === updated.id ? updated : r) : [updated, ...prev];
     });
+    syncSurveysToSupabase([updated]).catch(() => {});
   };
 
   const handleToggleAction = (id: string, notes?: string) => {
-    setRecords(prev => prev.map(r => r.id !== id ? r : {
-      ...r,
-      actionTaken: !r.actionTaken,
-      actionNotes: notes !== undefined ? notes : r.actionNotes,
-    }));
+    setRecords(prev => {
+      const next = prev.map(r => r.id !== id ? r : {
+        ...r,
+        actionTaken: !r.actionTaken,
+        actionNotes: notes !== undefined ? notes : r.actionNotes,
+      });
+      const updated = next.find(r => r.id === id);
+      if (updated) {
+        syncSurveysToSupabase([updated]).catch(() => {});
+      }
+      return next;
+    });
   };
 
   const handleImport = (newRecords: SurveyRecord[], mode: 'replace' | 'append') => {
     setRecords(mode === 'replace' ? newRecords : prev => [...newRecords, ...prev]);
+    syncSurveysToSupabase(newRecords).catch(() => {});
   };
 
   const handleReset = () => {
