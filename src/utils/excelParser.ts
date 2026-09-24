@@ -552,17 +552,16 @@ function parseSheetRows(
     const rawTechnician = getCellVal(row, colIndexMap.technician);
     const customerNotes = getCellVal(row, colIndexMap.customerNotes);
 
-    // Skip trailing blank rows where only agent formula or serial number was dragged down in Excel
+    // Skip blank or phantom rows: must have an identifier or interaction outcome
+    // This prevents empty rows or summary/category rows with just a branch name from creating phantom records
     const hasCustomerContent = Boolean(
       rawOrderRef ||
       rawCustomerName || 
       phone || 
-      rawBranch || 
-      rawProduct || 
-      rawTechnician || 
       rawCallStatus || 
       rawSatisfaction || 
-      customerNotes
+      customerNotes ||
+      (rawBranch && (rawProduct || rawTechnician))
     );
 
     if (!hasCustomerContent) {
@@ -580,11 +579,15 @@ function parseSheetRows(
       normBranch.includes('اجمالي') ||
       normBranch.includes('مجموع') ||
       normBranch.includes('total') ||
+      normBranch.includes('grand') ||
       normName.includes('اجمالي') ||
       normName.includes('مجموع') ||
       normName.includes('total') ||
+      normName.includes('grand') ||
       normRef.includes('اجمالي') ||
-      normRef.includes('total')
+      normRef.includes('مجموع') ||
+      normRef.includes('total') ||
+      normRef.includes('grand')
     ) {
       continue;
     }
@@ -659,119 +662,247 @@ function parseSheetRows(
 }
 
 /**
- * Strictly targets the raw operational data sheet (e.g. 'Sheet1'):
- * 1. Checks explicitly for 'Sheet1' (or case-insensitive variations).
- * 2. If 'Sheet1' is not present, finds the sheet containing operational columns:
- *    ('مرجع الطلب' / 'تاريخ امر البيع' / 'الفرع' / 'الهاتف') instead of summary/pivot sheets.
- * 3. Never combines or loops over multiple sheets in the workbook.
+ * Detects if a worksheet is a Pivot Table, Summary, or Overview table
+ * that should NOT be parsed as raw customer survey records.
  */
-export function findRawDataSheetName(workbook: XLSX.WorkBook): string {
-  if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-    return '';
+export function isPivotOrSummarySheet(rawRows: any[][], sheetName: string): boolean {
+  if (!rawRows || rawRows.length === 0) return true;
+
+  const normSheetName = normalizeArabic(sheetName).toLowerCase().trim();
+  if (/^(pivot|summary|ملخص|محوري|جدول محوري|احصائيات|تقرير_ملخص)/i.test(normSheetName)) {
+    return true;
   }
 
-  // 1. Explicitly check for 'Sheet1'
-  if (workbook.Sheets['Sheet1']) {
-    return 'Sheet1';
+  const scanLimit = Math.min(rawRows.length, 25);
+  let pivotMarkerHits = 0;
+  let hasGrandTotal = false;
+
+  for (let r = 0; r < scanLimit; r++) {
+    const row = rawRows[r];
+    if (!Array.isArray(row)) continue;
+    for (const cell of row) {
+      const raw = cleanCellValue(cell).toLowerCase();
+      const norm = normalizeArabic(raw);
+      if (
+        norm.includes('row labels') ||
+        norm.includes('column labels') ||
+        norm.includes('grand total') ||
+        norm.includes('تسميات الصفوف') ||
+        norm.includes('تسميات الاعمدة') ||
+        norm.includes('تسميات الاعمده') ||
+        norm.includes('مجموع كلي') ||
+        norm.includes('المجموع الكلي') ||
+        norm.includes('مجموع عام') ||
+        norm.includes('المجموع العام') ||
+        norm.startsWith('count of') ||
+        norm.startsWith('sum of') ||
+        norm.startsWith('average of') ||
+        norm.startsWith('عدد ')
+      ) {
+        pivotMarkerHits++;
+      }
+      if (
+        norm.includes('grand total') || 
+        norm.includes('مجموع كلي') || 
+        norm.includes('المجموع الكلي') || 
+        norm.includes('مجموع عام')
+      ) {
+        hasGrandTotal = true;
+      }
+    }
   }
 
-  // Check case-insensitive / trimmed match for 'Sheet1'
-  const sheet1Match = workbook.SheetNames.find(n => /^sheet1$/i.test(n.trim()));
-  if (sheet1Match && workbook.Sheets[sheet1Match]) {
-    return sheet1Match;
+  // Also check last 5 rows for Grand Total / مجموع كلي
+  for (let r = Math.max(0, rawRows.length - 5); r < rawRows.length; r++) {
+    const row = rawRows[r];
+    if (!Array.isArray(row)) continue;
+    for (const cell of row) {
+      const norm = normalizeArabic(cleanCellValue(cell)).toLowerCase();
+      if (
+        norm === 'grand total' || 
+        norm === 'مجموع كلي' || 
+        norm === 'المجموع الكلي' || 
+        norm === 'مجموع عام' ||
+        norm === 'اجمالي كلي' ||
+        norm === 'الاجمالي الكلي'
+      ) {
+        hasGrandTotal = true;
+      }
+    }
   }
 
-  // If only 1 sheet exists, return it
-  if (workbook.SheetNames.length === 1) {
-    return workbook.SheetNames[0];
+  // If pivot markers were found and sheet is small or has grand total
+  if (pivotMarkerHits >= 1 && (hasGrandTotal || rawRows.length < 50)) {
+    return true;
   }
 
-  // 2. Search for the sheet containing key operational columns:
-  // ('مرجع الطلب', 'تاريخ امر البيع', 'الفرع', 'الهاتف')
-  let bestSheetName = workbook.SheetNames[0];
-  let maxScore = -9999;
+  // If small sheet (< 40 rows) with Grand Total row, it's definitely a summary table
+  if (hasGrandTotal && rawRows.length < 100) {
+    return true;
+  }
 
-  for (const sName of workbook.SheetNames) {
-    const sheet = workbook.Sheets[sName];
-    if (!sheet) continue;
+  return false;
+}
 
-    const rawRows: any[][] = XLSX.utils.sheet_to_json(sheet, {
-      header: 1,
-      defval: '',
-      raw: false,
-    });
+interface SheetCandidate {
+  sheetName: string;
+  rawRows: any[][];
+  isPivot: boolean;
+  score: number;
+  phoneCount: number;
+  orderRefCount: number;
+  rowCount: number;
+}
 
-    if (!rawRows || rawRows.length === 0) continue;
+/**
+ * Evaluates a single worksheet to score its likelihood of containing raw survey records.
+ */
+function evaluateWorksheet(rawRows: any[][], sheetName: string): SheetCandidate {
+  if (!rawRows || rawRows.length === 0) {
+    return { sheetName, isPivot: true, score: -9999, rawRows, phoneCount: 0, orderRefCount: 0, rowCount: 0 };
+  }
 
-    let score = 0;
-    const isPivotName = /pivot|summary|ملخص|محوري|جدول|تقرير/i.test(sName);
-    if (isPivotName) score -= 200;
+  const isPivot = isPivotOrSummarySheet(rawRows, sheetName);
 
-    const scanLimit = Math.min(rawRows.length, 15);
-    let hasOrderRef = false;
-    let hasSaleDate = false;
-    let hasBranch = false;
-    let hasPhone = false;
-    let hasCustomerName = false;
-    let isPivotContent = false;
+  // Scan first 15 rows for header matching
+  let headerRowIndex = 0;
+  let maxMatchedCols = 0;
+  const scanLimit = Math.min(rawRows.length, 15);
 
-    for (let r = 0; r < scanLimit; r++) {
-      const row = rawRows[r];
-      if (!Array.isArray(row)) continue;
+  for (let r = 0; r < scanLimit; r++) {
+    const row = rawRows[r];
+    if (!Array.isArray(row)) continue;
+    let matched = 0;
+    for (const cell of row) {
+      const str = normalizeArabic(cleanCellValue(cell)).toLowerCase();
+      if (!str) continue;
+      for (const aliases of Object.values(COLUMN_ALIASES)) {
+        if (aliases.some(a => normalizeArabic(a).toLowerCase() === str)) {
+          matched++;
+          break;
+        }
+      }
+    }
+    if (matched > maxMatchedCols) {
+      maxMatchedCols = matched;
+      headerRowIndex = r;
+    }
+  }
 
+  const headerRow = rawRows[headerRowIndex] || [];
+  const colMap: { [key in keyof typeof COLUMN_ALIASES]?: number } = {};
+  for (let c = 0; c < headerRow.length; c++) {
+    const h = normalizeArabic(cleanCellValue(headerRow[c])).toLowerCase();
+    for (const [cat, aliases] of Object.entries(COLUMN_ALIASES)) {
+      const catKey = cat as keyof typeof COLUMN_ALIASES;
+      if (colMap[catKey] === undefined && aliases.some(a => normalizeArabic(a).toLowerCase() === h)) {
+        colMap[catKey] = c;
+      }
+    }
+  }
+
+  // Scan sample data rows to count real phones and order references
+  const dataRows = rawRows.slice(headerRowIndex + 1);
+  const sample = dataRows.slice(0, Math.min(dataRows.length, 40));
+  let phoneCount = 0;
+  let orderRefCount = 0;
+  let nameCount = 0;
+
+  for (const row of sample) {
+    if (!Array.isArray(row)) continue;
+    if (colMap.phone !== undefined) {
+      const p = cleanCellValue(row[colMap.phone]).replace(/[\s\-\+]/g, '');
+      if (/^\d{9,14}$/.test(p)) phoneCount++;
+    } else {
       for (const cell of row) {
-        const rawCell = cleanCellValue(cell);
-        const normCell = normalizeArabic(rawCell).toLowerCase();
-        if (!normCell) continue;
-
-        if (
-          normCell.includes('row labels') ||
-          normCell.includes('grand total') ||
-          normCell.includes('تسميات الصفوف') ||
-          normCell.includes('مجموع كلي')
-        ) {
-          isPivotContent = true;
-        }
-
-        if (COLUMN_ALIASES.orderRef.some(a => normalizeArabic(a).toLowerCase() === normCell)) {
-          hasOrderRef = true;
-        }
-        if (normCell.includes('تاريخ امر البيع') || normCell.includes('امر البيع')) {
-          hasSaleDate = true;
-        }
-        if (COLUMN_ALIASES.branch.some(a => normalizeArabic(a).toLowerCase() === normCell)) {
-          hasBranch = true;
-        }
-        if (COLUMN_ALIASES.phone.some(a => normalizeArabic(a).toLowerCase() === normCell)) {
-          hasPhone = true;
-        }
-        if (COLUMN_ALIASES.customerName.some(a => normalizeArabic(a).toLowerCase() === normCell)) {
-          hasCustomerName = true;
+        const p = cleanCellValue(cell).replace(/[\s\-\+]/g, '');
+        if (/^\d{9,14}$/.test(p)) {
+          phoneCount++;
+          break;
         }
       }
     }
 
-    if (hasOrderRef) score += 150;
-    if (hasSaleDate) score += 150;
-    if (hasBranch) score += 80;
-    if (hasPhone) score += 60;
-    if (hasCustomerName) score += 40;
-    if (isPivotContent) score -= 400;
-    if (rawRows.length > 50) score += 50;
-
-    if (score > maxScore) {
-      maxScore = score;
-      bestSheetName = sName;
+    if (colMap.orderRef !== undefined) {
+      if (cleanCellValue(row[colMap.orderRef])) orderRefCount++;
+    }
+    if (colMap.customerName !== undefined) {
+      const nm = cleanCellValue(row[colMap.customerName]);
+      if (nm && nm.length > 2 && !nm.includes('total') && !nm.includes('مجموع')) nameCount++;
     }
   }
 
-  return bestSheetName;
+  let score = 0;
+  if (isPivot) {
+    score -= 5000;
+  }
+  score += Object.keys(colMap).length * 150;
+  score += phoneCount * 25;
+  score += orderRefCount * 20;
+  score += nameCount * 10;
+  score += Math.min(rawRows.length, 1000);
+
+  if (rawRows.length < 35 && phoneCount === 0 && orderRefCount === 0) {
+    score -= 1000;
+  }
+
+  return {
+    sheetName,
+    rawRows,
+    isPivot,
+    score,
+    phoneCount,
+    orderRefCount,
+    rowCount: rawRows.length
+  };
 }
 
 /**
- * Parses an Excel file (.xlsx, .xls) buffer into SurveyRecord objects
- * Strictly processes ONLY the raw operational data sheet (e.g. 'Sheet1')
- * without looping or merging sheets in the workbook.
+ * Intelligently selects the sheets that contain genuine raw transaction data.
+ * - Excludes Pivot Tables, Summary tables, or overview sheets.
+ * - Supports single-sheet or multi-sheet data (e.g. multiple branches or date batches).
+ * - Never blindly relies on 'Sheet1' or any fixed name.
+ */
+export function selectSheetsToParse(workbook: XLSX.WorkBook): { sheetName: string; rawRows: any[][] }[] {
+  if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+    return [];
+  }
+
+  const evaluations: SheetCandidate[] = workbook.SheetNames.map(name => {
+    const ws = workbook.Sheets[name];
+    if (!ws) {
+      return { sheetName: name, isPivot: true, score: -9999, rawRows: [], phoneCount: 0, orderRefCount: 0, rowCount: 0 };
+    }
+    const rawRows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
+    return evaluateWorksheet(rawRows, name);
+  });
+
+  const validCandidates = evaluations.filter(e => !e.isPivot && e.score > 0);
+
+  if (validCandidates.length === 0) {
+    // Fallback: pick the highest scoring sheet available
+    const best = evaluations.sort((a, b) => b.score - a.score)[0];
+    return best && best.rawRows.length > 0 ? [{ sheetName: best.sheetName, rawRows: best.rawRows }] : [];
+  }
+
+  // If there is at least one large raw data sheet (>= 100 rows),
+  // exclude any tiny sheet (< 40 rows) that lacks phone numbers and order refs (e.g. branch summary table)
+  const hasLargeSheet = validCandidates.some(c => c.rowCount >= 100);
+
+  const selected = validCandidates.filter(c => {
+    if (hasLargeSheet && c.rowCount < 40 && c.phoneCount === 0 && c.orderRefCount === 0) {
+      return false; // Skip small overview table
+    }
+    return true;
+  });
+
+  const finalCandidates = selected.length > 0 ? selected : [validCandidates.sort((a, b) => b.score - a.score)[0]];
+  return finalCandidates.map(c => ({ sheetName: c.sheetName, rawRows: c.rawRows }));
+}
+
+/**
+ * Parses an Excel file (.xlsx, .xls) buffer into SurveyRecord objects.
+ * Automatically identifies all valid raw data sheets while skipping any Pivot Tables / summaries.
  */
 export function parseExcelFile(
   data: ArrayBuffer, 
@@ -782,43 +913,83 @@ export function parseExcelFile(
   const todayIso = new Date().toISOString().split('T')[0];
   const fallbackDate = options?.defaultDate || extractDateFromFileName(fileName) || todayIso;
 
-  // 1. Explicitly select ONLY the raw data sheet (Sheet1 or sheet with 'مرجع الطلب' / 'تاريخ امر البيع')
-  const sheetName = findRawDataSheetName(workbook);
-  const worksheet = workbook.Sheets[sheetName];
-
-  if (!worksheet) {
+  if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
     return {
       records: [],
       fileName,
       totalRows: 0,
       detectedColumns: [],
       detectedDate: fallbackDate,
-      sheetCount: 1,
-      sheetNames: [sheetName],
+      sheetCount: 0,
+      sheetNames: [],
       sampleRows: [],
-      warnings: [`[${fileName}] لم يتم العثور على الشيت [${sheetName}]`],
+      warnings: [`[${fileName}] ملف الإكسيل فارغ أو لا يحتوي على شيتات.`],
       stats: { answered: 0, noAnswer: 0, switchedOff: 0, pending: 0, satisfied: 0, unsatisfied: 0 },
     };
   }
 
-  // 2. Read ONLY this single target worksheet into rows
-  const rawRows: any[][] = XLSX.utils.sheet_to_json(worksheet, {
-    header: 1,
-    defval: '',
-    raw: false,
-  });
+  // Intelligently select all raw data sheets (skipping Pivot tables and summaries)
+  const sheetsToProcess = selectSheetsToParse(workbook);
 
-  const warnings: string[] = [];
-  if (workbook.SheetNames.length > 1) {
-    const skipped = workbook.SheetNames.filter(n => n !== sheetName).join(', ');
-    warnings.push(`تم استهداف شيت البيانات الخام [${sheetName}] فقط (${rawRows.length} صفاً) وتجاهل الشيتات الملخصة/المحورية (${skipped}) لمنع تكرار وحساب بيانات مكررة.`);
+  if (sheetsToProcess.length === 0) {
+    return {
+      records: [],
+      fileName,
+      totalRows: 0,
+      detectedColumns: [],
+      detectedDate: fallbackDate,
+      sheetCount: workbook.SheetNames.length,
+      sheetNames: workbook.SheetNames,
+      sampleRows: [],
+      warnings: [`[${fileName}] لم يتم العثور على أعمدة بيانات صالحة داخل أي شيت في الملف.`],
+      stats: { answered: 0, noAnswer: 0, switchedOff: 0, pending: 0, satisfied: 0, unsatisfied: 0 },
+    };
   }
 
-  // 3. Process ONLY this raw worksheet
-  const sheetResult = parseSheetRows(rawRows, fileName, fileName, fallbackDate, 'S1', 0);
-  warnings.push(...sheetResult.warnings);
+  const allRecords: SurveyRecord[] = [];
+  const validSheetNames: string[] = [];
+  const allDetectedColumns = new Set<string>();
+  const allWarnings: string[] = [];
+  const aggregatedStats = {
+    answered: 0,
+    noAnswer: 0,
+    switchedOff: 0,
+    pending: 0,
+    satisfied: 0,
+    unsatisfied: 0,
+  };
+  let globalRowCounter = 0;
 
-  const sampleRows = sheetResult.records.slice(0, 5).map(r => ({
+  for (let sIdx = 0; sIdx < sheetsToProcess.length; sIdx++) {
+    const target = sheetsToProcess[sIdx];
+    const sheetDisplayName = sheetsToProcess.length > 1 ? `${fileName} (${target.sheetName})` : fileName;
+    const filePrefix = `S${sIdx + 1}`;
+
+    const sheetResult = parseSheetRows(target.rawRows, fileName, sheetDisplayName, fallbackDate, filePrefix, globalRowCounter);
+    if (sheetResult.records.length > 0) {
+      validSheetNames.push(target.sheetName);
+      allRecords.push(...sheetResult.records);
+      sheetResult.detectedColumns.forEach(c => allDetectedColumns.add(c));
+      allWarnings.push(...sheetResult.warnings);
+      aggregatedStats.answered += sheetResult.stats.answered;
+      aggregatedStats.noAnswer += sheetResult.stats.noAnswer;
+      aggregatedStats.switchedOff += sheetResult.stats.switchedOff;
+      aggregatedStats.pending += sheetResult.stats.pending;
+      aggregatedStats.satisfied += sheetResult.stats.satisfied;
+      aggregatedStats.unsatisfied += sheetResult.stats.unsatisfied;
+      globalRowCounter += sheetResult.records.length;
+    }
+  }
+
+  // Informative notice about skipped sheets (e.g. Pivot Tables or summaries)
+  const skippedSheets = workbook.SheetNames.filter(n => !validSheetNames.includes(n));
+  if (skippedSheets.length > 0 && validSheetNames.length > 0) {
+    allWarnings.unshift(
+      `تم استهداف شيتات البيانات الحقيقية [${validSheetNames.join(', ')}] (${allRecords.length} صفاً)، وتجاوز شيتات الجداول المحورية/الملخصة (${skippedSheets.join(', ')}) لمنع تكرار وحساب بيانات مكررة.`
+    );
+  }
+
+  const sampleRows = allRecords.slice(0, 5).map(r => ({
     customerName: r.customerName,
     branch: r.branch,
     callStatus: r.callStatus || 'تم الرد',
@@ -827,17 +998,21 @@ export function parseExcelFile(
   }));
 
   return {
-    records: sheetResult.records,
+    records: allRecords,
     fileName,
-    totalRows: sheetResult.records.length,
-    detectedColumns: sheetResult.detectedColumns,
+    totalRows: allRecords.length,
+    detectedColumns: Array.from(allDetectedColumns),
     detectedDate: fallbackDate,
-    sheetCount: 1,
-    sheetNames: [sheetName],
+    sheetCount: validSheetNames.length,
+    sheetNames: validSheetNames,
     sampleRows,
-    warnings,
-    stats: sheetResult.stats,
+    warnings: allWarnings,
+    stats: sheetResult_stats(aggregatedStats),
   };
+}
+
+function sheetResult_stats(stats: { answered: number; noAnswer: number; switchedOff: number; pending: number; satisfied: number; unsatisfied: number }) {
+  return stats;
 }
 
 /**
