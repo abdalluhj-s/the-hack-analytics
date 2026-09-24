@@ -8,10 +8,12 @@ export function normalizeArabic(text: string | null | undefined): string {
   return text
     .toString()
     .trim()
-    .replace(/[\u064B-\u065F]/g, '') // remove diacritics / tashkeel
+    .replace(/\u00A0/g, ' ') // non-breaking space
+    .replace(/[\u064B-\u065F\u0640]/g, '') // remove diacritics / tashkeel and tatweel
     .replace(/[أإآ]/g, 'ا')
     .replace(/ة/g, 'ه')
-    .replace(/ى/g, 'ي');
+    .replace(/ى/g, 'ي')
+    .replace(/\s+/g, ' ');
 }
 
 /**
@@ -21,9 +23,36 @@ export function classifyCallOutcome(
   rawStatus: string | null | undefined,
   rawSatisfaction?: string | null | undefined
 ): CallOutcomeType {
-  const norm = normalizeArabic(rawStatus);
+  // 1. If explicit satisfaction rating exists (satisfied/complaint), customer was reached and answered!
+  if (rawSatisfaction) {
+    const normSat = normalizeArabic(rawSatisfaction).toLowerCase();
+    if (
+      normSat.includes('راض') ||
+      normSat.includes('شك') ||
+      normSat.includes('ممتاز') ||
+      normSat.includes('جيد') ||
+      normSat.includes('سعيد') ||
+      normSat.includes('مبسوط') ||
+      normSat.includes('زعلان') ||
+      normSat.includes('مستاء') ||
+      normSat.includes('سيء') ||
+      normSat.includes('سئ') ||
+      normSat.includes('ضعيف') ||
+      normSat.includes('ايجاب') ||
+      normSat.includes('تمام') ||
+      normSat === 'نعم' ||
+      normSat === 'لا' ||
+      normSat === 'yes' ||
+      normSat === 'no' ||
+      normSat.includes('satisf')
+    ) {
+      return 'تم الرد';
+    }
+  }
 
-  // 1. Explicit pending phrases or empty/blank indicators
+  const norm = normalizeArabic(rawStatus).toLowerCase();
+
+  // 2. Explicit pending phrases or empty/blank indicators
   if (
     !norm ||
     norm === '' ||
@@ -43,25 +72,10 @@ export function classifyCallOutcome(
     norm.includes('تحت الاتصال') ||
     norm.includes('لم نتحدث')
   ) {
-    // If call status was left blank but a clear satisfaction rating is provided,
-    // it implies the customer was reached and gave feedback
-    if (rawSatisfaction) {
-      const normSat = normalizeArabic(rawSatisfaction);
-      if (
-        normSat.includes('راض') ||
-        normSat.includes('شك') ||
-        normSat.includes('ممتاز') ||
-        normSat.includes('جيد') ||
-        normSat.includes('سيء') ||
-        normSat.includes('سئ')
-      ) {
-        return 'تم الرد';
-      }
-    }
     return 'قيد الانتظار';
   }
 
-  // 2. Unreachable / Switched off / Wrong numbers
+  // 3. Unreachable / Switched off / Wrong numbers
   if (
     norm.includes('مغلق') ||
     norm.includes('غير متاح') ||
@@ -79,7 +93,7 @@ export function classifyCallOutcome(
     return 'مغلق أو غير متاح';
   }
 
-  // 3. Refused to participate
+  // 4. Refused to participate
   if (
     norm.includes('ممتنع') ||
     norm.includes('رفض') ||
@@ -93,7 +107,7 @@ export function classifyCallOutcome(
     return 'ممتنع';
   }
 
-  // 4. Called but No Answer
+  // 5. Called but No Answer
   if (
     norm.includes('لم يتم الرد') ||
     norm.includes('لم يرد') ||
@@ -111,7 +125,7 @@ export function classifyCallOutcome(
     return 'لم يتم الرد';
   }
 
-  // 5. Answered / Successfully reached
+  // 6. Answered / Successfully reached
   if (
     norm.includes('تم الرد') ||
     norm.includes('رد') ||
@@ -122,14 +136,13 @@ export function classifyCallOutcome(
     norm.includes('مكتمل') ||
     norm.includes('تم') ||
     norm.includes('ناجح') ||
+    norm.includes('كلمته') ||
+    norm.includes('اتصلت') ||
     norm.includes('answered') ||
-    norm.includes('complete')
+    norm.includes('complete') ||
+    norm.includes('done') ||
+    norm.includes('success')
   ) {
-    return 'تم الرد';
-  }
-
-  // 6. Fallback: if satisfaction given, they answered; otherwise default to pending
-  if (rawSatisfaction && rawSatisfaction.toString().trim() !== '') {
     return 'تم الرد';
   }
 
@@ -137,103 +150,110 @@ export function classifyCallOutcome(
 }
 
 /**
- * Classifies customer satisfaction ONLY for answered calls.
- * Non-answered or pending calls are STRICTLY 'بدون تقييم' and never affect CSAT!
+ * Classifies customer satisfaction with highest precision.
+ * Directly honors explicit ratings without dropping them.
  */
 export function classifySatisfaction(
   rawSatisfaction: string | null | undefined,
   outcome: CallOutcomeType,
   customerNotes?: string | null | undefined
 ): SatisfactionType {
-  // CRITICAL RULE: If a client did not answer or was not contacted,
-  // they MUST NOT affect the satisfaction percentage!
+  const norm = normalizeArabic(rawSatisfaction).toLowerCase();
+
+  // If there is an explicit satisfaction rating in the cell, evaluate it directly!
+  if (norm && norm !== '' && norm !== '-' && norm !== '--' && norm !== 'na' && norm !== 'n/a' && norm !== 'none') {
+    // Check Unsatisfied first (because 'غير راضي' contains 'راضي')
+    if (
+      norm.includes('غير راضي') ||
+      norm.includes('غير راض') ||
+      norm.includes('مش راضي') ||
+      norm.includes('مش راض') ||
+      norm.includes('مش راضيه') ||
+      norm.includes('غير راضيه') ||
+      norm.includes('مستاء') ||
+      norm.includes('مستاءه') ||
+      norm.includes('شكوي') ||
+      norm.includes('شكوى') ||
+      norm.includes('سيء') ||
+      norm.includes('سئ') ||
+      norm.includes('سيئه') ||
+      norm.includes('متضرر') ||
+      norm.includes('غير مرضي') ||
+      norm.includes('ضعيف') ||
+      norm.includes('مرفوض') ||
+      norm.includes('زعلان') ||
+      norm.includes('غضبان') ||
+      norm.includes('غاضب') ||
+      norm.includes('مش عاجبه') ||
+      norm === 'لا' ||
+      norm === 'no' ||
+      norm === 'bad' ||
+      norm === 'poor' ||
+      norm === 'dissatisfied' ||
+      norm === 'unsatisfied' ||
+      norm === '1' ||
+      norm === '2'
+    ) {
+      return 'غير راضى';
+    }
+
+    // Check Satisfied
+    if (
+      norm.includes('راضي') ||
+      norm.includes('راض') ||
+      norm.includes('راضيه') ||
+      norm.includes('راضيين') ||
+      norm.includes('الراضي') ||
+      norm.includes('ممتاز') ||
+      norm.includes('جيد جدا') ||
+      norm.includes('جيد') ||
+      norm.includes('سعيد') ||
+      norm.includes('شاكر') ||
+      norm.includes('تمام') ||
+      norm.includes('ايجابي') ||
+      norm.includes('ايجابيه') ||
+      norm.includes('مبسوط') ||
+      norm.includes('متعاون') ||
+      norm === 'نعم' ||
+      norm === 'yes' ||
+      norm === 'good' ||
+      norm === 'great' ||
+      norm === 'excellent' ||
+      norm === 'satisfied' ||
+      norm === '4' ||
+      norm === '5' ||
+      norm === '8' ||
+      norm === '9' ||
+      norm === '10'
+    ) {
+      return 'راضى';
+    }
+  }
+
+  // If call outcome was NOT answered (e.g. no answer, switched off, pending) and no explicit satisfaction was given:
   if (outcome !== 'تم الرد') {
     return 'بدون تقييم';
   }
 
-  const norm = normalizeArabic(rawSatisfaction);
-
   // If no satisfaction given in the cell, inspect notes for obvious complaints
-  if (!norm || norm === '' || norm === '-' || norm === 'na') {
-    if (customerNotes) {
-      const normNotes = normalizeArabic(customerNotes);
-      if (
-        normNotes.includes('شكوى') ||
-        normNotes.includes('شكوي') ||
-        normNotes.includes('مشكلة') ||
-        normNotes.includes('مشكله') ||
-        normNotes.includes('عيب') ||
-        normNotes.includes('تالف') ||
-        normNotes.includes('زعلان') ||
-        normNotes.includes('سيء') ||
-        normNotes.includes('سئ') ||
-        normNotes.includes('سيئه') ||
-        normNotes.includes('تاخير') ||
-        normNotes.includes('تاخر')
-      ) {
-        return 'غير راضى';
-      }
+  if (customerNotes) {
+    const normNotes = normalizeArabic(customerNotes).toLowerCase();
+    if (
+      normNotes.includes('شكوى') ||
+      normNotes.includes('شكوي') ||
+      normNotes.includes('مشكلة') ||
+      normNotes.includes('مشكله') ||
+      normNotes.includes('عيب') ||
+      normNotes.includes('تالف') ||
+      normNotes.includes('زعلان') ||
+      normNotes.includes('سيء') ||
+      normNotes.includes('سئ') ||
+      normNotes.includes('سيئه') ||
+      normNotes.includes('تاخير') ||
+      normNotes.includes('تاخر')
+    ) {
+      return 'غير راضى';
     }
-    return 'بدون تقييم';
-  }
-
-  // Check Unsatisfied first (because 'غير راضي' contains 'راضي')
-  if (
-    norm.includes('غير راضي') ||
-    norm.includes('غير راض') ||
-    norm.includes('مش راضي') ||
-    norm.includes('مش راضيه') ||
-    norm.includes('مستاء') ||
-    norm.includes('مستاءه') ||
-    norm.includes('شكوي') ||
-    norm.includes('شكوى') ||
-    norm.includes('سيء') ||
-    norm.includes('سئ') ||
-    norm.includes('سيئه') ||
-    norm.includes('متضرر') ||
-    norm.includes('غير مرضي') ||
-    norm.includes('ضعيف') ||
-    norm.includes('مرفوض') ||
-    norm.includes('زعلان') ||
-    norm.includes('غضبان') ||
-    norm.includes('غاضب') ||
-    norm === 'لا' ||
-    norm === 'no' ||
-    norm === 'bad' ||
-    norm === 'poor' ||
-    norm === '1' ||
-    norm === '2'
-  ) {
-    return 'غير راضى';
-  }
-
-  // Check Satisfied
-  if (
-    norm.includes('راضي') ||
-    norm.includes('راض') ||
-    norm.includes('ممتاز') ||
-    norm.includes('جيد جدا') ||
-    norm.includes('جيد') ||
-    norm.includes('سعيد') ||
-    norm.includes('شاكر') ||
-    norm.includes('تمام') ||
-    norm.includes('ايجابي') ||
-    norm.includes('ايجابيه') ||
-    norm.includes('مبسوط') ||
-    norm.includes('متعاون') ||
-    norm === 'نعم' ||
-    norm === 'yes' ||
-    norm === 'good' ||
-    norm === 'great' ||
-    norm === 'excellent' ||
-    norm === 'satisfied' ||
-    norm === '4' ||
-    norm === '5' ||
-    norm === '8' ||
-    norm === '9' ||
-    norm === '10'
-  ) {
-    return 'راضى';
   }
 
   return 'بدون تقييم';

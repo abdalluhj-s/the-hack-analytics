@@ -23,6 +23,8 @@ export interface SurveyRecord {
   branchNotes: string;      // ملاحظات الفرع
   customerName: string;     // العميل
   phone: string;            // الهاتف
+  date?: string;            // التاريخ (YYYY-MM-DD)
+  sheetName?: string;       // اسم الشيت
   actionTaken?: boolean;    // حالة الإجراء للمشتكين
   actionNotes?: string;     // تفاصيل المتابعة
   updatedAt?: string;
@@ -66,6 +68,7 @@ export interface FilterOptions {
   agent: string;
   callOutcome: string;
   satisfaction: string;
+  date: string;
   searchQuery: string;
   onlyActionRequired: boolean;
 }

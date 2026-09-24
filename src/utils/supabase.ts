@@ -80,6 +80,8 @@ export async function fetchSurveysFromSupabase(): Promise<SurveyRecord[] | null>
     return data.map((row: any) => ({
       id: row.id,
       branch: row.branch || '',
+      date: row.date || (row.created_at ? row.created_at.split('T')[0] : new Date().toISOString().split('T')[0]),
+      sheetName: row.sheet_name || '',
       product: row.product || '',
       callStatus: row.call_status || '',
       satisfaction: row.satisfaction || '',
@@ -111,6 +113,8 @@ export async function syncSurveysToSupabase(records: SurveyRecord[]): Promise<bo
     const rows = records.map((r) => ({
       id: r.id,
       branch: r.branch,
+      date: r.date || new Date().toISOString().split('T')[0],
+      sheet_name: r.sheetName || '',
       product: r.product,
       call_status: r.callStatus,
       satisfaction: r.satisfaction,

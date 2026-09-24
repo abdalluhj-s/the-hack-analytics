@@ -84,13 +84,19 @@ export function App() {
     agent: 'all',
     callOutcome: 'all',
     satisfaction: 'all',
+    date: 'all',
     searchQuery: '',
     onlyActionRequired: false,
   });
 
   const resetFilters = () => setFilters({
-    branch: 'all', agent: 'all', callOutcome: 'all',
-    satisfaction: 'all', searchQuery: '', onlyActionRequired: false,
+    branch: 'all', 
+    agent: 'all', 
+    callOutcome: 'all',
+    satisfaction: 'all', 
+    date: 'all',
+    searchQuery: '', 
+    onlyActionRequired: false,
   });
 
   // ─── Active Tab ────────────────────────────────────────
@@ -117,6 +123,12 @@ export function App() {
     return Array.from(s);
   }, [records]);
 
+  const availableDates = useMemo(() => {
+    const s = new Set<string>();
+    records.forEach(r => r.date?.trim() && s.add(r.date.trim()));
+    return Array.from(s).sort((a, b) => b.localeCompare(a));
+  }, [records]);
+
   const pendingRecords = useMemo(
     () => records.filter(r => classifyCallOutcome(r.callStatus, r.satisfaction) === 'قيد الانتظار'),
     [records]
@@ -124,24 +136,54 @@ export function App() {
 
   // ─── Filtered Records ──────────────────────────────────
   const filteredRecords = useMemo(() => {
-    return records.filter(record => {
-      if (filters.branch !== 'all' && record.branch !== filters.branch) return false;
-      if (filters.agent  !== 'all' && record.agent  !== filters.agent)  return false;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
 
+    return records.filter(record => {
+      // 1. Branch filter
+      if (filters.branch !== 'all' && record.branch !== filters.branch) return false;
+      
+      // 2. Agent filter
+      if (filters.agent !== 'all' && record.agent !== filters.agent) return false;
+
+      // 3. Date / Day filter
+      if (filters.date !== 'all') {
+        const rDate = record.date || todayStr;
+        if (filters.date === 'today') {
+          if (rDate !== todayStr) return false;
+        } else if (filters.date === 'yesterday') {
+          if (rDate !== yesterdayStr) return false;
+        } else if (filters.date === 'last7') {
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          const minDate = sevenDaysAgo.toISOString().split('T')[0];
+          if (rDate < minDate) return false;
+        } else {
+          // Exact date match (e.g. '2026-09-24')
+          if (rDate !== filters.date) return false;
+        }
+      }
+
+      // 4. Call Outcome filter
       const outcome = classifyCallOutcome(record.callStatus, record.satisfaction);
       if (filters.callOutcome !== 'all' && outcome !== filters.callOutcome) return false;
 
+      // 5. Satisfaction filter
       const sat = classifySatisfaction(record.satisfaction, outcome, record.customerNotes);
       if (filters.satisfaction !== 'all') {
         if (filters.satisfaction === 'بدون تقييم' && sat !== 'بدون تقييم') return false;
         if (filters.satisfaction !== 'بدون تقييم' && sat !== filters.satisfaction) return false;
       }
 
+      // 6. Action required (escalations)
       if (filters.onlyActionRequired && sat !== 'غير راضى') return false;
 
+      // 7. Search query
       if (filters.searchQuery.trim()) {
         const q = normalizeArabic(filters.searchQuery);
-        const hit = [record.customerName, record.technician, record.customerNotes, record.product]
+        const hit = [record.customerName, record.technician, record.customerNotes, record.product, record.date]
           .some(f => normalizeArabic(f ?? '').includes(q))
           || record.phone.includes(filters.searchQuery.trim());
         if (!hit) return false;
@@ -152,7 +194,7 @@ export function App() {
   }, [records, filters]);
 
   const kpis = useMemo(() => calculateKPIs(filteredRecords), [filteredRecords]);
-  const branchPerformance = useMemo(() => calculateBranchPerformance(records), [records]);
+  const branchPerformance = useMemo(() => calculateBranchPerformance(filteredRecords), [filteredRecords]);
 
   // ─── Record Handlers ───────────────────────────────────
   const handleSave = (updated: SurveyRecord) => {
@@ -184,9 +226,9 @@ export function App() {
   };
 
   const handleReset = () => {
-    if (window.confirm('استعادة البيانات الافتراضية (271 عميل)؟')) {
-      setRecords(INITIAL_RECORDS);
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(INITIAL_RECORDS));
+    if (window.confirm('هل تريد مسح وتفريغ كافة السجلات الحالية لبدء شيتات جديدة؟')) {
+      setRecords([]);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([]));
       resetFilters();
     }
   };
@@ -346,6 +388,7 @@ export function App() {
           onFilterChange={setFilters}
           availableBranches={availableBranches}
           availableAgents={availableAgents}
+          availableDates={availableDates}
           onResetFilters={resetFilters}
           filteredCount={filteredRecords.length}
           totalCount={records.length}

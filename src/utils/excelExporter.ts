@@ -105,6 +105,7 @@ export function exportFullDashboardToExcel(
   const rawData = records.map((r, i) => ({
     'م': i + 1,
     'الفرع': r.branch,
+    'التاريخ': r.date || '',
     'المنتج / الخدمة': r.product,
     'حالة التواصل': r.callStatus || 'قيد الانتظار',
     'حالة العميل': r.satisfaction || 'بدون تقييم',

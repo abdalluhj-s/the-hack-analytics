@@ -24,6 +24,7 @@ export const QuickEntryModal: React.FC<QuickEntryModalProps> = ({
   const [formData, setFormData] = useState<Partial<SurveyRecord>>({
     customerName: '',
     phone: '',
+    date: new Date().toISOString().split('T')[0],
     branch: availableBranches[0] || 'فرع النزهة',
     product: 'صيانة دورية 10,000 كم',
     callStatus: 'تم الرد',
@@ -41,13 +42,17 @@ export const QuickEntryModal: React.FC<QuickEntryModalProps> = ({
 
   useEffect(() => {
     if (recordToEdit) {
-      setFormData({ ...recordToEdit });
+      setFormData({ 
+        ...recordToEdit,
+        date: recordToEdit.date || new Date().toISOString().split('T')[0]
+      });
       setSelectedPendingId(recordToEdit.id);
     } else {
       setFormData({
         id: `REC-${Date.now().toString().slice(-4)}`,
         customerName: '',
         phone: '',
+        date: new Date().toISOString().split('T')[0],
         branch: availableBranches[0] || 'فرع النزهة',
         product: 'صيانة دورية 10,000 كم',
         callStatus: 'تم الرد',
@@ -151,8 +156,8 @@ export const QuickEntryModal: React.FC<QuickEntryModalProps> = ({
             </div>
           )}
 
-          {/* Customer Name & Phone */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Customer Name, Phone & Date */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">اسم العميل *</label>
               <input
@@ -174,6 +179,16 @@ export const QuickEntryModal: React.FC<QuickEntryModalProps> = ({
                 className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-500 text-left font-mono"
                 placeholder="01012345678"
                 dir="ltr"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">تاريخ المكالمة *</label>
+              <input
+                type="date"
+                required
+                value={formData.date || new Date().toISOString().split('T')[0]}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono text-amber-300 focus:outline-none focus:border-amber-500"
               />
             </div>
           </div>
