@@ -275,7 +275,26 @@ export function calculateKPIs(records: SurveyRecord[]): KPIStats {
   let actionRequiredCount = 0;
   let resolvedComplaintsCount = 0;
 
+  // 1. Unique Orders calculation (based on orderRef if available, otherwise total rows)
+  const orderRefSet = new Set<string>();
+  let hasAnyOrderRef = false;
+  
+  // 2. Unique Customers calculation (strictly based on phone number to avoid first-name collisions)
+  const uniquePhoneSet = new Set<string>();
+
   for (const record of records) {
+    if (record.orderRef && record.orderRef.trim()) {
+      hasAnyOrderRef = true;
+      orderRefSet.add(record.orderRef.trim());
+    }
+
+    const rawPhone = (record.phone || '').trim();
+    // Normalize phone: keep digits and +
+    const cleanPhone = rawPhone.replace(/[^\d+]/g, '');
+    if (cleanPhone && cleanPhone.length >= 7 && !/^0+$/.test(cleanPhone)) {
+      uniquePhoneSet.add(cleanPhone);
+    }
+
     const outcome = classifyCallOutcome(record.callStatus, record.satisfaction);
     const satisfaction = classifySatisfaction(record.satisfaction, outcome, record.customerNotes);
 
@@ -308,6 +327,9 @@ export function calculateKPIs(records: SurveyRecord[]): KPIStats {
     }
   }
 
+  const uniqueOrders = hasAnyOrderRef && orderRefSet.size > 0 ? orderRefSet.size : totalWorkload;
+  const uniqueCustomers = uniquePhoneSet.size > 0 ? uniquePhoneSet.size : totalWorkload;
+
   // Response Rate = (Answered / Contacted) * 100
   const responseRate = contacted > 0 ? (answered / contacted) * 100 : 0;
   const responseRateTotal = totalWorkload > 0 ? (answered / totalWorkload) * 100 : 0;
@@ -324,6 +346,8 @@ export function calculateKPIs(records: SurveyRecord[]): KPIStats {
 
   return {
     totalWorkload,
+    uniqueOrders,
+    uniqueCustomers,
     contacted,
     pending,
     answered,
@@ -361,6 +385,8 @@ export function calculateBranchPerformance(records: SurveyRecord[]): BranchPerfo
     result.push({
       branch,
       totalWorkload: kpis.totalWorkload,
+      uniqueOrders: kpis.uniqueOrders,
+      uniqueCustomers: kpis.uniqueCustomers,
       contacted: kpis.contacted,
       pending: kpis.pending,
       answered: kpis.answered,

@@ -45,6 +45,7 @@ export const WorkloadTable: React.FC<WorkloadTableProps> = ({
     if (!search.trim()) return records;
     const q = search.trim().toLowerCase();
     return records.filter(r => 
+      (r.orderRef || '').toLowerCase().includes(q) ||
       (r.customerName || '').toLowerCase().includes(q) ||
       (r.phone || '').includes(q) ||
       (r.branch || '').toLowerCase().includes(q) ||
@@ -73,6 +74,7 @@ export const WorkloadTable: React.FC<WorkloadTableProps> = ({
     if (filteredRecords.length === 0) return;
     const rows = filteredRecords.map((r, idx) => ({
       'م': idx + 1,
+      'مرجع الطلب': r.orderRef || '',
       'العميل': r.customerName,
       'الهاتف': r.phone,
       'الفرع': r.branch,
@@ -216,7 +218,14 @@ export const WorkloadTable: React.FC<WorkloadTableProps> = ({
 
                     {/* Customer & Phone */}
                     <td className="py-3 px-4">
-                      <div className="font-bold text-white text-xs">{r.customerName}</div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold text-white text-xs">{r.customerName}</span>
+                        {r.orderRef && (
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 font-mono border border-amber-500/30" title="مرجع الطلب">
+                            #{r.orderRef}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[11px] text-slate-400 font-mono">{r.phone || '-'}</span>
                         {r.phone && (

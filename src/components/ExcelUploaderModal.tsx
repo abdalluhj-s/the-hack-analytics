@@ -37,7 +37,7 @@ export const ExcelUploaderModal: React.FC<ExcelUploaderModalProps> = ({
   onImport,
 }) => {
   const [parsedFiles, setParsedFiles] = useState<ParsedFileDetail[]>([]);
-  const [importMode, setImportMode] = useState<'replace' | 'append'>('append');
+  const [importMode, setImportMode] = useState<'replace' | 'append'>('replace');
   const [globalDate, setGlobalDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -423,6 +423,28 @@ export const ExcelUploaderModal: React.FC<ExcelUploaderModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label 
                 className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
+                  importMode === 'replace'
+                    ? 'border-emerald-500 bg-emerald-500/10 text-white'
+                    : 'border-slate-800 hover:border-slate-700 text-slate-400'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="import-mode"
+                  checked={importMode === 'replace'}
+                  onChange={() => setImportMode('replace')}
+                  className="mt-0.5 text-emerald-500 focus:ring-emerald-500"
+                />
+                <div>
+                  <div className="text-xs font-bold text-emerald-300">تفريغ واستبدال السابق (الموصى به)</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">
+                    تصفير الذاكرة والمصفوفات ومسح الشيتات السابقة، والاعتماد فقط على الشيت الجديد لضمان دقة الأرقام
+                  </div>
+                </div>
+              </label>
+
+              <label 
+                className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
                   importMode === 'append'
                     ? 'border-amber-500 bg-amber-500/10 text-white'
                     : 'border-slate-800 hover:border-slate-700 text-slate-400'
@@ -436,31 +458,9 @@ export const ExcelUploaderModal: React.FC<ExcelUploaderModalProps> = ({
                   className="mt-0.5 text-amber-500 focus:ring-amber-500"
                 />
                 <div>
-                  <div className="text-xs font-bold text-white">إضافة ودمج (موصى به للشيتات المتعددة)</div>
+                  <div className="text-xs font-bold text-white">إضافة وتجميع مع السابق</div>
                   <div className="text-[11px] text-slate-400 mt-0.5">
-                    إبقاء السجلات السابقة وإضافة الشيتات الجديدة إليها وتجميعها معاً
-                  </div>
-                </div>
-              </label>
-
-              <label 
-                className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
-                  importMode === 'replace'
-                    ? 'border-rose-500 bg-rose-500/10 text-white'
-                    : 'border-slate-800 hover:border-slate-700 text-slate-400'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="import-mode"
-                  checked={importMode === 'replace'}
-                  onChange={() => setImportMode('replace')}
-                  className="mt-0.5 text-rose-500 focus:ring-rose-500"
-                />
-                <div>
-                  <div className="text-xs font-bold text-rose-300">استبدال وتصفير البيانات السابقة بالكامل</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">
-                    مسح كافة البيانات السابقة نهائياً والبدء فقط بالشيتات المرفقة حالياً
+                    إبقاء السجلات السابقة وإضافة الشيت الجديد إليها وتراكمها معاً
                   </div>
                 </div>
               </label>

@@ -227,14 +227,61 @@ export function App() {
   };
 
   const handleImport = (newRecords: SurveyRecord[], mode: 'replace' | 'append') => {
-    setRecords(mode === 'replace' ? newRecords : prev => [...newRecords, ...prev]);
-    syncSurveysToSupabase(newRecords, { clearFirst: mode === 'replace' }).catch(() => {});
+    if (mode === 'replace') {
+      // 1. Reset state arrays
+      setRecords(newRecords);
+
+      // 2. Clear old caches and keys from localStorage
+      try {
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+        localStorage.removeItem('the_hack_survey_records_v1');
+        localStorage.removeItem('the_hack_survey_records_v2');
+        localStorage.removeItem('the_hack_survey_records_v3');
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newRecords));
+      } catch {}
+
+      // 3. Clear IndexedDB databases if present
+      if (typeof window !== 'undefined' && window.indexedDB && window.indexedDB.databases) {
+        window.indexedDB.databases().then(dbs => {
+          dbs.forEach(db => {
+            if (db.name && db.name.toLowerCase().includes('survey')) {
+              window.indexedDB.deleteDatabase(db.name);
+            }
+          });
+        }).catch(() => {});
+      }
+
+      // 4. Reset filters so old date or branch filters don't hide imported records
+      resetFilters();
+
+      // 5. Sync to Supabase with clearFirst
+      syncSurveysToSupabase(newRecords, { clearFirst: true }).catch(() => {});
+    } else {
+      setRecords(prev => [...newRecords, ...prev]);
+      syncSurveysToSupabase(newRecords, { clearFirst: false }).catch(() => {});
+    }
   };
 
   const handleReset = () => {
-    if (window.confirm('هل تريد مسح وتفريغ كافة السجلات الحالية لبدء شيتات جديدة؟')) {
+    if (window.confirm('هل تريد مسح وتفريغ كافة السجلات الحالية وتصفير الذاكرة لبدء شيتات جديدة؟')) {
       setRecords([]);
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([]));
+      try {
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+        localStorage.removeItem('the_hack_survey_records_v1');
+        localStorage.removeItem('the_hack_survey_records_v2');
+        localStorage.removeItem('the_hack_survey_records_v3');
+      } catch {}
+
+      if (typeof window !== 'undefined' && window.indexedDB && window.indexedDB.databases) {
+        window.indexedDB.databases().then(dbs => {
+          dbs.forEach(db => {
+            if (db.name && db.name.toLowerCase().includes('survey')) {
+              window.indexedDB.deleteDatabase(db.name);
+            }
+          });
+        }).catch(() => {});
+      }
+
       clearAllSurveysInSupabase().catch(() => {});
       resetFilters();
     }

@@ -12,6 +12,7 @@ export type SatisfactionType =
 
 export interface SurveyRecord {
   id: string;
+  orderRef?: string;        // مرجع الطلب / رقم الطلب
   branch: string;           // الفرع
   product: string;          // المنتج
   callStatus: string;       // حالة التواصل (تم الرد / لم يتم الرد)
@@ -31,7 +32,9 @@ export interface SurveyRecord {
 }
 
 export interface KPIStats {
-  totalWorkload: number;     // إجمالي العملاء / Total Workload
+  totalWorkload: number;     // إجمالي المكالمات والطلبات / Total Workload
+  uniqueOrders: number;      // إجمالي الطلبات الفريدة (بناءً على مرجع الطلب)
+  uniqueCustomers: number;   // إجمالي العملاء الفريدين (بناءً على رقم الهاتف)
   contacted: number;         // تم التواصل معه (Call Status is NOT empty)
   pending: number;           // قيد الانتظار (لم يتم الاتصال / فارغ)
   answered: number;          // تم الرد
@@ -52,6 +55,8 @@ export interface KPIStats {
 export interface BranchPerformance {
   branch: string;
   totalWorkload: number;
+  uniqueOrders?: number;
+  uniqueCustomers?: number;
   contacted: number;
   pending: number;
   answered: number;

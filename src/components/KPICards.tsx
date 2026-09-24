@@ -89,12 +89,18 @@ export const KPICards: React.FC<KPICardsProps> = ({ kpis, totalRecords, onFilter
       {/* 1. Total Workload */}
       <KPICard
         icon={<Users className="w-5 h-5 text-blue-400" />}
-        label="إجمالي العملاء"
+        label="إجمالي المكالمات / الطلبات"
         value={kpis.totalWorkload}
-        sub="عميل"
+        sub={kpis.uniqueCustomers && kpis.uniqueCustomers !== kpis.totalWorkload ? `${kpis.uniqueCustomers} عميل فريد (بالهاتف)` : 'مكالمة / طلب'}
         footer={
           <div className="flex items-center justify-between">
-            <span>{isFiltered ? `مفلتر من ${totalRecords}` : 'حجم الشيت الكلي'}</span>
+            <span>
+              {kpis.uniqueOrders && kpis.uniqueOrders !== kpis.totalWorkload 
+                ? `${kpis.uniqueOrders} طلب فريد (مرجع الطلب)` 
+                : isFiltered 
+                  ? `مفلتر من ${totalRecords}` 
+                  : 'حجم البيانات الخام'}
+            </span>
             <span className="text-blue-400 font-bold">{isFiltered ? `${filteredPct}%` : '100%'}</span>
           </div>
         }

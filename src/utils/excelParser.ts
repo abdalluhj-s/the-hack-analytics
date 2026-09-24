@@ -63,8 +63,44 @@ export interface MultiFileParseResult {
 }
 
 
+/**
+ * Cleans and sanitizes a cell value:
+ * 1. Strips any HTML tags (<p>, </p>, <br>, <div>, etc.)
+ * 2. Decodes common HTML entities
+ * 3. Collapses internal line breaks (\r\n, \r, \n) into a single space
+ * 4. Trims leading and trailing whitespace
+ */
+export function cleanCellValue(val: any): string {
+  if (val === undefined || val === null) return '';
+  let str = String(val);
+
+  // Strip HTML tags like <p>, <br>, etc.
+  str = str.replace(/<[^>]*>/g, ' ');
+
+  // Decode common HTML entities
+  str = str
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'");
+
+  // Replace internal newlines / linebreaks (\r\n, \r, \n) with a clean space
+  // This prevents SheetJS or downstream code from treating line breaks as new rows
+  str = str.replace(/[\r\n\v\f]+/g, ' ');
+
+  // Collapse multiple spaces into one and trim
+  return str.replace(/\s+/g, ' ').trim();
+}
+
 // Column alias definitions
 const COLUMN_ALIASES = {
+  orderRef: [
+    'مرجع الطلب', 'رقم الطلب', 'مرجع', 'المرجع', 'رقم الفاتورة', 'رقم الحركة', 'رقم السند',
+    'رقم كرت الصيانة', 'رقم العملية', 'رقم الشغل', 'order ref', 'order reference', 
+    'order id', 'order no', 'ref', 'reference', 'invoice', 'invoice no', 'job no', 'ticket no'
+  ],
   branch: [
     'الفرع', 'فرع', 'المركز', 'مركز', 'اسم الفرع', 'اسم المركز', 
     'branch', 'branch name', 'location', 'site'
@@ -320,6 +356,7 @@ function parseSheetRows(
 
   // PASS 1: EXACT MATCHES ONLY (Strict 1-to-1 matching)
   const categoryOrder: (keyof typeof COLUMN_ALIASES)[] = [
+    'orderRef',
     'customerName',
     'branch',
     'phone',
@@ -494,16 +531,17 @@ function parseSheetRows(
 
   const getCellVal = (row: any[], colIdx?: number): string => {
     if (colIdx === undefined || row[colIdx] === undefined || row[colIdx] === null) return '';
-    return String(row[colIdx]).trim();
+    return cleanCellValue(row[colIdx]);
   };
 
   for (let idx = 0; idx < dataRows.length; idx++) {
     const row = dataRows[idx];
     if (!Array.isArray(row) || row.length === 0) continue;
 
-    const hasAnyContent = row.some(cell => String(cell || '').trim() !== '');
+    const hasAnyContent = row.some(cell => cleanCellValue(cell) !== '');
     if (!hasAnyContent) continue;
 
+    const rawOrderRef = getCellVal(row, colIndexMap.orderRef);
     const rawBranch = getCellVal(row, colIndexMap.branch);
     const rawCustomerName = getCellVal(row, colIndexMap.customerName);
     const phone = getCellVal(row, colIndexMap.phone);
@@ -515,6 +553,7 @@ function parseSheetRows(
 
     // Skip trailing blank rows where only agent formula or serial number was dragged down in Excel
     const hasCustomerContent = Boolean(
+      rawOrderRef ||
       rawCustomerName || 
       phone || 
       rawBranch || 
@@ -535,13 +574,16 @@ function parseSheetRows(
 
     const normBranch = normalizeArabic(branch).toLowerCase();
     const normName = normalizeArabic(customerName).toLowerCase();
+    const normRef = normalizeArabic(rawOrderRef).toLowerCase();
     if (
       normBranch.includes('اجمالي') ||
       normBranch.includes('مجموع') ||
       normBranch.includes('total') ||
       normName.includes('اجمالي') ||
       normName.includes('مجموع') ||
-      normName.includes('total')
+      normName.includes('total') ||
+      normRef.includes('اجمالي') ||
+      normRef.includes('total')
     ) {
       continue;
     }
@@ -585,6 +627,7 @@ function parseSheetRows(
 
     records.push({
       id: `EXCEL-${prefix}-${startGlobalIdx + idx + 1}-${Date.now().toString().slice(-4)}`,
+      orderRef: rawOrderRef || undefined,
       branch,
       date: recordDate,
       sheetName: sheetDisplayName,
@@ -614,16 +657,177 @@ function parseSheetRows(
   };
 }
 
+interface SheetCandidate {
+  name: string;
+  score: number;
+  rowCount: number;
+  hasOrderRefAndBranch: boolean;
+  isPivotOrSummary: boolean;
+  detectedColsCount: number;
+}
+
+/**
+ * Intelligently targets the true raw operational data sheet:
+ * - Filters out Pivot Tables, Summary sheets, or aggregate tables (e.g. Sheet2 with Pivot Table)
+ * - Identifies Sheet1 or sheets with 'مرجع الطلب' and 'الفرع'
+ * - Prevents merging summary sheets into raw customer data
+ */
+export function selectRawDataSheetNames(workbook: XLSX.WorkBook): { sheetNames: string[]; explanation?: string } {
+  if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+    return { sheetNames: [] };
+  }
+  
+  if (workbook.SheetNames.length === 1) {
+    return { sheetNames: [workbook.SheetNames[0]] };
+  }
+
+  const candidates: SheetCandidate[] = [];
+
+  for (const sName of workbook.SheetNames) {
+    const sheet = workbook.Sheets[sName];
+    if (!sheet) continue;
+
+    const rawRows: any[][] = XLSX.utils.sheet_to_json(sheet, {
+      header: 1,
+      defval: '',
+      raw: false,
+    });
+
+    if (!rawRows || rawRows.length === 0) continue;
+
+    const rowCount = rawRows.length;
+    let score = 0;
+
+    // 1. Pivot / Summary name checks
+    const isPivotName = /pivot|summary|ملخص|محوري|جدول محوري|تقرير/i.test(sName);
+    const isSheet1 = /^sheet1$/i.test(sName) || /^sheet1[\s_-]/i.test(sName);
+    const isSheet2 = /^sheet2$/i.test(sName) || /^sheet2[\s_-]/i.test(sName);
+    const isRawDataName = /بيانات|raw|data|استبيان|مكالمات|orders|طلبات|عملاء/i.test(sName);
+
+    if (isPivotName) score -= 150;
+    if (isRawDataName) score += 60;
+    if (isSheet1) score += 50;
+    if (isSheet2 && workbook.SheetNames.some(n => /^sheet1$/i.test(n))) {
+      // If Sheet1 exists alongside Sheet2, Sheet2 is typically the Pivot table created in front
+      score -= 40;
+    }
+
+    // 2. Scan header row in first 15 rows
+    const scanLimit = Math.min(rawRows.length, 15);
+    let hasOrderRef = false;
+    let hasBranch = false;
+    let hasPhone = false;
+    let hasCustomerName = false;
+    let hasCallStatus = false;
+    let hasSatisfaction = false;
+    let isPivotContent = false;
+    let detectedColsCount = 0;
+
+    for (let r = 0; r < scanLimit; r++) {
+      const row = rawRows[r];
+      if (!Array.isArray(row)) continue;
+
+      for (const cell of row) {
+        const rawCell = cleanCellValue(cell);
+        const normCell = normalizeArabic(rawCell).toLowerCase();
+        if (!normCell) continue;
+
+        // Check for Pivot indicators
+        if (
+          normCell.includes('row labels') ||
+          normCell.includes('column labels') ||
+          normCell.includes('grand total') ||
+          normCell.includes('تسميات الصفوف') ||
+          normCell.includes('تسميات الاعمده') ||
+          normCell.includes('مجموع كلي') ||
+          normCell.startsWith('sum of') ||
+          normCell.startsWith('count of')
+        ) {
+          isPivotContent = true;
+        }
+
+        if (COLUMN_ALIASES.orderRef.some(a => normalizeArabic(a).toLowerCase() === normCell)) {
+          hasOrderRef = true;
+          detectedColsCount++;
+        }
+        if (COLUMN_ALIASES.branch.some(a => normalizeArabic(a).toLowerCase() === normCell)) {
+          hasBranch = true;
+          detectedColsCount++;
+        }
+        if (COLUMN_ALIASES.phone.some(a => normalizeArabic(a).toLowerCase() === normCell)) {
+          hasPhone = true;
+          detectedColsCount++;
+        }
+        if (COLUMN_ALIASES.customerName.some(a => normalizeArabic(a).toLowerCase() === normCell)) {
+          hasCustomerName = true;
+          detectedColsCount++;
+        }
+        if (COLUMN_ALIASES.callStatus.some(a => normalizeArabic(a).toLowerCase() === normCell)) {
+          hasCallStatus = true;
+          detectedColsCount++;
+        }
+        if (COLUMN_ALIASES.satisfaction.some(a => normalizeArabic(a).toLowerCase() === normCell)) {
+          hasSatisfaction = true;
+          detectedColsCount++;
+        }
+      }
+    }
+
+    const hasOrderRefAndBranch = hasOrderRef && hasBranch;
+    if (hasOrderRefAndBranch) score += 200;
+    if (hasBranch && (hasPhone || hasCustomerName)) score += 100;
+    if (hasCallStatus || hasSatisfaction) score += 50;
+    if (isPivotContent) score -= 250;
+
+    score += detectedColsCount * 15;
+    if (rowCount > 80) score += 50;
+
+    candidates.push({
+      name: sName,
+      score,
+      rowCount,
+      hasOrderRefAndBranch,
+      isPivotOrSummary: isPivotName || isPivotContent,
+      detectedColsCount,
+    });
+  }
+
+  // Sort candidates by score descending
+  candidates.sort((a, b) => b.score - a.score);
+
+  if (candidates.length === 0) {
+    return { sheetNames: workbook.SheetNames };
+  }
+
+  const best = candidates[0];
+
+  // If the best sheet has a clear raw-data signature or if other sheets are pivot/summary:
+  // Target exclusively the best sheet!
+  const hasPivotOrSummary = candidates.some(c => c.isPivotOrSummary);
+  if (best.hasOrderRefAndBranch || best.score >= 100 || hasPivotOrSummary) {
+    const excludedSheets = candidates.filter(c => c.name !== best.name).map(c => c.name);
+    const explanation = excludedSheets.length > 0
+      ? `تم استهداف شيت البيانات الخام [${best.name}] مباشرة (${best.hasOrderRefAndBranch ? 'تحتوي على أعمدة مرجع الطلب والفرع' : 'تحتوي على البيانات التشغيلية'} - ${best.rowCount} صف) وتجاوز الشيتات الأخرى (${excludedSheets.join(', ')}) لمنع تكرار أو تضارب الأرقام.`
+      : undefined;
+    return {
+      sheetNames: [best.name],
+      explanation,
+    };
+  }
+
+  return { sheetNames: candidates.map(c => c.name) };
+}
+
 /**
  * Parses an Excel file (.xlsx, .xls) buffer into SurveyRecord objects
- * with support for ALL worksheets/tabs inside the workbook
+ * with support for specific raw data sheet targeting
  */
 export function parseExcelFile(
   data: ArrayBuffer, 
   fileName: string,
   options?: { defaultDate?: string }
 ): ParseResult {
-  const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+  const workbook = XLSX.read(data, { type: 'array', cellDates: true, dense: false });
   const todayIso = new Date().toISOString().split('T')[0];
   const fallbackDate = options?.defaultDate || extractDateFromFileName(fileName) || todayIso;
 
@@ -639,11 +843,17 @@ export function parseExcelFile(
     unsatisfied: 0,
   };
 
+  // Specific Sheet Targeting: Never blindly read workbook.SheetNames[0] or concatenate all sheets!
+  const { sheetNames: targetSheetNames, explanation } = selectRawDataSheetNames(workbook);
+  if (explanation) {
+    allWarnings.push(`[${fileName}] ${explanation}`);
+  }
+
   const validSheetNames: string[] = [];
   let globalRowCounter = 0;
 
-  for (let sIdx = 0; sIdx < workbook.SheetNames.length; sIdx++) {
-    const sName = workbook.SheetNames[sIdx];
+  for (let sIdx = 0; sIdx < targetSheetNames.length; sIdx++) {
+    const sName = targetSheetNames[sIdx];
     const sheet = workbook.Sheets[sName];
     if (!sheet) continue;
 
@@ -655,7 +865,7 @@ export function parseExcelFile(
 
     if (!rawRows || rawRows.length === 0) continue;
 
-    const sheetDisplayName = workbook.SheetNames.length > 1 ? `${fileName} (${sName})` : fileName;
+    const sheetDisplayName = targetSheetNames.length > 1 ? `${fileName} (${sName})` : fileName;
     const filePrefix = `S${sIdx + 1}`;
 
     const sheetResult = parseSheetRows(rawRows, fileName, sheetDisplayName, fallbackDate, filePrefix, globalRowCounter);
@@ -790,6 +1000,7 @@ export async function parseMultipleExcelFiles(
  */
 export function downloadExcelTemplate(): void {
   const headers = [
+    'مرجع الطلب',
     'الفرع',
     'التاريخ',
     'المنتج',
@@ -808,6 +1019,7 @@ export function downloadExcelTemplate(): void {
 
   const sampleRows = [
     [
+      'ORD-2026-001',
       'فرع المعادي',
       todayStr,
       'صيانة دورية 10,000 كم',
@@ -822,6 +1034,7 @@ export function downloadExcelTemplate(): void {
       '01012345678',
     ],
     [
+      'ORD-2026-002',
       'فرع مدينة نصر',
       todayStr,
       'تغيير تيل فرامل أمامي',
@@ -836,6 +1049,7 @@ export function downloadExcelTemplate(): void {
       '01123456789',
     ],
     [
+      'ORD-2026-003',
       'فرع الهرم',
       todayStr,
       'فحص تكييف وشحن فريون',
@@ -850,6 +1064,7 @@ export function downloadExcelTemplate(): void {
       '01234567890',
     ],
     [
+      'ORD-2026-004',
       'فرع التجمع',
       todayStr,
       'صيانة 40,000 كم + زيوت',
@@ -864,6 +1079,7 @@ export function downloadExcelTemplate(): void {
       '01512345678',
     ],
     [
+      'ORD-2026-005',
       'فرع زايد',
       todayStr,
       'فحص شامل وضبط زوايا',
@@ -884,6 +1100,7 @@ export function downloadExcelTemplate(): void {
 
   // Auto column widths
   worksheet['!cols'] = [
+    { wch: 16 }, // مرجع الطلب
     { wch: 16 }, // الفرع
     { wch: 14 }, // التاريخ
     { wch: 25 }, // المنتج
