@@ -490,6 +490,8 @@ function parseSheetRows(
     warnings.push(`[${sheetDisplayName}] لم يتم العثور على عمود الرضا بشكل صريح.`);
   }
 
+  let skippedEmptyRows = 0;
+
   const getCellVal = (row: any[], colIdx?: number): string => {
     if (colIdx === undefined || row[colIdx] === undefined || row[colIdx] === null) return '';
     return String(row[colIdx]).trim();
@@ -502,8 +504,34 @@ function parseSheetRows(
     const hasAnyContent = row.some(cell => String(cell || '').trim() !== '');
     if (!hasAnyContent) continue;
 
-    const branch = getCellVal(row, colIndexMap.branch) || 'فرع غير محدد';
-    const customerName = getCellVal(row, colIndexMap.customerName) || `عميل ${startGlobalIdx + records.length + 1}`;
+    const rawBranch = getCellVal(row, colIndexMap.branch);
+    const rawCustomerName = getCellVal(row, colIndexMap.customerName);
+    const phone = getCellVal(row, colIndexMap.phone);
+    const rawProduct = getCellVal(row, colIndexMap.product);
+    let rawSatisfaction = getCellVal(row, colIndexMap.satisfaction);
+    let rawCallStatus = getCellVal(row, colIndexMap.callStatus);
+    const rawTechnician = getCellVal(row, colIndexMap.technician);
+    const customerNotes = getCellVal(row, colIndexMap.customerNotes);
+
+    // Skip trailing blank rows where only agent formula or serial number was dragged down in Excel
+    const hasCustomerContent = Boolean(
+      rawCustomerName || 
+      phone || 
+      rawBranch || 
+      rawProduct || 
+      rawTechnician || 
+      rawCallStatus || 
+      rawSatisfaction || 
+      customerNotes
+    );
+
+    if (!hasCustomerContent) {
+      skippedEmptyRows++;
+      continue;
+    }
+
+    const branch = rawBranch || 'فرع غير محدد';
+    const customerName = rawCustomerName || `عميل ${startGlobalIdx + records.length + 1}`;
 
     const normBranch = normalizeArabic(branch).toLowerCase();
     const normName = normalizeArabic(customerName).toLowerCase();
@@ -518,8 +546,6 @@ function parseSheetRows(
       continue;
     }
 
-    let rawSatisfaction = getCellVal(row, colIndexMap.satisfaction);
-
     if (!rawSatisfaction && (satisfiedCheckCol !== undefined || unsatisfiedCheckCol !== undefined)) {
       const satVal = satisfiedCheckCol !== undefined ? getCellVal(row, satisfiedCheckCol) : '';
       const unsatVal = unsatisfiedCheckCol !== undefined ? getCellVal(row, unsatisfiedCheckCol) : '';
@@ -530,17 +556,14 @@ function parseSheetRows(
       }
     }
 
-    let rawCallStatus = getCellVal(row, colIndexMap.callStatus);
     const rawDateVal = colIndexMap.date !== undefined ? row[colIndexMap.date] : undefined;
     const recordDate = parseDateValue(rawDateVal, fallbackDate);
 
-    const product = getCellVal(row, colIndexMap.product) || 'صيانة عامة';
+    const product = rawProduct || 'صيانة عامة';
     const agent = getCellVal(row, colIndexMap.agent) || 'غير محدد';
-    const technician = getCellVal(row, colIndexMap.technician) || 'غير محدد';
+    const technician = rawTechnician || 'غير محدد';
     const salesperson = getCellVal(row, colIndexMap.salesperson);
-    const customerNotes = getCellVal(row, colIndexMap.customerNotes);
     const branchNotes = getCellVal(row, colIndexMap.branchNotes);
-    const phone = getCellVal(row, colIndexMap.phone);
 
     const outcome = classifyCallOutcome(rawCallStatus, rawSatisfaction);
     const satisfactionClass = classifySatisfaction(rawSatisfaction, outcome, customerNotes);
@@ -577,6 +600,10 @@ function parseSheetRows(
       phone,
       actionTaken: false,
     });
+  }
+
+  if (skippedEmptyRows > 0) {
+    warnings.push(`[${sheetDisplayName}] تم تلقائياً استبعاد ${skippedEmptyRows} سطر فارغ في نهاية الشيت (خلايا فارغة ليس بها اسم عميل أو هاتف أو فرع).`);
   }
 
   return {
