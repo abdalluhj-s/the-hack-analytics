@@ -98,17 +98,18 @@ export function cleanCellValue(val: any): string {
 const COLUMN_ALIASES = {
   orderRef: [
     'مرجع الطلب', 'رقم الطلب', 'مرجع', 'المرجع', 'رقم الفاتورة', 'رقم الحركة', 'رقم السند',
-    'رقم كرت الصيانة', 'رقم العملية', 'رقم الشغل', 'order ref', 'order reference', 
-    'order id', 'order no', 'ref', 'reference', 'invoice', 'invoice no', 'job no', 'ticket no'
+    'رقم كرت الصيانة', 'رقم العملية', 'رقم الشغل', 'رقم امر البيع', 'رقم أمر البيع', 'امر البيع', 'أمر البيع',
+    'order ref', 'order reference', 'order id', 'order no', 'ref', 'reference', 'invoice', 'invoice no', 'job no', 'ticket no'
   ],
   branch: [
     'الفرع', 'فرع', 'المركز', 'مركز', 'اسم الفرع', 'اسم المركز', 
     'branch', 'branch name', 'location', 'site'
   ],
   date: [
+    'تاريخ امر البيع', 'تاريخ أمر البيع', 'تاريخ امر الشغل', 'تاريخ أمر الشغل', 'تاريخ الطلب',
     'التاريخ', 'تاريخ', 'تاريخ الاتصال', 'تاريخ الاستبيان', 'تاريخ المكالمة', 
     'اليوم', 'تاريخ الحركة', 'تاريخ الصيانة', 'تاريخ الزيارة', 'تاريخ الفاتورة',
-    'date', 'call date', 'survey date', 'day'
+    'date', 'order date', 'sale date', 'call date', 'survey date', 'day'
   ],
   product: [
     'المنتج', 'الخدمة', 'نوع الخدمة', 'نوع الصيانة', 'العملية', 'الصيانة', 
@@ -657,31 +658,38 @@ function parseSheetRows(
   };
 }
 
-interface SheetCandidate {
-  name: string;
-  score: number;
-  rowCount: number;
-  hasOrderRefAndBranch: boolean;
-  isPivotOrSummary: boolean;
-  detectedColsCount: number;
-}
-
 /**
- * Intelligently targets the true raw operational data sheet:
- * - Filters out Pivot Tables, Summary sheets, or aggregate tables (e.g. Sheet2 with Pivot Table)
- * - Identifies Sheet1 or sheets with 'مرجع الطلب' and 'الفرع'
- * - Prevents merging summary sheets into raw customer data
+ * Strictly targets the raw operational data sheet (e.g. 'Sheet1'):
+ * 1. Checks explicitly for 'Sheet1' (or case-insensitive variations).
+ * 2. If 'Sheet1' is not present, finds the sheet containing operational columns:
+ *    ('مرجع الطلب' / 'تاريخ امر البيع' / 'الفرع' / 'الهاتف') instead of summary/pivot sheets.
+ * 3. Never combines or loops over multiple sheets in the workbook.
  */
-export function selectRawDataSheetNames(workbook: XLSX.WorkBook): { sheetNames: string[]; explanation?: string } {
+export function findRawDataSheetName(workbook: XLSX.WorkBook): string {
   if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-    return { sheetNames: [] };
-  }
-  
-  if (workbook.SheetNames.length === 1) {
-    return { sheetNames: [workbook.SheetNames[0]] };
+    return '';
   }
 
-  const candidates: SheetCandidate[] = [];
+  // 1. Explicitly check for 'Sheet1'
+  if (workbook.Sheets['Sheet1']) {
+    return 'Sheet1';
+  }
+
+  // Check case-insensitive / trimmed match for 'Sheet1'
+  const sheet1Match = workbook.SheetNames.find(n => /^sheet1$/i.test(n.trim()));
+  if (sheet1Match && workbook.Sheets[sheet1Match]) {
+    return sheet1Match;
+  }
+
+  // If only 1 sheet exists, return it
+  if (workbook.SheetNames.length === 1) {
+    return workbook.SheetNames[0];
+  }
+
+  // 2. Search for the sheet containing key operational columns:
+  // ('مرجع الطلب', 'تاريخ امر البيع', 'الفرع', 'الهاتف')
+  let bestSheetName = workbook.SheetNames[0];
+  let maxScore = -9999;
 
   for (const sName of workbook.SheetNames) {
     const sheet = workbook.Sheets[sName];
@@ -695,33 +703,17 @@ export function selectRawDataSheetNames(workbook: XLSX.WorkBook): { sheetNames: 
 
     if (!rawRows || rawRows.length === 0) continue;
 
-    const rowCount = rawRows.length;
     let score = 0;
+    const isPivotName = /pivot|summary|ملخص|محوري|جدول|تقرير/i.test(sName);
+    if (isPivotName) score -= 200;
 
-    // 1. Pivot / Summary name checks
-    const isPivotName = /pivot|summary|ملخص|محوري|جدول محوري|تقرير/i.test(sName);
-    const isSheet1 = /^sheet1$/i.test(sName) || /^sheet1[\s_-]/i.test(sName);
-    const isSheet2 = /^sheet2$/i.test(sName) || /^sheet2[\s_-]/i.test(sName);
-    const isRawDataName = /بيانات|raw|data|استبيان|مكالمات|orders|طلبات|عملاء/i.test(sName);
-
-    if (isPivotName) score -= 150;
-    if (isRawDataName) score += 60;
-    if (isSheet1) score += 50;
-    if (isSheet2 && workbook.SheetNames.some(n => /^sheet1$/i.test(n))) {
-      // If Sheet1 exists alongside Sheet2, Sheet2 is typically the Pivot table created in front
-      score -= 40;
-    }
-
-    // 2. Scan header row in first 15 rows
     const scanLimit = Math.min(rawRows.length, 15);
     let hasOrderRef = false;
+    let hasSaleDate = false;
     let hasBranch = false;
     let hasPhone = false;
     let hasCustomerName = false;
-    let hasCallStatus = false;
-    let hasSatisfaction = false;
     let isPivotContent = false;
-    let detectedColsCount = 0;
 
     for (let r = 0; r < scanLimit; r++) {
       const row = rawRows[r];
@@ -732,95 +724,54 @@ export function selectRawDataSheetNames(workbook: XLSX.WorkBook): { sheetNames: 
         const normCell = normalizeArabic(rawCell).toLowerCase();
         if (!normCell) continue;
 
-        // Check for Pivot indicators
         if (
           normCell.includes('row labels') ||
-          normCell.includes('column labels') ||
           normCell.includes('grand total') ||
           normCell.includes('تسميات الصفوف') ||
-          normCell.includes('تسميات الاعمده') ||
-          normCell.includes('مجموع كلي') ||
-          normCell.startsWith('sum of') ||
-          normCell.startsWith('count of')
+          normCell.includes('مجموع كلي')
         ) {
           isPivotContent = true;
         }
 
         if (COLUMN_ALIASES.orderRef.some(a => normalizeArabic(a).toLowerCase() === normCell)) {
           hasOrderRef = true;
-          detectedColsCount++;
+        }
+        if (normCell.includes('تاريخ امر البيع') || normCell.includes('امر البيع')) {
+          hasSaleDate = true;
         }
         if (COLUMN_ALIASES.branch.some(a => normalizeArabic(a).toLowerCase() === normCell)) {
           hasBranch = true;
-          detectedColsCount++;
         }
         if (COLUMN_ALIASES.phone.some(a => normalizeArabic(a).toLowerCase() === normCell)) {
           hasPhone = true;
-          detectedColsCount++;
         }
         if (COLUMN_ALIASES.customerName.some(a => normalizeArabic(a).toLowerCase() === normCell)) {
           hasCustomerName = true;
-          detectedColsCount++;
-        }
-        if (COLUMN_ALIASES.callStatus.some(a => normalizeArabic(a).toLowerCase() === normCell)) {
-          hasCallStatus = true;
-          detectedColsCount++;
-        }
-        if (COLUMN_ALIASES.satisfaction.some(a => normalizeArabic(a).toLowerCase() === normCell)) {
-          hasSatisfaction = true;
-          detectedColsCount++;
         }
       }
     }
 
-    const hasOrderRefAndBranch = hasOrderRef && hasBranch;
-    if (hasOrderRefAndBranch) score += 200;
-    if (hasBranch && (hasPhone || hasCustomerName)) score += 100;
-    if (hasCallStatus || hasSatisfaction) score += 50;
-    if (isPivotContent) score -= 250;
+    if (hasOrderRef) score += 150;
+    if (hasSaleDate) score += 150;
+    if (hasBranch) score += 80;
+    if (hasPhone) score += 60;
+    if (hasCustomerName) score += 40;
+    if (isPivotContent) score -= 400;
+    if (rawRows.length > 50) score += 50;
 
-    score += detectedColsCount * 15;
-    if (rowCount > 80) score += 50;
-
-    candidates.push({
-      name: sName,
-      score,
-      rowCount,
-      hasOrderRefAndBranch,
-      isPivotOrSummary: isPivotName || isPivotContent,
-      detectedColsCount,
-    });
+    if (score > maxScore) {
+      maxScore = score;
+      bestSheetName = sName;
+    }
   }
 
-  // Sort candidates by score descending
-  candidates.sort((a, b) => b.score - a.score);
-
-  if (candidates.length === 0) {
-    return { sheetNames: workbook.SheetNames };
-  }
-
-  const best = candidates[0];
-
-  // If the best sheet has a clear raw-data signature or if other sheets are pivot/summary:
-  // Target exclusively the best sheet!
-  const hasPivotOrSummary = candidates.some(c => c.isPivotOrSummary);
-  if (best.hasOrderRefAndBranch || best.score >= 100 || hasPivotOrSummary) {
-    const excludedSheets = candidates.filter(c => c.name !== best.name).map(c => c.name);
-    const explanation = excludedSheets.length > 0
-      ? `تم استهداف شيت البيانات الخام [${best.name}] مباشرة (${best.hasOrderRefAndBranch ? 'تحتوي على أعمدة مرجع الطلب والفرع' : 'تحتوي على البيانات التشغيلية'} - ${best.rowCount} صف) وتجاوز الشيتات الأخرى (${excludedSheets.join(', ')}) لمنع تكرار أو تضارب الأرقام.`
-      : undefined;
-    return {
-      sheetNames: [best.name],
-      explanation,
-    };
-  }
-
-  return { sheetNames: candidates.map(c => c.name) };
+  return bestSheetName;
 }
 
 /**
  * Parses an Excel file (.xlsx, .xls) buffer into SurveyRecord objects
- * with support for specific raw data sheet targeting
+ * Strictly processes ONLY the raw operational data sheet (e.g. 'Sheet1')
+ * without looping or merging sheets in the workbook.
  */
 export function parseExcelFile(
   data: ArrayBuffer, 
@@ -831,60 +782,43 @@ export function parseExcelFile(
   const todayIso = new Date().toISOString().split('T')[0];
   const fallbackDate = options?.defaultDate || extractDateFromFileName(fileName) || todayIso;
 
-  const allRecords: SurveyRecord[] = [];
-  const allDetectedColumns = new Set<string>();
-  const allWarnings: string[] = [];
-  const aggregatedStats = {
-    answered: 0,
-    noAnswer: 0,
-    switchedOff: 0,
-    pending: 0,
-    satisfied: 0,
-    unsatisfied: 0,
-  };
+  // 1. Explicitly select ONLY the raw data sheet (Sheet1 or sheet with 'مرجع الطلب' / 'تاريخ امر البيع')
+  const sheetName = findRawDataSheetName(workbook);
+  const worksheet = workbook.Sheets[sheetName];
 
-  // Specific Sheet Targeting: Never blindly read workbook.SheetNames[0] or concatenate all sheets!
-  const { sheetNames: targetSheetNames, explanation } = selectRawDataSheetNames(workbook);
-  if (explanation) {
-    allWarnings.push(`[${fileName}] ${explanation}`);
+  if (!worksheet) {
+    return {
+      records: [],
+      fileName,
+      totalRows: 0,
+      detectedColumns: [],
+      detectedDate: fallbackDate,
+      sheetCount: 1,
+      sheetNames: [sheetName],
+      sampleRows: [],
+      warnings: [`[${fileName}] لم يتم العثور على الشيت [${sheetName}]`],
+      stats: { answered: 0, noAnswer: 0, switchedOff: 0, pending: 0, satisfied: 0, unsatisfied: 0 },
+    };
   }
 
-  const validSheetNames: string[] = [];
-  let globalRowCounter = 0;
+  // 2. Read ONLY this single target worksheet into rows
+  const rawRows: any[][] = XLSX.utils.sheet_to_json(worksheet, {
+    header: 1,
+    defval: '',
+    raw: false,
+  });
 
-  for (let sIdx = 0; sIdx < targetSheetNames.length; sIdx++) {
-    const sName = targetSheetNames[sIdx];
-    const sheet = workbook.Sheets[sName];
-    if (!sheet) continue;
-
-    const rawRows: any[][] = XLSX.utils.sheet_to_json(sheet, {
-      header: 1,
-      defval: '',
-      raw: false,
-    });
-
-    if (!rawRows || rawRows.length === 0) continue;
-
-    const sheetDisplayName = targetSheetNames.length > 1 ? `${fileName} (${sName})` : fileName;
-    const filePrefix = `S${sIdx + 1}`;
-
-    const sheetResult = parseSheetRows(rawRows, fileName, sheetDisplayName, fallbackDate, filePrefix, globalRowCounter);
-    if (sheetResult.records.length > 0) {
-      validSheetNames.push(sName);
-      allRecords.push(...sheetResult.records);
-      sheetResult.detectedColumns.forEach(c => allDetectedColumns.add(c));
-      allWarnings.push(...sheetResult.warnings);
-      aggregatedStats.answered += sheetResult.stats.answered;
-      aggregatedStats.noAnswer += sheetResult.stats.noAnswer;
-      aggregatedStats.switchedOff += sheetResult.stats.switchedOff;
-      aggregatedStats.pending += sheetResult.stats.pending;
-      aggregatedStats.satisfied += sheetResult.stats.satisfied;
-      aggregatedStats.unsatisfied += sheetResult.stats.unsatisfied;
-      globalRowCounter += sheetResult.records.length;
-    }
+  const warnings: string[] = [];
+  if (workbook.SheetNames.length > 1) {
+    const skipped = workbook.SheetNames.filter(n => n !== sheetName).join(', ');
+    warnings.push(`تم استهداف شيت البيانات الخام [${sheetName}] فقط (${rawRows.length} صفاً) وتجاهل الشيتات الملخصة/المحورية (${skipped}) لمنع تكرار وحساب بيانات مكررة.`);
   }
 
-  const sampleRows = allRecords.slice(0, 5).map(r => ({
+  // 3. Process ONLY this raw worksheet
+  const sheetResult = parseSheetRows(rawRows, fileName, fileName, fallbackDate, 'S1', 0);
+  warnings.push(...sheetResult.warnings);
+
+  const sampleRows = sheetResult.records.slice(0, 5).map(r => ({
     customerName: r.customerName,
     branch: r.branch,
     callStatus: r.callStatus || 'تم الرد',
@@ -893,16 +827,16 @@ export function parseExcelFile(
   }));
 
   return {
-    records: allRecords,
+    records: sheetResult.records,
     fileName,
-    totalRows: allRecords.length,
-    detectedColumns: Array.from(allDetectedColumns),
+    totalRows: sheetResult.records.length,
+    detectedColumns: sheetResult.detectedColumns,
     detectedDate: fallbackDate,
-    sheetCount: validSheetNames.length,
-    sheetNames: validSheetNames,
+    sheetCount: 1,
+    sheetNames: [sheetName],
     sampleRows,
-    warnings: allWarnings,
-    stats: aggregatedStats,
+    warnings,
+    stats: sheetResult.stats,
   };
 }
 

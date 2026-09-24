@@ -56,11 +56,12 @@ export const ExcelUploaderModal: React.FC<ExcelUploaderModalProps> = ({
       const multiResult = await parseMultipleExcelFiles(rawFiles, { defaultDate: globalDate });
       
       setParsedFiles(prev => {
-        // Prevent duplicate file names or replace them
+        if (importMode === 'replace') {
+          return multiResult.files;
+        }
         const existingNames = new Set(prev.map(p => p.fileName));
         const nonDuplicates = multiResult.files.filter(f => !existingNames.has(f.fileName));
-        const updated = [...prev, ...nonDuplicates];
-        return updated;
+        return [...prev, ...nonDuplicates];
       });
     } catch (err: any) {
       alert(`حدث خطأ أثناء قراءة ملفات الإكسيل: ${err.message || 'الملفات تالفة'}`);
