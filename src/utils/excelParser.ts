@@ -8,6 +8,8 @@ export interface ParseResult {
   totalRows: number;
   detectedColumns: string[];
   detectedDate?: string;
+  sheetCount?: number;
+  sheetNames?: string[];
   sampleRows: { customerName: string; branch: string; callStatus: string; satisfaction: string; phone: string }[];
   warnings: string[];
   stats: {
@@ -19,6 +21,47 @@ export interface ParseResult {
     unsatisfied: number;
   };
 }
+
+export interface ParsedFileDetail {
+  id: string;
+  file: File;
+  fileName: string;
+  fileSize: number;
+  sheetCount: number;
+  sheetNames: string[];
+  recordsCount: number;
+  detectedDate: string;
+  stats: {
+    answered: number;
+    noAnswer: number;
+    switchedOff: number;
+    pending: number;
+    satisfied: number;
+    unsatisfied: number;
+  };
+  sampleRows: { customerName: string; branch: string; callStatus: string; satisfaction: string; phone: string }[];
+  records: SurveyRecord[];
+  warnings: string[];
+}
+
+export interface MultiFileParseResult {
+  files: ParsedFileDetail[];
+  allRecords: SurveyRecord[];
+  totalFiles: number;
+  totalRows: number;
+  detectedDate: string;
+  stats: {
+    answered: number;
+    noAnswer: number;
+    switchedOff: number;
+    pending: number;
+    satisfied: number;
+    unsatisfied: number;
+  };
+  sampleRows: { customerName: string; branch: string; callStatus: string; satisfaction: string; phone: string }[];
+  warnings: string[];
+}
+
 
 // Column alias definitions
 const COLUMN_ALIASES = {
@@ -191,39 +234,40 @@ function extractDateFromFileName(fileName: string): string | null {
 }
 
 /**
- * Parses an Excel file (.xlsx, .xls) buffer into SurveyRecord objects
- * with dynamic header row detection, two-pass mapping, and content validation
+ * Helper to parse a 2D array of rows from a single worksheet
  */
-export function parseExcelFile(
-  data: ArrayBuffer, 
+function parseSheetRows(
+  rawRows: any[][],
   fileName: string,
-  options?: { defaultDate?: string }
-): ParseResult {
-  const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-  const sheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[sheetName];
+  sheetDisplayName: string,
+  fallbackDate: string,
+  prefix: string,
+  startGlobalIdx: number
+): {
+  records: SurveyRecord[];
+  detectedColumns: string[];
+  warnings: string[];
+  stats: {
+    answered: number;
+    noAnswer: number;
+    switchedOff: number;
+    pending: number;
+    satisfied: number;
+    unsatisfied: number;
+  };
+} {
+  const records: SurveyRecord[] = [];
+  const stats = {
+    answered: 0,
+    noAnswer: 0,
+    switchedOff: 0,
+    pending: 0,
+    satisfied: 0,
+    unsatisfied: 0,
+  };
 
-  // Read as array of rows
-  const rawRows: any[][] = XLSX.utils.sheet_to_json(sheet, {
-    header: 1,
-    defval: '',
-    raw: false,
-  });
-
-  const todayIso = new Date().toISOString().split('T')[0];
-  const fallbackDate = options?.defaultDate || extractDateFromFileName(fileName) || todayIso;
-
-  if (rawRows.length === 0) {
-    return {
-      records: [],
-      fileName,
-      totalRows: 0,
-      detectedColumns: [],
-      detectedDate: fallbackDate,
-      sampleRows: [],
-      warnings: ['الملف فارغ أو لا يحتوي على صفوف بيانات صالحة'],
-      stats: { answered: 0, noAnswer: 0, switchedOff: 0, pending: 0, satisfied: 0, unsatisfied: 0 },
-    };
+  if (!rawRows || rawRows.length === 0) {
+    return { records, detectedColumns: [], warnings: [], stats };
   }
 
   // 1. Dynamic Header Row Detection: scan first 10 rows
@@ -262,7 +306,6 @@ export function parseExcelFile(
   // Map each column category to its column index
   const colIndexMap: { [key in keyof typeof COLUMN_ALIASES]?: number } = {};
 
-  // Check for separate satisfied / unsatisfied checkmark columns
   let satisfiedCheckCol: number | undefined;
   let unsatisfiedCheckCol: number | undefined;
 
@@ -276,7 +319,6 @@ export function parseExcelFile(
   }
 
   // PASS 1: EXACT MATCHES ONLY (Strict 1-to-1 matching)
-  // This guarantees that "العميل" matches customerName, "الفرع" matches branch, "ملاحظات" matches customerNotes!
   const categoryOrder: (keyof typeof COLUMN_ALIASES)[] = [
     'customerName',
     'branch',
@@ -307,7 +349,6 @@ export function parseExcelFile(
   }
 
   // PASS 2: PHRASE / SUBSTRING MATCHES FOR REMAINING COLUMNS
-  // Only allowed when the Excel cell header is longer and contains the candidate phrase!
   for (const category of categoryOrder) {
     if (colIndexMap[category] !== undefined) continue;
     const aliases = COLUMN_ALIASES[category];
@@ -316,8 +357,6 @@ export function parseExcelFile(
       const h = normalizeArabic(headerRow[c]).toLowerCase().trim();
       for (const a of aliases) {
         const normCand = normalizeArabic(a).toLowerCase().trim();
-        // ONLY if Excel cell header is longer than alias (e.g. "حالة التواصل (تم الرد / لم يتم الرد)" contains "حالة التواصل")
-        // NEVER if alias is longer than cell header!
         if (h.length > normCand.length && normCand.length >= 3 && h.includes(normCand)) {
           colIndexMap[category] = c;
           break;
@@ -328,7 +367,6 @@ export function parseExcelFile(
   }
 
   // 2. Intelligent Content-Based Verification & Fallback Detection
-  // Check if satisfaction column is valid or if another column has real satisfaction words
   let isSatisfactionValid = false;
   if (colIndexMap.satisfaction !== undefined) {
     let satHits = 0;
@@ -347,13 +385,11 @@ export function parseExcelFile(
     }
   }
 
-  // If satisfaction is invalid (or points to customer name), search all columns for the real one!
   if (!isSatisfactionValid && !satisfiedCheckCol) {
     let bestCol = -1;
     let maxSatHits = 0;
 
     for (let c = 0; c < headerRow.length; c++) {
-      // Skip columns known to be name, phone, or branch
       if (c === colIndexMap.customerName || c === colIndexMap.phone || c === colIndexMap.branch) continue;
 
       let hits = 0;
@@ -451,25 +487,8 @@ export function parseExcelFile(
 
   const warnings: string[] = [];
   if (colIndexMap.satisfaction === undefined && !satisfiedCheckCol) {
-    warnings.push("لم يتم العثور على عمود 'الرضا / حالة العميل' بشكل صريح، يرجى مراجعة عناوين الأعمدة.");
+    warnings.push(`[${sheetDisplayName}] لم يتم العثور على عمود الرضا بشكل صريح.`);
   }
-  if (colIndexMap.callStatus === undefined) {
-    warnings.push("تم فحص حالة التواصل تلقائياً بناءً على إجابات ورضا العملاء.");
-  }
-  if (headerRowIndex > 0) {
-    warnings.push(`تم تخطي ${headerRowIndex} أسطر تمهيدية والبدء من سطر العناوين رقم ${headerRowIndex + 1}.`);
-  }
-
-  // Parse data rows
-  const records: SurveyRecord[] = [];
-  const stats = {
-    answered: 0,
-    noAnswer: 0,
-    switchedOff: 0,
-    pending: 0,
-    satisfied: 0,
-    unsatisfied: 0,
-  };
 
   const getCellVal = (row: any[], colIdx?: number): string => {
     if (colIdx === undefined || row[colIdx] === undefined || row[colIdx] === null) return '';
@@ -480,14 +499,12 @@ export function parseExcelFile(
     const row = dataRows[idx];
     if (!Array.isArray(row) || row.length === 0) continue;
 
-    // Check if entire row is empty
     const hasAnyContent = row.some(cell => String(cell || '').trim() !== '');
     if (!hasAnyContent) continue;
 
     const branch = getCellVal(row, colIndexMap.branch) || 'فرع غير محدد';
-    const customerName = getCellVal(row, colIndexMap.customerName) || `عميل ${records.length + 1}`;
+    const customerName = getCellVal(row, colIndexMap.customerName) || `عميل ${startGlobalIdx + records.length + 1}`;
 
-    // Skip summary / total rows
     const normBranch = normalizeArabic(branch).toLowerCase();
     const normName = normalizeArabic(customerName).toLowerCase();
     if (
@@ -503,7 +520,6 @@ export function parseExcelFile(
 
     let rawSatisfaction = getCellVal(row, colIndexMap.satisfaction);
 
-    // Support separate checkmark columns if present
     if (!rawSatisfaction && (satisfiedCheckCol !== undefined || unsatisfiedCheckCol !== undefined)) {
       const satVal = satisfiedCheckCol !== undefined ? getCellVal(row, satisfiedCheckCol) : '';
       const unsatVal = unsatisfiedCheckCol !== undefined ? getCellVal(row, unsatisfiedCheckCol) : '';
@@ -526,7 +542,6 @@ export function parseExcelFile(
     const branchNotes = getCellVal(row, colIndexMap.branchNotes);
     const phone = getCellVal(row, colIndexMap.phone);
 
-    // Compute classification for preview & stats using strict business rules
     const outcome = classifyCallOutcome(rawCallStatus, rawSatisfaction);
     const satisfactionClass = classifySatisfaction(rawSatisfaction, outcome, customerNotes);
 
@@ -546,10 +561,10 @@ export function parseExcelFile(
     }
 
     records.push({
-      id: `EXCEL-${idx + 1}-${Date.now().toString().slice(-4)}`,
+      id: `EXCEL-${prefix}-${startGlobalIdx + idx + 1}-${Date.now().toString().slice(-4)}`,
       branch,
       date: recordDate,
-      sheetName: fileName,
+      sheetName: sheetDisplayName,
       product,
       callStatus: rawCallStatus,
       satisfaction: rawSatisfaction,
@@ -564,8 +579,75 @@ export function parseExcelFile(
     });
   }
 
-  // Create sample extracted preview (first 3 valid records)
-  const sampleRows = records.slice(0, 3).map(r => ({
+  return {
+    records,
+    detectedColumns,
+    warnings,
+    stats,
+  };
+}
+
+/**
+ * Parses an Excel file (.xlsx, .xls) buffer into SurveyRecord objects
+ * with support for ALL worksheets/tabs inside the workbook
+ */
+export function parseExcelFile(
+  data: ArrayBuffer, 
+  fileName: string,
+  options?: { defaultDate?: string }
+): ParseResult {
+  const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+  const todayIso = new Date().toISOString().split('T')[0];
+  const fallbackDate = options?.defaultDate || extractDateFromFileName(fileName) || todayIso;
+
+  const allRecords: SurveyRecord[] = [];
+  const allDetectedColumns = new Set<string>();
+  const allWarnings: string[] = [];
+  const aggregatedStats = {
+    answered: 0,
+    noAnswer: 0,
+    switchedOff: 0,
+    pending: 0,
+    satisfied: 0,
+    unsatisfied: 0,
+  };
+
+  const validSheetNames: string[] = [];
+  let globalRowCounter = 0;
+
+  for (let sIdx = 0; sIdx < workbook.SheetNames.length; sIdx++) {
+    const sName = workbook.SheetNames[sIdx];
+    const sheet = workbook.Sheets[sName];
+    if (!sheet) continue;
+
+    const rawRows: any[][] = XLSX.utils.sheet_to_json(sheet, {
+      header: 1,
+      defval: '',
+      raw: false,
+    });
+
+    if (!rawRows || rawRows.length === 0) continue;
+
+    const sheetDisplayName = workbook.SheetNames.length > 1 ? `${fileName} (${sName})` : fileName;
+    const filePrefix = `S${sIdx + 1}`;
+
+    const sheetResult = parseSheetRows(rawRows, fileName, sheetDisplayName, fallbackDate, filePrefix, globalRowCounter);
+    if (sheetResult.records.length > 0) {
+      validSheetNames.push(sName);
+      allRecords.push(...sheetResult.records);
+      sheetResult.detectedColumns.forEach(c => allDetectedColumns.add(c));
+      allWarnings.push(...sheetResult.warnings);
+      aggregatedStats.answered += sheetResult.stats.answered;
+      aggregatedStats.noAnswer += sheetResult.stats.noAnswer;
+      aggregatedStats.switchedOff += sheetResult.stats.switchedOff;
+      aggregatedStats.pending += sheetResult.stats.pending;
+      aggregatedStats.satisfied += sheetResult.stats.satisfied;
+      aggregatedStats.unsatisfied += sheetResult.stats.unsatisfied;
+      globalRowCounter += sheetResult.records.length;
+    }
+  }
+
+  const sampleRows = allRecords.slice(0, 5).map(r => ({
     customerName: r.customerName,
     branch: r.branch,
     callStatus: r.callStatus || 'تم الرد',
@@ -574,16 +656,107 @@ export function parseExcelFile(
   }));
 
   return {
-    records,
+    records: allRecords,
     fileName,
-    totalRows: records.length,
-    detectedColumns,
+    totalRows: allRecords.length,
+    detectedColumns: Array.from(allDetectedColumns),
     detectedDate: fallbackDate,
+    sheetCount: validSheetNames.length,
+    sheetNames: validSheetNames,
     sampleRows,
-    warnings,
-    stats,
+    warnings: allWarnings,
+    stats: aggregatedStats,
   };
 }
+
+/**
+ * Parses multiple Excel files simultaneously, returning an aggregated result and per-file details
+ */
+export async function parseMultipleExcelFiles(
+  files: File[],
+  options?: { defaultDate?: string }
+): Promise<MultiFileParseResult> {
+  const parsedFiles: ParsedFileDetail[] = [];
+  const allRecords: SurveyRecord[] = [];
+  const aggregatedStats = {
+    answered: 0,
+    noAnswer: 0,
+    switchedOff: 0,
+    pending: 0,
+    satisfied: 0,
+    unsatisfied: 0,
+  };
+  const allWarnings: string[] = [];
+  const todayIso = new Date().toISOString().split('T')[0];
+  const detectedDate = options?.defaultDate || todayIso;
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    try {
+      const buffer = await file.arrayBuffer();
+      const result = parseExcelFile(buffer, file.name, { defaultDate: options?.defaultDate });
+
+      parsedFiles.push({
+        id: `FILE-${i + 1}-${Date.now().toString().slice(-4)}`,
+        file,
+        fileName: file.name,
+        fileSize: file.size,
+        sheetCount: result.sheetCount || 1,
+        sheetNames: result.sheetNames || [file.name],
+        recordsCount: result.records.length,
+        detectedDate: result.detectedDate || detectedDate,
+        stats: result.stats,
+        sampleRows: result.sampleRows,
+        records: result.records,
+        warnings: result.warnings,
+      });
+
+      allRecords.push(...result.records);
+      aggregatedStats.answered += result.stats.answered;
+      aggregatedStats.noAnswer += result.stats.noAnswer;
+      aggregatedStats.switchedOff += result.stats.switchedOff;
+      aggregatedStats.pending += result.stats.pending;
+      aggregatedStats.satisfied += result.stats.satisfied;
+      aggregatedStats.unsatisfied += result.stats.unsatisfied;
+      allWarnings.push(...result.warnings);
+    } catch (err: any) {
+      parsedFiles.push({
+        id: `FILE-${i + 1}-ERR`,
+        file,
+        fileName: file.name,
+        fileSize: file.size,
+        sheetCount: 0,
+        sheetNames: [],
+        recordsCount: 0,
+        detectedDate,
+        stats: { answered: 0, noAnswer: 0, switchedOff: 0, pending: 0, satisfied: 0, unsatisfied: 0 },
+        sampleRows: [],
+        records: [],
+        warnings: [`فشل في قراءة الملف: ${err.message || 'الملف تالف'}`],
+      });
+    }
+  }
+
+  const sampleRows = allRecords.slice(0, 5).map(r => ({
+    customerName: r.customerName,
+    branch: r.branch,
+    callStatus: r.callStatus || 'تم الرد',
+    satisfaction: r.satisfaction || 'بدون تقييم',
+    phone: r.phone || '-',
+  }));
+
+  return {
+    files: parsedFiles,
+    allRecords,
+    totalFiles: files.length,
+    totalRows: allRecords.length,
+    detectedDate,
+    stats: aggregatedStats,
+    sampleRows,
+    warnings: allWarnings,
+  };
+}
+
 
 /**
  * Generates and downloads a clean sample Excel template for users with Date column

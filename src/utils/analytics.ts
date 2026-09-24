@@ -376,3 +376,112 @@ export function calculateBranchPerformance(records: SurveyRecord[]): BranchPerfo
   // Sort by total workload descending
   return result.sort((a, b) => b.totalWorkload - a.totalWorkload);
 }
+
+/**
+ * Normalizes service/product names to clean standard categories
+ * matching user operational reports (e.g. ضبط زوايا\استعدال, ضبط زوايا, استعدال, ترصيص)
+ */
+export function cleanServiceName(product: string | null | undefined): string {
+  if (!product) return 'صيانة عامة';
+  const str = product.toString().trim();
+  const norm = normalizeArabic(str).toLowerCase();
+
+  const hasZawayah = norm.includes('ضبط زوايا') || norm.includes('ظبط زوايا') || norm.includes('زوايا');
+  const hasEsteadal = norm.includes('استعدال');
+  const hasTarsees = norm.includes('ترصيص');
+  const hasNitrogen = norm.includes('نيتروجين');
+  const hasLaham = norm.includes('لحام');
+  const hasBattery = norm.includes('بطارية') || norm.includes('بطاريه');
+  const hasOil = norm.includes('زيت') || norm.includes('زيوت');
+
+  if (hasZawayah && hasEsteadal) return 'ضبط زوايا\\استعدال';
+  if (hasZawayah) return 'ضبط زوايا';
+  if (hasEsteadal) return 'استعدال';
+  if (hasTarsees) return 'ترصيص';
+  if (hasNitrogen) return 'نيتروجين';
+  if (hasLaham) return 'لحام كاوتش';
+  if (hasBattery) return 'بطاريات';
+  if (hasOil) return 'تغيير زيت';
+
+  // Strip brackets like [620120] and any leading numeric codes
+  const cleaned = str.replace(/^\[\d+\]\s*/, '').trim();
+  return cleaned || 'صيانة عامة';
+}
+
+export interface TechnicianComplaintStat {
+  technician: string;
+  branch: string;
+  serviceType: string;
+  totalOperations: number; // إجمالي العمليات لنفس الخدمة
+  complaintsCount: number; // عدد الشكاوى
+  percentage: number;      // %
+  complaintRecords: SurveyRecord[]; // قائمة سجلات شكاوى هذا الفني
+}
+
+/**
+ * Calculates technician complaints statistics exactly matching operational report:
+ * رابعاً: الفنيون الموجهة إليهم شكاوى العملاء
+ * Columns: اسم الفني | اسم الفرع | إجمالي العمليات لنفس الخدمة | عدد الشكاوى | % | نوع الخدمة
+ */
+export function calculateTechnicianComplaints(records: SurveyRecord[]): TechnicianComplaintStat[] {
+  const map = new Map<string, {
+    technician: string;
+    branch: string;
+    serviceType: string;
+    total: number;
+    complaints: number;
+    complaintRecords: SurveyRecord[];
+  }>();
+
+  for (const r of records) {
+    const tech = (r.technician || '').trim();
+    if (!tech || tech === 'غير محدد' || tech === '-' || tech === 'لا يوجد') continue;
+
+    const branch = (r.branch || '').trim() || 'فرع غير محدد';
+    const serviceType = cleanServiceName(r.product);
+    const key = `${tech}__${branch}__${serviceType}`;
+
+    let item = map.get(key);
+    if (!item) {
+      item = {
+        technician: tech,
+        branch,
+        serviceType,
+        total: 0,
+        complaints: 0,
+        complaintRecords: [],
+      };
+      map.set(key, item);
+    }
+
+    item.total++;
+
+    const outcome = classifyCallOutcome(r.callStatus, r.satisfaction);
+    const sat = classifySatisfaction(r.satisfaction, outcome, r.customerNotes);
+    if (sat === 'غير راضى') {
+      item.complaints++;
+      item.complaintRecords.push(r);
+    }
+  }
+
+  const results: TechnicianComplaintStat[] = [];
+  for (const item of map.values()) {
+    if (item.complaints > 0) {
+      const pct = Math.round((item.complaints / item.total) * 100);
+      results.push({
+        technician: item.technician,
+        branch: item.branch,
+        serviceType: item.serviceType,
+        totalOperations: item.total,
+        complaintsCount: item.complaints,
+        percentage: pct,
+        complaintRecords: item.complaintRecords,
+      });
+    }
+  }
+
+  // Sort by complaintsCount DESC, then percentage DESC
+  results.sort((a, b) => b.complaintsCount - a.complaintsCount || b.percentage - a.percentage);
+  return results;
+}
+

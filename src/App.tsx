@@ -8,6 +8,7 @@ import { BranchPerformanceTable } from './components/BranchPerformanceTable';
 import { BranchDashboardModal } from './components/BranchDashboardModal';
 import { EscalationsTable } from './components/EscalationsTable';
 import { WorkloadTable } from './components/WorkloadTable';
+import { TechnicianComplaintsTable } from './components/TechnicianComplaintsTable';
 import { QuickEntryModal } from './components/QuickEntryModal';
 import { ExcelUploaderModal } from './components/ExcelUploaderModal';
 import { SupabaseSettingsModal } from './components/SupabaseSettingsModal';
@@ -24,7 +25,12 @@ import {
   classifySatisfaction,
   normalizeArabic,
 } from './utils/analytics';
-import { getStoredSupabaseConfig, fetchSurveysFromSupabase, syncSurveysToSupabase } from './utils/supabase';
+import { 
+  getStoredSupabaseConfig, 
+  fetchSurveysFromSupabase, 
+  syncSurveysToSupabase,
+  clearAllSurveysInSupabase 
+} from './utils/supabase';
 import { downloadExcelTemplate } from './utils/excelParser';
 import { BarChart3, AlertTriangle, Building2, PhoneCall, Sparkles, FileSpreadsheet, Download, Upload, PlusCircle } from 'lucide-react';
 
@@ -222,13 +228,14 @@ export function App() {
 
   const handleImport = (newRecords: SurveyRecord[], mode: 'replace' | 'append') => {
     setRecords(mode === 'replace' ? newRecords : prev => [...newRecords, ...prev]);
-    syncSurveysToSupabase(newRecords).catch(() => {});
+    syncSurveysToSupabase(newRecords, { clearFirst: mode === 'replace' }).catch(() => {});
   };
 
   const handleReset = () => {
     if (window.confirm('هل تريد مسح وتفريغ كافة السجلات الحالية لبدء شيتات جديدة؟')) {
       setRecords([]);
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([]));
+      clearAllSurveysInSupabase().catch(() => {});
       resetFilters();
     }
   };
@@ -243,7 +250,7 @@ export function App() {
     },
     {
       id: 'escalations',
-      label: 'الشكاوى',
+      label: 'الشكاوى والفنيين',
       icon: <AlertTriangle className="w-4 h-4" />,
       count: kpis.unsatisfied,
       color: 'rose',
@@ -257,7 +264,7 @@ export function App() {
     },
     {
       id: 'calls',
-      label: 'سجل المكالمات',
+      label: 'بيانات الشيت والمكالمات',
       icon: <PhoneCall className="w-4 h-4" />,
       count: filteredRecords.length,
       color: 'indigo',
@@ -398,7 +405,7 @@ export function App() {
             TAB 1: الرئيسية — Overview
         ══════════════════════════════════ */}
         {activeTab === 'dashboard' && (
-          <div className="space-y-5 animate-fade-in">
+          <div className="space-y-6 animate-fade-in">
             {/* Charts row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               <OutcomeChart kpis={kpis} />
@@ -408,7 +415,10 @@ export function App() {
               />
             </div>
 
-            {/* Branch table (compact preview — 5 rows) */}
+            {/* رابعاً: الفنيون الموجهة إليهم شكاوى العملاء */}
+            <TechnicianComplaintsTable records={filteredRecords} />
+
+            {/* Branch table (compact preview — 6 rows) */}
             <BranchPerformanceTable
               branches={branchPerformance.slice(0, 6)}
               selectedBranch={filters.branch}
@@ -416,6 +426,27 @@ export function App() {
               onOpenBranchDashboard={openBranchDashboard}
               compact
             />
+
+            {/* Direct Sheet Data & Calls Preview with quick tab switch */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-bold text-slate-300">
+                  معاينة مباشرة للبيانات الفعلية من الشيت:
+                </span>
+                <button
+                  onClick={() => setActiveTab('calls')}
+                  className="text-xs font-bold text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
+                >
+                  <span>عرض سجل الشيت بالكامل ({filteredRecords.length} سجل) ←</span>
+                </button>
+              </div>
+              <WorkloadTable
+                records={filteredRecords.slice(0, 15)}
+                onUpdateRecord={handleSave}
+                onSelectRecordForQuickEntry={rec => setQuickEntry({ open: true, record: rec })}
+                title="معاينة بيانات الشيت وسجل المكالمات الفعلي (أحدث 15 سجل)"
+              />
+            </div>
 
             {/* Escalations preview (top 5 unsatisfied) */}
             {kpis.unsatisfied > 0 && (
@@ -429,10 +460,14 @@ export function App() {
         )}
 
         {/* ══════════════════════════════════
-            TAB 2: الشكاوى — Escalations
+            TAB 2: الشكاوى والفنيين — Escalations
         ══════════════════════════════════ */}
         {activeTab === 'escalations' && (
-          <div className="animate-fade-in">
+          <div className="space-y-6 animate-fade-in">
+            {/* رابعاً: الفنيون الموجهة إليهم شكاوى العملاء */}
+            <TechnicianComplaintsTable records={filteredRecords} />
+
+            {/* قائمة شكاوى العملاء التفصيلية ومتابعتها */}
             <EscalationsTable
               records={filteredRecords}
               onToggleActionTaken={handleToggleAction}

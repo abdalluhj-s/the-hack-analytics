@@ -2,6 +2,7 @@ import React from 'react';
 import { X, TrendingUp, TrendingDown, Phone, PhoneOff, Clock, Smile, Frown, BarChart3, Users, Target, AlertTriangle, CheckCircle2, MessageCircle } from 'lucide-react';
 import { SurveyRecord, BranchPerformance } from '../types/survey';
 import { calculateKPIs, classifyCallOutcome, classifySatisfaction } from '../utils/analytics';
+import { TechnicianComplaintsTable } from './TechnicianComplaintsTable';
 
 interface BranchDashboardModalProps {
   isOpen: boolean;
@@ -273,6 +274,12 @@ export const BranchDashboardModal: React.FC<BranchDashboardModalProps> = ({
               </div>
             </div>
           </div>
+
+          {/* ─── Fourth: Technicians targeted by complaints in this branch ─── */}
+          <TechnicianComplaintsTable 
+            records={branchRecords} 
+            title={`رابعاً: الفنيون الموجهة إليهم شكاوى العملاء بفرع ${branch}`} 
+          />
 
           {/* ─── Branch Analysis Summary ─── */}
           <div className="rounded-xl bg-slate-800/40 border border-slate-700/60 p-4">

@@ -57,27 +57,46 @@ export async function testSupabaseConnection(): Promise<{ success: boolean; mess
 }
 
 /**
- * Loads surveys from Supabase table
+ * Loads surveys from Supabase table with pagination to retrieve all records
  */
 export async function fetchSurveysFromSupabase(): Promise<SurveyRecord[] | null> {
   const client = getSupabaseClient();
   if (!client) return null;
 
   try {
-    const { data, error } = await client
-      .from('surveys')
-      .select('*')
-      .limit(5000)
-      .order('created_at', { ascending: false });
+    let allRows: any[] = [];
+    let from = 0;
+    const step = 1000;
+    let hasMore = true;
 
-    if (error) {
-      console.warn('Supabase fetch error:', error);
-      return null;
+    // Supabase default max limit is 1000 per request, so we paginate to fetch all records
+    while (hasMore) {
+      const { data, error } = await client
+        .from('surveys')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(from, from + step - 1);
+
+      if (error) {
+        console.warn('Supabase fetch error:', error);
+        break;
+      }
+
+      if (!data || data.length === 0) {
+        hasMore = false;
+      } else {
+        allRows = allRows.concat(data);
+        if (data.length < step || allRows.length >= 15000) {
+          hasMore = false;
+        } else {
+          from += step;
+        }
+      }
     }
 
-    if (!data || data.length === 0) return null;
+    if (allRows.length === 0) return null;
 
-    return data.map((row: any) => ({
+    return allRows.map((row: any) => ({
       id: row.id,
       branch: row.branch || '',
       date: row.date || (row.created_at ? row.created_at.split('T')[0] : new Date().toISOString().split('T')[0]),
@@ -103,41 +122,77 @@ export async function fetchSurveysFromSupabase(): Promise<SurveyRecord[] | null>
 }
 
 /**
- * Syncs an entire batch of records or single record to Supabase
+ * Clears all survey records in Supabase
  */
-export async function syncSurveysToSupabase(records: SurveyRecord[]): Promise<boolean> {
+export async function clearAllSurveysInSupabase(): Promise<boolean> {
+  const client = getSupabaseClient();
+  if (!client) return false;
+  try {
+    const { error } = await client.from('surveys').delete().neq('id', '___NON_EXISTENT_ID___');
+    if (error) {
+      console.warn('Failed to clear Supabase surveys:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Clear Supabase exception:', err);
+    return false;
+  }
+}
+
+/**
+ * Syncs an entire batch of records or single record to Supabase
+ * Uses chunked batches of 150 items to ensure zero timeouts or payload errors
+ */
+export async function syncSurveysToSupabase(
+  records: SurveyRecord[],
+  options?: { clearFirst?: boolean }
+): Promise<boolean> {
   const client = getSupabaseClient();
   if (!client) return false;
 
   try {
+    if (options?.clearFirst) {
+      await clearAllSurveysInSupabase();
+    }
+
+    if (records.length === 0) return true;
+
     const rows = records.map((r) => ({
       id: r.id,
-      branch: r.branch,
+      branch: r.branch || '',
       date: r.date || new Date().toISOString().split('T')[0],
       sheet_name: r.sheetName || '',
-      product: r.product,
-      call_status: r.callStatus,
-      satisfaction: r.satisfaction,
-      agent: r.agent,
-      technician: r.technician,
-      salesperson: r.salesperson,
-      customer_notes: r.customerNotes,
-      branch_notes: r.branchNotes,
-      customer_name: r.customerName,
-      phone: r.phone,
+      product: r.product || '',
+      call_status: r.callStatus || '',
+      satisfaction: r.satisfaction || '',
+      agent: r.agent || '',
+      technician: r.technician || '',
+      salesperson: r.salesperson || '',
+      customer_notes: r.customerNotes || '',
+      branch_notes: r.branchNotes || '',
+      customer_name: r.customerName || '',
+      phone: r.phone || '',
       action_taken: r.actionTaken || false,
       action_notes: r.actionNotes || '',
       updated_at: new Date().toISOString(),
     }));
 
-    const { error } = await client.from('surveys').upsert(rows, { onConflict: 'id' });
-    if (error) {
-      console.error('Failed to upsert to Supabase:', error);
-      return false;
+    // Chunk into batches of 150 records
+    const CHUNK_SIZE = 150;
+    for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+      const chunk = rows.slice(i, i + CHUNK_SIZE);
+      const { error } = await client.from('surveys').upsert(chunk, { onConflict: 'id' });
+      if (error) {
+        console.error(`Failed to upsert chunk ${i} to ${i + chunk.length}:`, error);
+        return false;
+      }
     }
+
     return true;
   } catch (err) {
     console.error('Supabase sync exception:', err);
     return false;
   }
 }
+
