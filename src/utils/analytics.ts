@@ -434,6 +434,26 @@ export function cleanServiceName(product: string | null | undefined): string {
   return cleaned || 'صيانة عامة';
 }
 
+export interface TechnicianServiceBreakdown {
+  serviceType: string;
+  totalOperations: number;
+  complaintsCount: number;
+  percentage: number;
+}
+
+export interface ConsolidatedTechnicianStat {
+  technician: string;
+  branch: string;
+  branches: string[];
+  totalOperations: number;    // إجمالي العمليات المنفذة بواسطة الفني لكافة الخدمات
+  complaintsCount: number;    // إجمالي عدد الشكاوى لكافة الخدمات
+  percentage: number;         // % معدل الشكاوى الإجمالي للفني
+  services: TechnicianServiceBreakdown[]; // تفصيل العمليات والشكاوى لكل خدمة
+  topProblemService?: string; // أكثر خدمة تركزت فيها الشكاوى
+  complaintRecords: SurveyRecord[]; // قائمة بكافة سجلات الشكاوى لهذا الفني
+  allRecords: SurveyRecord[];       // كافة سجلات الفني
+}
+
 export interface TechnicianComplaintStat {
   technician: string;
   branch: string;
@@ -510,4 +530,109 @@ export function calculateTechnicianComplaints(records: SurveyRecord[]): Technici
   results.sort((a, b) => b.complaintsCount - a.complaintsCount || b.percentage - a.percentage);
   return results;
 }
+
+/**
+ * Calculates consolidated per-technician statistics across ALL services they performed.
+ * Aggregates all operations, complaints, rate %, and provides per-service breakdown.
+ */
+export function calculateConsolidatedTechnicians(
+  records: SurveyRecord[],
+  options?: { includeZeroComplaints?: boolean }
+): ConsolidatedTechnicianStat[] {
+  const map = new Map<string, {
+    technician: string;
+    branchSet: Set<string>;
+    servicesMap: Map<string, { total: number; complaints: number }>;
+    total: number;
+    complaints: number;
+    complaintRecords: SurveyRecord[];
+    allRecords: SurveyRecord[];
+  }>();
+
+  for (const r of records) {
+    const tech = (r.technician || '').trim();
+    if (!tech || tech === 'غير محدد' || tech === '-' || tech === 'لا يوجد') continue;
+
+    const branch = (r.branch || '').trim() || 'فرع غير محدد';
+    const serviceType = cleanServiceName(r.product);
+
+    let item = map.get(tech);
+    if (!item) {
+      item = {
+        technician: tech,
+        branchSet: new Set<string>(),
+        servicesMap: new Map<string, { total: number; complaints: number }>(),
+        total: 0,
+        complaints: 0,
+        complaintRecords: [],
+        allRecords: [],
+      };
+      map.set(tech, item);
+    }
+
+    item.branchSet.add(branch);
+    item.total++;
+    item.allRecords.push(r);
+
+    let sItem = item.servicesMap.get(serviceType);
+    if (!sItem) {
+      sItem = { total: 0, complaints: 0 };
+      item.servicesMap.set(serviceType, sItem);
+    }
+    sItem.total++;
+
+    const outcome = classifyCallOutcome(r.callStatus, r.satisfaction);
+    const sat = classifySatisfaction(r.satisfaction, outcome, r.customerNotes);
+    if (sat === 'غير راضى') {
+      item.complaints++;
+      sItem.complaints++;
+      item.complaintRecords.push(r);
+    }
+  }
+
+  const results: ConsolidatedTechnicianStat[] = [];
+  for (const item of map.values()) {
+    if (!options?.includeZeroComplaints && item.complaints === 0) {
+      continue;
+    }
+
+    const branches = Array.from(item.branchSet);
+    const primaryBranch = branches.join('، ');
+
+    const services: TechnicianServiceBreakdown[] = [];
+    for (const [srv, sData] of item.servicesMap.entries()) {
+      const sPct = sData.total > 0 ? Math.round((sData.complaints / sData.total) * 100) : 0;
+      services.push({
+        serviceType: srv,
+        totalOperations: sData.total,
+        complaintsCount: sData.complaints,
+        percentage: sPct,
+      });
+    }
+
+    // Sort services by complaints DESC, then total operations DESC
+    services.sort((a, b) => b.complaintsCount - a.complaintsCount || b.totalOperations - a.totalOperations);
+
+    const overallPct = item.total > 0 ? Math.round((item.complaints / item.total) * 100) : 0;
+    const topProblemService = services.find(s => s.complaintsCount > 0)?.serviceType;
+
+    results.push({
+      technician: item.technician,
+      branch: primaryBranch,
+      branches,
+      totalOperations: item.total,
+      complaintsCount: item.complaints,
+      percentage: overallPct,
+      services,
+      topProblemService,
+      complaintRecords: item.complaintRecords,
+      allRecords: item.allRecords,
+    });
+  }
+
+  // Sort by complaintsCount DESC, then percentage DESC, then total operations DESC
+  results.sort((a, b) => b.complaintsCount - a.complaintsCount || b.percentage - a.percentage || b.totalOperations - a.totalOperations);
+  return results;
+}
+
 
