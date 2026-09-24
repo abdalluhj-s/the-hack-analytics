@@ -436,20 +436,22 @@ export function cleanServiceName(product: string | null | undefined): string {
 
 export interface TechnicianServiceBreakdown {
   serviceType: string;
-  totalOperations: number;
-  complaintsCount: number;
-  percentage: number;
+  totalOperations: number;      // إجمالي عدد مرات تنفيذ هذه الخدمة
+  cleanCount: number;           // كم مرة عملها صح (بدون شكاوى)
+  complaintsCount: number;      // كم مرة فيها مشكلة / شكوى
+  percentage: number;           // % نسبة الشكاوى في هذه الخدمة نفسها = (الشكاوى ÷ إجمالي نفس الخدمة) × 100
 }
 
 export interface ConsolidatedTechnicianStat {
   technician: string;
   branch: string;
   branches: string[];
-  totalOperations: number;    // إجمالي العمليات المنفذة بواسطة الفني لكافة الخدمات
-  complaintsCount: number;    // إجمالي عدد الشكاوى لكافة الخدمات
-  percentage: number;         // % معدل الشكاوى الإجمالي للفني
+  totalOperations: number;      // إجمالي العمليات المنفذة بواسطة الفني لكافة الخدمات
+  cleanCount: number;           // إجمالي العمليات الناجحة (صح)
+  complaintsCount: number;      // إجمالي عدد الشكاوى لكافة الخدمات
+  percentage: number;           // % معدل الشكاوى الإجمالي للفني
   services: TechnicianServiceBreakdown[]; // تفصيل العمليات والشكاوى لكل خدمة
-  topProblemService?: string; // أكثر خدمة تركزت فيها الشكاوى
+  topProblemService?: TechnicianServiceBreakdown; // الخدمة محل الشكوى الأبرز مع تفاصيلها (إجماليها، الصح، والشكاوى)
   complaintRecords: SurveyRecord[]; // قائمة بكافة سجلات الشكاوى لهذا الفني
   allRecords: SurveyRecord[];       // كافة سجلات الفني
 }
@@ -459,6 +461,7 @@ export interface TechnicianComplaintStat {
   branch: string;
   serviceType: string;
   totalOperations: number; // إجمالي العمليات لنفس الخدمة
+  cleanCount: number;      // العمليات الناجحة (صح)
   complaintsCount: number; // عدد الشكاوى
   percentage: number;      // %
   complaintRecords: SurveyRecord[]; // قائمة سجلات شكاوى هذا الفني
@@ -514,11 +517,13 @@ export function calculateTechnicianComplaints(records: SurveyRecord[]): Technici
   for (const item of map.values()) {
     if (item.complaints > 0) {
       const pct = Math.round((item.complaints / item.total) * 100);
+      const clean = Math.max(0, item.total - item.complaints);
       results.push({
         technician: item.technician,
         branch: item.branch,
         serviceType: item.serviceType,
         totalOperations: item.total,
+        cleanCount: clean,
         complaintsCount: item.complaints,
         percentage: pct,
         complaintRecords: item.complaintRecords,
@@ -602,9 +607,11 @@ export function calculateConsolidatedTechnicians(
     const services: TechnicianServiceBreakdown[] = [];
     for (const [srv, sData] of item.servicesMap.entries()) {
       const sPct = sData.total > 0 ? Math.round((sData.complaints / sData.total) * 100) : 0;
+      const cleanCount = Math.max(0, sData.total - sData.complaints);
       services.push({
         serviceType: srv,
         totalOperations: sData.total,
+        cleanCount,
         complaintsCount: sData.complaints,
         percentage: sPct,
       });
@@ -614,13 +621,15 @@ export function calculateConsolidatedTechnicians(
     services.sort((a, b) => b.complaintsCount - a.complaintsCount || b.totalOperations - a.totalOperations);
 
     const overallPct = item.total > 0 ? Math.round((item.complaints / item.total) * 100) : 0;
-    const topProblemService = services.find(s => s.complaintsCount > 0)?.serviceType;
+    const totalClean = Math.max(0, item.total - item.complaints);
+    const topProblemService = services.find(s => s.complaintsCount > 0);
 
     results.push({
       technician: item.technician,
       branch: primaryBranch,
       branches,
       totalOperations: item.total,
+      cleanCount: totalClean,
       complaintsCount: item.complaints,
       percentage: overallPct,
       services,

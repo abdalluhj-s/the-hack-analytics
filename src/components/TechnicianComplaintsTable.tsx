@@ -194,10 +194,15 @@ export const TechnicianComplaintsTable: React.FC<TechnicianComplaintsTableProps>
         'اسم الفني': item.technician,
         'اسم الفرع': item.branch,
         'إجمالي كافة العمليات المنفذة': item.totalOperations,
+        'عمليات صحيحة لكافة الخدمات (صح)': item.cleanCount,
         'إجمالي عدد الشكاوى': item.complaintsCount,
         '% معدل الشكاوى الإجمالي': `${item.percentage}%`,
-        'أكثر خدمة تركزت فيها الشكاوى': item.topProblemService || 'لا توجد شكاوى',
-        'تفصيل الخدمات المنفذة': item.services.map(s => `${s.serviceType} (${s.totalOperations} عملية / ${s.complaintsCount} شكوى)`).join(' | '),
+        'أكثر خدمة تركزت فيها الشكاوى': item.topProblemService ? item.topProblemService.serviceType : 'لا توجد شكاوى',
+        'مرات تنفيذ الخدمة الأكثر شكاوى': item.topProblemService ? item.topProblemService.totalOperations : 0,
+        'عمليات صحيحة لنفس الخدمة (صح)': item.topProblemService ? item.topProblemService.cleanCount : 0,
+        'شكاوى نفس الخدمة': item.topProblemService ? item.topProblemService.complaintsCount : 0,
+        '% نسبة الشكاوى لنفس الخدمة': item.topProblemService ? `${item.topProblemService.percentage}%` : '0%',
+        'تفصيل كافة الخدمات المنفذة': item.services.map(s => `${s.serviceType} (إجمالي: ${s.totalOperations} | صح: ${s.cleanCount} | شكاوى: ${s.complaintsCount} | %${s.percentage})`).join(' | '),
       }));
 
       const ws = XLSX.utils.json_to_sheet(rows);
@@ -210,10 +215,11 @@ export const TechnicianComplaintsTable: React.FC<TechnicianComplaintsTableProps>
         'م': idx + 1,
         'اسم الفني': item.technician,
         'اسم الفرع': item.branch,
-        'إجمالي العمليات لنفس الخدمة': item.totalOperations,
-        'عدد الشكاوى': item.complaintsCount,
-        '%': `${item.percentage}%`,
         'نوع الخدمة': item.serviceType,
+        'إجمالي العمليات لنفس الخدمة': item.totalOperations,
+        'عمليات صحيحة (صح)': item.cleanCount,
+        'عدد الشكاوى': item.complaintsCount,
+        '% نسبة الشكاوى في الخدمة': `${item.percentage}%`,
       }));
 
       const ws = XLSX.utils.json_to_sheet(rows);
@@ -491,7 +497,11 @@ export const TechnicianComplaintsTable: React.FC<TechnicianComplaintsTableProps>
                     <ArrowUpDown className="w-3 h-3 opacity-80" />
                   </div>
                 </th>
-                <th className="py-3 px-4 font-black text-sm">توزيع الخدمات المنفذة ومواضع الشكاوى</th>
+                <th className="py-3 px-4 font-black text-sm">
+                  {selectedService === 'all' 
+                    ? 'الخدمة محل الشكوى ومعدل المشاكل فيها (كم عملها | صح | شكوى | %)' 
+                    : `تحليل خدمة (${selectedService}): كم عملها | صح | شكوى | %`}
+                </th>
                 <th className="py-3 px-3 text-center w-20">التفاصيل</th>
               </tr>
             </thead>
@@ -552,10 +562,15 @@ export const TechnicianComplaintsTable: React.FC<TechnicianComplaintsTableProps>
                       </td>
 
                       {/* Total Operations across ALL services */}
-                      <td className="py-3 px-3 text-center font-bold text-white text-sm">
-                        <span className="font-mono px-2 py-0.5 rounded bg-slate-800 text-cyan-300">
-                          {item.totalOperations}
-                        </span>
+                      <td className="py-3 px-3 text-center">
+                        <div className="flex flex-col items-center">
+                          <span className="font-mono px-2 py-0.5 rounded bg-slate-800 text-cyan-300 font-bold">
+                            {item.totalOperations} عملية
+                          </span>
+                          <span className="text-[10px] text-emerald-400 font-mono font-bold mt-0.5">
+                            ({item.cleanCount} صح)
+                          </span>
+                        </div>
                       </td>
 
                       {/* Total Complaints */}
@@ -584,32 +599,110 @@ export const TechnicianComplaintsTable: React.FC<TechnicianComplaintsTableProps>
                         </span>
                       </td>
 
-                      {/* Services Breakdown Badges */}
+                      {/* Service Complaint & Clean Rate Breakdown */}
                       <td className="py-3 px-4">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {item.services.map((srv, sIdx) => {
-                            const hasSrvComplaint = srv.complaintsCount > 0;
+                        {selectedService !== 'all' ? (
+                          (() => {
+                            const srv = item.services.find(s => s.serviceType === selectedService);
+                            if (!srv) {
+                              return (
+                                <span className="text-xs text-slate-500 italic">
+                                  لم ينفذ خدمة ({selectedService}) في هذا الشيت
+                                </span>
+                              );
+                            }
+                            const hasSrvComp = srv.complaintsCount > 0;
                             return (
-                              <span 
-                                key={sIdx}
-                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-medium border ${
-                                  hasSrvComplaint 
-                                    ? 'bg-rose-950/40 text-rose-300 border-rose-500/40 font-bold'
-                                    : 'bg-[#5a823b]/15 text-[#a1d66c] border-[#5a823b]/30'
-                                }`}
-                                title={`${srv.serviceType}: إجمالي ${srv.totalOperations} عملية، منها ${srv.complaintsCount} شكوى (${srv.percentage}%)`}
-                              >
-                                <span>{srv.serviceType}</span>
-                                <span className="font-mono text-[10px] opacity-80">({srv.totalOperations})</span>
-                                {hasSrvComplaint && (
-                                  <span className="px-1 py-0.1 rounded bg-rose-500 text-white text-[9px] font-black">
-                                    {srv.complaintsCount} ⚠️
-                                  </span>
-                                )}
-                              </span>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="px-2.5 py-1 rounded-lg bg-slate-800 text-cyan-300 font-mono font-bold text-xs">
+                                  عملها: {srv.totalOperations} مرة
+                                </span>
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  {srv.cleanCount} صح
+                                </span>
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono font-bold ${
+                                  hasSrvComp 
+                                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' 
+                                    : 'bg-slate-800/80 text-slate-400'
+                                }`}>
+                                  {hasSrvComp && <AlertTriangle className="w-3 h-3 text-rose-400" />}
+                                  {srv.complaintsCount} شكوى
+                                </span>
+                                <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-black ${
+                                  hasSrvComp 
+                                    ? 'bg-rose-500/30 text-rose-300 border border-rose-500/50' 
+                                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                }`}>
+                                  % نسبة المشاكل بالخدمة: {srv.percentage}%
+                                </span>
+                              </div>
                             );
-                          })}
-                        </div>
+                          })()
+                        ) : item.topProblemService ? (
+                          <div className="space-y-1.5">
+                            {/* Focus card on the problem service */}
+                            <div className="p-2 rounded-xl bg-rose-950/20 border border-rose-500/30 flex flex-wrap items-center gap-2">
+                              <span className="text-[11px] font-bold text-rose-400 flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3" />
+                                الخدمة محل الشكوى:
+                              </span>
+                              <span className="px-2 py-0.5 rounded-md bg-rose-500/25 text-rose-200 border border-rose-500/40 text-xs font-black">
+                                {item.topProblemService.serviceType}
+                              </span>
+                              <span className="text-slate-300 text-xs">
+                                عملها: <strong className="text-cyan-300 font-mono">{item.topProblemService.totalOperations}</strong> مرة
+                              </span>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold">
+                                <CheckCircle2 className="w-3 h-3" />
+                                {item.topProblemService.cleanCount} صح
+                              </span>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/25 text-rose-200 border border-rose-500/40 text-xs font-mono font-bold">
+                                {item.topProblemService.complaintsCount} شكوى
+                              </span>
+                              <span className="px-2 py-0.5 rounded-md bg-rose-500 text-white text-xs font-mono font-black shadow-sm">
+                                %{item.topProblemService.percentage} نسبة المشاكل بالخدمة
+                              </span>
+                            </div>
+
+                            {/* Other services executed if any */}
+                            {item.services.length > 1 && (
+                              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                                <span className="text-[10px] text-slate-500 font-medium">بقية الخدمات:</span>
+                                {item.services
+                                  .filter(s => s.serviceType !== item.topProblemService?.serviceType)
+                                  .map((srv, sIdx) => {
+                                    const hasSrvComplaint = srv.complaintsCount > 0;
+                                    return (
+                                      <span 
+                                        key={sIdx}
+                                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-medium border ${
+                                          hasSrvComplaint 
+                                            ? 'bg-rose-950/30 text-rose-300 border-rose-500/30' 
+                                            : 'bg-slate-900 text-slate-300 border-slate-800'
+                                        }`}
+                                        title={`${srv.serviceType}: عملها ${srv.totalOperations} مرة (${srv.cleanCount} صح، ${srv.complaintsCount} شكاوى - %${srv.percentage})`}
+                                      >
+                                        <span>{srv.serviceType}</span>
+                                        <span className="font-mono text-cyan-400">({srv.totalOperations} عملها)</span>
+                                        <span className="font-mono text-emerald-400">({srv.cleanCount} صح)</span>
+                                        {hasSrvComplaint && (
+                                          <span className="px-1 rounded bg-rose-500 text-white text-[9px] font-black">
+                                            {srv.complaintsCount} شكوى ({srv.percentage}%)
+                                          </span>
+                                        )}
+                                      </span>
+                                    );
+                                  })}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 text-emerald-400 text-xs font-medium py-1">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <span>أداء ممتاز 100% — نفذ {item.cleanCount} عملية صحيحة دون أي شكاوى في {item.services.length} خدمات</span>
+                          </div>
+                        )}
                       </td>
 
                       {/* Details Action */}
@@ -639,15 +732,19 @@ export const TechnicianComplaintsTable: React.FC<TechnicianComplaintsTableProps>
                 <th className="py-3 px-4 text-center w-10">م</th>
                 <th className="py-3 px-4 font-black text-sm">اسم الفني</th>
                 <th className="py-3 px-4 font-black text-sm">اسم الفرع</th>
+                <th className="py-3 px-4 font-black text-sm">نوع الخدمة</th>
                 <th 
                   onClick={() => handleSort('total')}
                   className="py-3 px-4 text-center cursor-pointer hover:bg-[#4d7031] transition-colors"
-                  title="ترتيب حسب إجمالي العمليات لنفس الخدمة"
+                  title="ترتيب حسب إجمالي مرات تنفيذ الخدمة"
                 >
                   <div className="flex items-center justify-center gap-1">
-                    <span>إجمالي العمليات لنفس الخدمة</span>
+                    <span>مرات التنفيذ (عملها)</span>
                     <ArrowUpDown className="w-3 h-3 opacity-80" />
                   </div>
+                </th>
+                <th className="py-3 px-4 text-center font-black text-sm">
+                  عمليات ناجحة (صح)
                 </th>
                 <th 
                   onClick={() => handleSort('complaints')}
@@ -661,22 +758,21 @@ export const TechnicianComplaintsTable: React.FC<TechnicianComplaintsTableProps>
                 </th>
                 <th 
                   onClick={() => handleSort('percentage')}
-                  className="py-3 px-4 text-center cursor-pointer hover:bg-[#4d7031] transition-colors w-20"
-                  title="ترتيب حسب نسبة الشكاوى"
+                  className="py-3 px-4 text-center cursor-pointer hover:bg-[#4d7031] transition-colors w-28"
+                  title="ترتيب حسب نسبة الشكاوى في الخدمة"
                 >
                   <div className="flex items-center justify-center gap-1 font-black text-sm">
-                    <span>%</span>
+                    <span>% نسبة المشاكل</span>
                     <ArrowUpDown className="w-3 h-3 opacity-80" />
                   </div>
                 </th>
-                <th className="py-3 px-4 font-black text-sm">نوع الخدمة</th>
                 <th className="py-3 px-3 text-center w-20">التفاصيل</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-slate-200">
               {displayedByService.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-500">
+                  <td colSpan={9} className="py-12 text-center text-slate-500">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <CheckCircle2 className="w-8 h-8 text-emerald-400/60" />
                       <p className="text-sm font-bold text-slate-300">
@@ -715,8 +811,23 @@ export const TechnicianComplaintsTable: React.FC<TechnicianComplaintsTableProps>
                         </span>
                       </td>
 
+                      <td className="py-3 px-4 font-bold text-slate-200">
+                        <span className="px-2.5 py-1 rounded-lg bg-[#5a823b]/15 text-[#a1d66c] border border-[#5a823b]/30 inline-block font-sans">
+                          {item.serviceType}
+                        </span>
+                      </td>
+
                       <td className="py-3 px-4 text-center font-bold text-white text-sm">
-                        <span className="font-mono">{item.totalOperations}</span>
+                        <span className="font-mono px-2 py-0.5 rounded bg-slate-800 text-cyan-300">
+                          {item.totalOperations} مرة
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4 text-center">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono font-bold text-xs">
+                          <CheckCircle2 className="w-3 h-3" />
+                          {item.cleanCount} صح
+                        </span>
                       </td>
 
                       <td className="py-3 px-4 text-center">
@@ -726,20 +837,14 @@ export const TechnicianComplaintsTable: React.FC<TechnicianComplaintsTableProps>
                       </td>
 
                       <td className="py-3 px-4 text-center font-black">
-                        <span className={`inline-block px-2 py-0.5 rounded-lg text-xs font-mono font-black ${
+                        <span className={`inline-block px-2.5 py-0.5 rounded-lg text-xs font-mono font-black ${
                           isHighRisk 
                             ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
                             : isMediumRisk
                               ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                               : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
                         }`}>
-                          {item.percentage}%
-                        </span>
-                      </td>
-
-                      <td className="py-3 px-4 font-bold text-slate-200">
-                        <span className="px-2.5 py-1 rounded-lg bg-[#5a823b]/15 text-[#a1d66c] border border-[#5a823b]/30 inline-block font-sans">
-                          {item.serviceType}
+                          %{item.percentage}
                         </span>
                       </td>
 
@@ -796,9 +901,12 @@ export const TechnicianComplaintsTable: React.FC<TechnicianComplaintsTableProps>
             {/* Modal Header */}
             <div className="p-5 border-b border-slate-800 bg-[#5a823b]/20 flex items-center justify-between">
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="px-2.5 py-0.5 rounded-full bg-rose-500/25 text-rose-300 border border-rose-500/40 text-xs font-bold">
                     {activeConsolidatedModal.complaintsCount} شكاوى إجمالية
+                  </span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
+                    {activeConsolidatedModal.cleanCount} عملية صحيحة (صح)
                   </span>
                   <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-cyan-300 font-bold">
                     {activeConsolidatedModal.totalOperations} إجمالي العمليات
@@ -806,7 +914,7 @@ export const TechnicianComplaintsTable: React.FC<TechnicianComplaintsTableProps>
                   <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold ${
                     activeConsolidatedModal.percentage >= 15 ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/20 text-amber-300'
                   }`}>
-                    معدل الشكاوى {activeConsolidatedModal.percentage}%
+                    معدل الشكاوى العام {activeConsolidatedModal.percentage}%
                   </span>
                 </div>
                 <h4 className="text-lg font-black text-white mt-1.5 flex items-center gap-2">
@@ -829,11 +937,42 @@ export const TechnicianComplaintsTable: React.FC<TechnicianComplaintsTableProps>
             {/* Modal Scrollable Body */}
             <div className="p-5 overflow-y-auto space-y-5 flex-1">
               
+              {/* Highlight Banner for Top Problem Service */}
+              {activeConsolidatedModal.topProblemService ? (
+                <div className="p-4 rounded-xl bg-rose-950/30 border border-rose-500/40 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-lg">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+                      <span className="text-xs font-black text-rose-300">الخدمة محل الشكوى الأبرز لهذا الفني:</span>
+                      <span className="px-2.5 py-0.5 rounded-lg bg-rose-500/30 text-rose-100 border border-rose-500/50 text-xs font-black">
+                        {activeConsolidatedModal.topProblemService.serviceType}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      قام الفني بتنفيذ خدمة <strong className="text-white">({activeConsolidatedModal.topProblemService.serviceType})</strong> إجمالي <strong className="text-cyan-300 font-mono">{activeConsolidatedModal.topProblemService.totalOperations} مرة</strong>، 
+                      منها <strong className="text-emerald-400 font-mono">{activeConsolidatedModal.topProblemService.cleanCount} عملية ناجحة (صح)</strong> 
+                      و <strong className="text-rose-400 font-mono">{activeConsolidatedModal.topProblemService.complaintsCount} عملية واجهت مشاكل أو شكاوى</strong>.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+                    <div className="text-center px-4 py-2 rounded-xl bg-slate-900 border border-rose-500/50 shadow-inner">
+                      <div className="text-[10px] text-slate-400 font-bold">نسبة المشاكل في هذه الخدمة</div>
+                      <div className="text-xl font-black text-rose-400 font-mono">%{activeConsolidatedModal.topProblemService.percentage}</div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-500/30 flex items-center gap-2.5 text-xs text-emerald-300">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                  <span>هذا الفني نفذ كافة عملياته بنسبة نجاح 100% دون تسجيل أي شكاوى ({activeConsolidatedModal.cleanCount} عملية صحيحة).</span>
+                </div>
+              )}
+
               {/* 1. Services Breakdown Sub-table */}
               <div className="space-y-2">
                 <h5 className="text-xs font-bold text-[#a1d66c] flex items-center gap-1.5">
                   <BarChart3 className="w-4 h-4" />
-                  <span>تحليل كافة الخدمات المنفذة بواسطة هذا الفني في الشيت:</span>
+                  <span>تحليل كافة الخدمات المنفذة بواسطة هذا الفني ومعدل المشاكل لكل خدمة:</span>
                 </h5>
 
                 <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-950/60">
@@ -841,47 +980,75 @@ export const TechnicianComplaintsTable: React.FC<TechnicianComplaintsTableProps>
                     <thead>
                       <tr className="bg-slate-900 text-slate-300 border-b border-slate-800 font-bold">
                         <th className="py-2.5 px-3">نوع الخدمة</th>
-                        <th className="py-2.5 px-3 text-center">العمليات المنفذة</th>
-                        <th className="py-2.5 px-3 text-center">عدد الشكاوى</th>
-                        <th className="py-2.5 px-3 text-center">% معدل الشكاوى</th>
-                        <th className="py-2.5 px-3 text-center">تقييم الأداء</th>
+                        <th className="py-2.5 px-3 text-center">مرات التنفيذ بالكامل</th>
+                        <th className="py-2.5 px-3 text-center">عمليات ناجحة (صح)</th>
+                        <th className="py-2.5 px-3 text-center">عمليات بها شكوى</th>
+                        <th className="py-2.5 px-3 text-center font-black text-rose-300">% نسبة المشاكل في الخدمة</th>
+                        <th className="py-2.5 px-3 text-center">شريط الأداء (صح مقابل شكوى)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/60">
                       {activeConsolidatedModal.services.map((srv, sIdx) => {
                         const hasComp = srv.complaintsCount > 0;
+                        const cleanPct = srv.totalOperations > 0 ? Math.round((srv.cleanCount / srv.totalOperations) * 100) : 100;
                         return (
-                          <tr key={sIdx} className={hasComp ? 'bg-rose-950/10' : ''}>
+                          <tr key={sIdx} className={hasComp ? 'bg-rose-950/15' : 'hover:bg-slate-900/40'}>
                             <td className="py-2.5 px-3 font-bold text-white">
-                              <span className="px-2 py-0.5 rounded bg-[#5a823b]/15 text-[#a1d66c] border border-[#5a823b]/30">
+                              <span className={`px-2.5 py-1 rounded-lg text-xs border inline-block ${
+                                hasComp 
+                                  ? 'bg-rose-950/50 text-rose-300 border-rose-500/40 font-black' 
+                                  : 'bg-[#5a823b]/15 text-[#a1d66c] border-[#5a823b]/30'
+                              }`}>
                                 {srv.serviceType}
                               </span>
                             </td>
-                            <td className="py-2.5 px-3 text-center font-mono font-bold text-slate-200">
-                              {srv.totalOperations}
+                            <td className="py-2.5 px-3 text-center font-mono font-bold text-cyan-300 text-xs">
+                              {srv.totalOperations} مرة
                             </td>
                             <td className="py-2.5 px-3 text-center">
-                              <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold ${
-                                hasComp ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'text-slate-500'
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                <CheckCircle2 className="w-3 h-3" />
+                                {srv.cleanCount} صح
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 text-center">
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold ${
+                                hasComp 
+                                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' 
+                                  : 'text-slate-500'
                               }`}>
-                                {srv.complaintsCount}
+                                {hasComp && <AlertTriangle className="w-3 h-3 text-rose-400" />}
+                                {srv.complaintsCount} {hasComp ? 'شكوى' : '-'}
                               </span>
                             </td>
-                            <td className="py-2.5 px-3 text-center font-mono font-bold">
-                              <span className={hasComp ? 'text-rose-400' : 'text-emerald-400'}>
-                                {srv.percentage}%
+                            <td className="py-2.5 px-3 text-center font-mono font-black">
+                              <span className={`px-2.5 py-1 rounded-lg text-xs inline-block ${
+                                hasComp ? 'bg-rose-500/25 text-rose-300 border border-rose-500/40' : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                              }`}>
+                                %{srv.percentage}
                               </span>
                             </td>
                             <td className="py-2.5 px-3 text-center">
-                              {hasComp ? (
-                                <span className="text-[10px] font-bold text-rose-300 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20">
-                                  يوجد شكاوى
-                                </span>
-                              ) : (
-                                <span className="text-[10px] font-bold text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-                                  ممتاز 0 شكوى
-                                </span>
-                              )}
+                              <div className="w-32 mx-auto space-y-1">
+                                <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden flex">
+                                  <div 
+                                    className="h-full bg-emerald-500 transition-all" 
+                                    style={{ width: `${cleanPct}%` }} 
+                                    title={`صح: ${cleanPct}%`}
+                                  />
+                                  {hasComp && (
+                                    <div 
+                                      className="h-full bg-rose-500 transition-all" 
+                                      style={{ width: `${srv.percentage}%` }} 
+                                      title={`شكاوى: ${srv.percentage}%`}
+                                    />
+                                  )}
+                                </div>
+                                <div className="flex justify-between text-[9px] font-mono text-slate-400 px-0.5">
+                                  <span className="text-emerald-400 font-bold">{cleanPct}% صح</span>
+                                  {hasComp && <span className="text-rose-400 font-bold">%{srv.percentage} شكوى</span>}
+                                </div>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -976,7 +1143,7 @@ export const TechnicianComplaintsTable: React.FC<TechnicianComplaintsTableProps>
             {/* Modal Footer */}
             <div className="p-4 border-t border-slate-800 bg-slate-900/50 flex justify-between items-center">
               <span className="text-xs text-slate-400">
-                إجمالي عمليات الفني في قاعدة البيانات: <strong className="text-white font-mono">{activeConsolidatedModal.totalOperations}</strong>
+                إجمالي عمليات الفني: <strong className="text-white font-mono">{activeConsolidatedModal.totalOperations}</strong> ({activeConsolidatedModal.cleanCount} صح)
               </span>
               <button
                 onClick={() => setActiveConsolidatedModal(null)}
@@ -998,15 +1165,21 @@ export const TechnicianComplaintsTable: React.FC<TechnicianComplaintsTableProps>
           <div className="relative w-full max-w-2xl rounded-2xl bg-[#111724] border border-slate-700 shadow-2xl overflow-hidden">
             <div className="p-5 border-b border-slate-800 bg-[#5a823b]/20 flex items-center justify-between">
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold">
                     {activeByServiceModal.complaintsCount} شكاوى
                   </span>
-                  <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-                    معدل الشكاوى {activeByServiceModal.percentage}%
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
+                    {activeByServiceModal.cleanCount} صح
+                  </span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-cyan-300 font-bold">
+                    {activeByServiceModal.totalOperations} مرات تنفيذ الخدمة
+                  </span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-rose-500/25 text-rose-200 font-black">
+                    معدل الشكاوى بالخدمة %{activeByServiceModal.percentage}
                   </span>
                 </div>
-                <h4 className="text-base font-black text-white mt-1">
+                <h4 className="text-base font-black text-white mt-1.5">
                   شكاوى الفني: {activeByServiceModal.technician}
                 </h4>
                 <p className="text-xs text-slate-300 mt-0.5">
