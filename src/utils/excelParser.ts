@@ -8,6 +8,7 @@ export interface ParseResult {
   totalRows: number;
   detectedColumns: string[];
   detectedDate?: string;
+  sampleRows: { customerName: string; branch: string; callStatus: string; satisfaction: string; phone: string }[];
   warnings: string[];
   stats: {
     answered: number;
@@ -119,23 +120,6 @@ const COLUMN_ALIASES = {
 };
 
 /**
- * Checks if a cell title matches any alias in the category
- */
-function matchesAlias(cellText: string, candidates: string[]): boolean {
-  const normCell = normalizeArabic(cellText).toLowerCase().trim();
-  if (!normCell) return false;
-
-  for (const candidate of candidates) {
-    const normCand = normalizeArabic(candidate).toLowerCase().trim();
-    if (normCell === normCand) return true;
-    if (normCell.includes(normCand) || normCand.includes(normCell)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
  * Parses date values into ISO string YYYY-MM-DD
  */
 export function parseDateValue(val: any, defaultDate: string): string {
@@ -208,7 +192,7 @@ function extractDateFromFileName(fileName: string): string | null {
 
 /**
  * Parses an Excel file (.xlsx, .xls) buffer into SurveyRecord objects
- * with dynamic header row detection and high resilience
+ * with dynamic header row detection, two-pass mapping, and content validation
  */
 export function parseExcelFile(
   data: ArrayBuffer, 
@@ -236,12 +220,13 @@ export function parseExcelFile(
       totalRows: 0,
       detectedColumns: [],
       detectedDate: fallbackDate,
+      sampleRows: [],
       warnings: ['الملف فارغ أو لا يحتوي على صفوف بيانات صالحة'],
       stats: { answered: 0, noAnswer: 0, switchedOff: 0, pending: 0, satisfied: 0, unsatisfied: 0 },
     };
   }
 
-  // 1. Dynamic Header Row Detection: scan first 10 rows to find row with most recognized column headers
+  // 1. Dynamic Header Row Detection: scan first 10 rows
   let headerRowIndex = 0;
   let maxMatchedCols = 0;
   const scanLimit = Math.min(rawRows.length, 10);
@@ -252,11 +237,11 @@ export function parseExcelFile(
 
     let matchedCols = 0;
     for (const cell of row) {
-      const strCell = String(cell || '').trim();
+      const strCell = normalizeArabic(String(cell || '')).toLowerCase().trim();
       if (!strCell) continue;
 
       for (const aliases of Object.values(COLUMN_ALIASES)) {
-        if (matchesAlias(strCell, aliases)) {
+        if (aliases.some(a => normalizeArabic(a).toLowerCase().trim() === strCell)) {
           matchedCols++;
           break;
         }
@@ -271,6 +256,8 @@ export function parseExcelFile(
 
   const headerRow = rawRows[headerRowIndex].map((h: any) => String(h || '').trim());
   const detectedColumns = headerRow.filter(h => h.length > 0);
+  const dataRows = rawRows.slice(headerRowIndex + 1);
+  const sampleScanRows = dataRows.slice(0, Math.min(dataRows.length, 40));
 
   // Map each column category to its column index
   const colIndexMap: { [key in keyof typeof COLUMN_ALIASES]?: number } = {};
@@ -288,47 +275,87 @@ export function parseExcelFile(
     }
   }
 
-  // Match columns with category priority
-  const categoryPriority: (keyof typeof COLUMN_ALIASES)[] = [
-    'satisfaction',
-    'callStatus',
+  // PASS 1: EXACT MATCHES ONLY (Strict 1-to-1 matching)
+  // This guarantees that "العميل" matches customerName, "الفرع" matches branch, "ملاحظات" matches customerNotes!
+  const categoryOrder: (keyof typeof COLUMN_ALIASES)[] = [
+    'customerName',
     'branch',
-    'date',
+    'phone',
+    'callStatus',
+    'satisfaction',
     'agent',
     'technician',
     'salesperson',
     'customerNotes',
     'branchNotes',
-    'phone',
-    'customerName',
+    'date',
     'product',
   ];
 
-  for (const category of categoryPriority) {
+  for (const category of categoryOrder) {
+    if (colIndexMap[category] !== undefined) continue;
     const aliases = COLUMN_ALIASES[category];
     for (let c = 0; c < headerRow.length; c++) {
-      // Don't overwrite already claimed column
       if (Object.values(colIndexMap).includes(c)) continue;
-
-      const headerCell = headerRow[c];
-      if (matchesAlias(headerCell, aliases)) {
+      const h = normalizeArabic(headerRow[c]).toLowerCase().trim();
+      const hasExact = aliases.some(a => normalizeArabic(a).toLowerCase().trim() === h);
+      if (hasExact) {
         colIndexMap[category] = c;
         break;
       }
     }
   }
 
-  // 2. Intelligent Content-Based Fallback Detection
-  // If satisfaction or callStatus or date were NOT detected by headers, scan data rows!
-  const dataRows = rawRows.slice(headerRowIndex + 1);
-  const sampleScanRows = dataRows.slice(0, Math.min(dataRows.length, 30));
+  // PASS 2: PHRASE / SUBSTRING MATCHES FOR REMAINING COLUMNS
+  // Only allowed when the Excel cell header is longer and contains the candidate phrase!
+  for (const category of categoryOrder) {
+    if (colIndexMap[category] !== undefined) continue;
+    const aliases = COLUMN_ALIASES[category];
+    for (let c = 0; c < headerRow.length; c++) {
+      if (Object.values(colIndexMap).includes(c)) continue;
+      const h = normalizeArabic(headerRow[c]).toLowerCase().trim();
+      for (const a of aliases) {
+        const normCand = normalizeArabic(a).toLowerCase().trim();
+        // ONLY if Excel cell header is longer than alias (e.g. "حالة التواصل (تم الرد / لم يتم الرد)" contains "حالة التواصل")
+        // NEVER if alias is longer than cell header!
+        if (h.length > normCand.length && normCand.length >= 3 && h.includes(normCand)) {
+          colIndexMap[category] = c;
+          break;
+        }
+      }
+      if (colIndexMap[category] !== undefined) break;
+    }
+  }
 
-  if (colIndexMap.satisfaction === undefined && !satisfiedCheckCol) {
+  // 2. Intelligent Content-Based Verification & Fallback Detection
+  // Check if satisfaction column is valid or if another column has real satisfaction words
+  let isSatisfactionValid = false;
+  if (colIndexMap.satisfaction !== undefined) {
+    let satHits = 0;
+    for (const row of sampleScanRows) {
+      const val = normalizeArabic(String(row[colIndexMap.satisfaction] || '')).toLowerCase();
+      if (
+        val.includes('راض') || val.includes('ممتاز') || val.includes('جيد') || 
+        val.includes('سعيد') || val.includes('شكوى') || val.includes('شكوي') || 
+        val.includes('مستاء') || val.includes('سيء') || val.includes('سئ')
+      ) {
+        satHits++;
+      }
+    }
+    if (satHits >= 2) {
+      isSatisfactionValid = true;
+    }
+  }
+
+  // If satisfaction is invalid (or points to customer name), search all columns for the real one!
+  if (!isSatisfactionValid && !satisfiedCheckCol) {
     let bestCol = -1;
     let maxSatHits = 0;
 
     for (let c = 0; c < headerRow.length; c++) {
-      if (Object.values(colIndexMap).includes(c)) continue;
+      // Skip columns known to be name, phone, or branch
+      if (c === colIndexMap.customerName || c === colIndexMap.phone || c === colIndexMap.branch) continue;
+
       let hits = 0;
       for (const row of sampleScanRows) {
         const val = normalizeArabic(String(row[c] || '')).toLowerCase();
@@ -355,12 +382,13 @@ export function parseExcelFile(
     }
   }
 
+  // Content-based fallback for Call Status if missing
   if (colIndexMap.callStatus === undefined) {
     let bestCol = -1;
     let maxCallHits = 0;
 
     for (let c = 0; c < headerRow.length; c++) {
-      if (Object.values(colIndexMap).includes(c)) continue;
+      if (c === colIndexMap.customerName || c === colIndexMap.phone || c === colIndexMap.branch || c === colIndexMap.satisfaction) continue;
       let hits = 0;
       for (const row of sampleScanRows) {
         const val = normalizeArabic(String(row[c] || '')).toLowerCase();
@@ -386,6 +414,23 @@ export function parseExcelFile(
     }
   }
 
+  // Content-based fallback for Phone Number if missing
+  if (colIndexMap.phone === undefined) {
+    for (let c = 0; c < headerRow.length; c++) {
+      if (Object.values(colIndexMap).includes(c)) continue;
+      let phoneHits = 0;
+      for (const row of sampleScanRows) {
+        const str = String(row[c] || '').replace(/[\s\-\+]/g, '');
+        if (/^\d{9,14}$/.test(str)) phoneHits++;
+      }
+      if (phoneHits >= 3) {
+        colIndexMap.phone = c;
+        break;
+      }
+    }
+  }
+
+  // Content-based fallback for Date if missing
   if (colIndexMap.date === undefined) {
     for (let c = 0; c < headerRow.length; c++) {
       if (Object.values(colIndexMap).includes(c)) continue;
@@ -519,12 +564,22 @@ export function parseExcelFile(
     });
   }
 
+  // Create sample extracted preview (first 3 valid records)
+  const sampleRows = records.slice(0, 3).map(r => ({
+    customerName: r.customerName,
+    branch: r.branch,
+    callStatus: r.callStatus || 'تم الرد',
+    satisfaction: r.satisfaction || 'بدون تقييم',
+    phone: r.phone || '-',
+  }));
+
   return {
     records,
     fileName,
     totalRows: records.length,
     detectedColumns,
     detectedDate: fallbackDate,
+    sampleRows,
     warnings,
     stats,
   };

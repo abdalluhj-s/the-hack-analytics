@@ -233,6 +233,51 @@ export const ExcelUploaderModal: React.FC<ExcelUploaderModalProps> = ({
                 </div>
               </div>
 
+              {/* Sample Rows Verification Table */}
+              {parseResult.sampleRows && parseResult.sampleRows.length > 0 && (
+                <div className="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800 space-y-1.5">
+                  <div className="text-[11px] font-bold text-amber-300 flex items-center justify-between">
+                    <span>معاينة دقة استخراج الأعمدة (تأكيد فصل الاسم عن التقييم):</span>
+                    <span className="text-[10px] text-slate-400">عينة من أول صفوف</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-[11px] text-right">
+                      <thead>
+                        <tr className="text-slate-400 border-b border-slate-800">
+                          <th className="pb-1 font-semibold">اسم العميل</th>
+                          <th className="pb-1 font-semibold">الفرع</th>
+                          <th className="pb-1 font-semibold">حالة التواصل</th>
+                          <th className="pb-1 font-semibold">تقييم العميل</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60 font-medium">
+                        {parseResult.sampleRows.map((sr, i) => (
+                          <tr key={i} className="text-slate-200">
+                            <td className="py-1 text-white font-bold">{sr.customerName}</td>
+                            <td className="py-1 text-slate-300">{sr.branch}</td>
+                            <td className="py-1">
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                sr.callStatus.includes('تم') ? 'bg-cyan-500/20 text-cyan-300' : 'bg-slate-800 text-slate-400'
+                              }`}>
+                                {sr.callStatus}
+                              </span>
+                            </td>
+                            <td className="py-1">
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                sr.satisfaction.includes('غير') ? 'bg-rose-500/20 text-rose-300' :
+                                sr.satisfaction.includes('راض') ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-400'
+                              }`}>
+                                {sr.satisfaction}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
               {parseResult.warnings.length > 0 && (
                 <div className="p-2 rounded bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300 space-y-1">
                   {parseResult.warnings.map((w, i) => (

@@ -39,12 +39,16 @@ export const BranchCSATChart: React.FC<BranchCSATChartProps> = ({ branchPerforma
 
   // 1. Data configuration for CSAT Mode
   const csatValues = sorted.map((b) => b.csat);
-  const csatBackgrounds = csatValues.map((val) => {
+  const csatBackgrounds = csatValues.map((val, idx) => {
+    const b = sorted[idx];
+    if (b.satisfied + b.unsatisfied === 0) return 'rgba(100, 116, 139, 0.35)'; // Neutral slate for unrated
     if (val >= 85) return 'rgba(16, 185, 129, 0.85)'; // Emerald
     if (val >= 70) return 'rgba(245, 158, 11, 0.85)'; // Amber
     return 'rgba(239, 68, 68, 0.85)'; // Red
   });
-  const csatBorders = csatValues.map((val) => {
+  const csatBorders = csatValues.map((val, idx) => {
+    const b = sorted[idx];
+    if (b.satisfied + b.unsatisfied === 0) return '#64748b';
     if (val >= 85) return '#10b981';
     if (val >= 70) return '#f59e0b';
     return '#ef4444';
@@ -282,8 +286,11 @@ export const BranchCSATChart: React.FC<BranchCSATChartProps> = ({ branchPerforma
           </span>
           <div className="flex items-center flex-wrap gap-1.5">
             {sorted.map((b) => {
+              const hasRatings = b.satisfied + b.unsatisfied > 0;
               const badgeColor =
-                b.csat >= 85
+                !hasRatings
+                  ? 'border-slate-700/80 text-slate-300 bg-slate-850 hover:bg-slate-800'
+                  : b.csat >= 85
                   ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20'
                   : b.csat >= 70
                   ? 'border-amber-500/30 text-amber-400 bg-amber-500/10 hover:bg-amber-500/20'
@@ -292,10 +299,13 @@ export const BranchCSATChart: React.FC<BranchCSATChartProps> = ({ branchPerforma
                 <button
                   key={b.branch}
                   onClick={() => onClickBranch(b.branch)}
-                  className={`px-2 py-1 rounded-lg border text-[11px] font-bold transition-all active:scale-95 flex items-center gap-1 ${badgeColor}`}
+                  className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all active:scale-95 flex items-center gap-1.5 ${badgeColor}`}
+                  title={`${b.branch}: إجمالي ${b.totalWorkload} مكالمة (${b.answered} مجابة, ${b.satisfied} راضي, ${b.unsatisfied} شكاوى)`}
                 >
                   <span>{b.branch}</span>
-                  <span className="opacity-75 font-mono">({b.csat}%)</span>
+                  <span className="opacity-80 font-mono text-[10px]">
+                    {hasRatings ? `(${b.csat}% • ${b.totalWorkload} مكالمة)` : `(${b.totalWorkload} مكالمة)`}
+                  </span>
                 </button>
               );
             })}
