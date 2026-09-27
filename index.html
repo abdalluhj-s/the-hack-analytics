@@ -1,30 +1,2084 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
-    <link rel="manifest" href="./manifest.json" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Hack - بوابة تحليلات الجودة ورضا العملاء</title>
+
+  <!-- Google Fonts: Cairo & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Cairo', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- SheetJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      background-color: #0b0f19;
+      color: #f1f5f9;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.4);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.7);
+    }
+    .modal-backdrop-blur {
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .tile-glow:hover {
+      box-shadow: 0 10px 30px -5px rgba(99, 102, 241, 0.25);
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printableReportArea, #printableReportArea * {
+        visibility: visible;
+      }
+      #printableReportArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        color: #000;
+        background: #fff;
+        padding: 20px;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+
+  <script>
+    // Ensure all stale service workers and caches are purged
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (const r of registrations) r.unregister();
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
+  </script>
+</head>
+
+<body class="min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white">
+
+  <!-- Minimal Header -->
+  <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center gap-3.5">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 via-indigo-600 to-cyan-500 flex items-center justify-center text-white shadow-xl shadow-brand-500/20 text-xl font-black">
+          <i class="fa-solid fa-shapes"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2.5">
+            <h1 class="text-2xl font-black tracking-tight text-white">The Hack</h1>
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-950/80 text-emerald-400 border border-emerald-800/60">
+              بوابة التحليلات الرسمية
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">لوحة تحكم إدارية تفاعلية مقسمة لوحدات مستقلة وسلسة</p>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="flex items-center gap-3">
+        <button onclick="openModal('modalSurveyLogger')" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-brand-600/30 transition-all">
+          <i class="fa-solid fa-plus"></i>
+          <span>تسجيل استبيان جديد</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Clean Content Area -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-8">
     
-    <!-- PWA & Mobile Web App Meta Tags -->
-    <meta name="theme-color" content="#f59e0b" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="The Hack" />
-    <meta name="application-name" content="The Hack" />
-    <meta name="description" content="منظومة تحليلات استبيانات ومكالمات رضا عملاء مراكز صيانة السيارات" />
+    <!-- Top Row: Upload File & Active Stats Strip -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+      
+      <!-- Drag & Drop Excel Box -->
+      <div class="lg:col-span-8 relative border-2 border-dashed border-slate-700 hover:border-brand-500/70 rounded-3xl p-6 bg-slate-900/40 hover:bg-slate-900/70 transition-all flex flex-col sm:flex-row items-center justify-between gap-5 group">
+        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+        
+        <div class="flex items-center gap-4 pointer-events-none">
+          <div class="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-brand-400 flex items-center justify-center text-3xl group-hover:scale-105 transition-transform shrink-0">
+            <i class="fa-solid fa-file-excel"></i>
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <span>رفع شيت إكسيل جديد</span>
+              <span class="text-[11px] font-normal px-2 py-0.5 rounded-md bg-slate-800 text-slate-300">.xlsx / .xls / .csv</span>
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">اسحب الشيت هنا لتحليله فورياً وتوليد الإسطمبة الرسمية والتحليلات آلياً</p>
+          </div>
+        </div>
 
-    <title>The Hack - بوابة تحليلات الجودة ورضا العملاء</title>
+        <div class="flex items-center gap-2 shrink-0 z-20">
+          <button onclick="loadDefaultData()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5 transition-all">
+            <i class="fa-solid fa-rotate text-emerald-400"></i>
+            <span>إعادة تعيين البيانات الافتراضية</span>
+          </button>
+        </div>
+      </div>
 
-    <!-- Google Fonts: Cairo -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  </head>
-  <body class="font-sans antialiased min-h-screen selection:bg-amber-500 selection:text-black transition-colors duration-200">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+      <!-- Quick Snapshot Info Card -->
+      <div class="lg:col-span-4 border border-slate-800 rounded-3xl p-5 bg-slate-900/50 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">حالة الشيت المحمّل</span>
+          <span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-400">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            جاهز للتحليل
+          </span>
+        </div>
+        
+        <div class="my-3">
+          <div class="text-base font-black text-white truncate" id="hubFileName">SUR 25-5-2026 Morgan.xlsx</div>
+          <div class="text-xs text-slate-400 mt-1 font-mono" id="hubFileMeta">271 عميل | 12 فرع مسجل</div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-800 text-xs">
+          <div>
+            <span class="text-slate-500 block text-[10px]">معدل الرد</span>
+            <span class="font-bold text-emerald-400 text-sm" id="hubResponseRate">47.1%</span>
+          </div>
+          <div>
+            <span class="text-slate-500 block text-[10px]">نسبة الرضا (CSAT)</span>
+            <span class="font-bold text-indigo-400 text-sm" id="hubCsatRate">82.5%</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Section Heading -->
+    <div class="flex items-center justify-between pt-2">
+      <div>
+        <h2 class="text-xl font-black text-white">وحدات التحليل والتقارير الإدارية</h2>
+        <p class="text-xs text-slate-400 mt-0.5">انقر على أي وحدة لفتح التقرير التفصيلي الخاص بها في نافذة كاملة</p>
+      </div>
+      <span class="text-xs text-slate-500 font-mono">5 بوابات متخصصة</span>
+    </div>
+
+    <!-- Grid of Executive Buttons / Tiles -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- TILE 1: Executive Standard Report (The Requested Template) -->
+      <div onclick="openModal('modalExecutiveReport')" class="group relative bg-gradient-to-b from-slate-900/90 to-slate-900/40 border border-indigo-500/30 hover:border-indigo-500 rounded-3xl p-6 cursor-pointer transition-all duration-300 tile-glow flex flex-col justify-between overflow-hidden">
+        <div class="absolute -top-12 -left-12 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-indigo-500/20 transition-all"></div>
+        
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-14 h-14 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-file-invoice"></i>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-indigo-950 text-indigo-300 border border-indigo-800">
+              الإسطمبة الرسمية
+            </span>
+          </div>
+          
+          <h3 class="text-lg font-black text-white group-hover:text-indigo-300 transition-colors">
+            التقرير الأسبوعي الرسمي (الموحد)
+          </h3>
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+            التقرير الإداري الكامل بالـ 4 أقسام المعتمدة: إجمالي مكالمات الفروع، نسب الاستبيان، الشكاوى والخدمات، وجدول الفنيين مع خياري النسخ والطباعة.
+          </p>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-indigo-400">
+          <span>فتح التقرير الإداري</span>
+          <i class="fa-solid fa-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
+        </div>
+      </div>
+
+      <!-- TILE 2: Branch Analytics Hub -->
+      <div onclick="openModal('modalBranchHub')" class="group relative bg-gradient-to-b from-slate-900/90 to-slate-900/40 border border-slate-800 hover:border-emerald-500/60 rounded-3xl p-6 cursor-pointer transition-all duration-300 tile-glow flex flex-col justify-between overflow-hidden">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-code-branch"></i>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300" id="badgeTotalBranches">
+              12 فرع
+            </span>
+          </div>
+          
+          <h3 class="text-lg font-black text-white group-hover:text-emerald-300 transition-colors">
+            تحليل ومقارنة أداء الفروع
+          </h3>
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+            مقارنة الفروع حسب نسبة الرضا (CSAT)، معدل استجابة العملاء، وفحص تفاصيل كل فرع والخدمات المنفذة داخله (زوايا، استعدال، ترصيص).
+          </p>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-emerald-400">
+          <span>استعراض الفروع</span>
+          <i class="fa-solid fa-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
+        </div>
+      </div>
+
+      <!-- TILE 3: Technicians & Quality -->
+      <div onclick="openModal('modalTechHub')" class="group relative bg-gradient-to-b from-slate-900/90 to-slate-900/40 border border-slate-800 hover:border-amber-500/60 rounded-3xl p-6 cursor-pointer transition-all duration-300 tile-glow flex flex-col justify-between overflow-hidden">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-14 h-14 rounded-2xl bg-amber-600/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-wrench"></i>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-950/80 text-amber-400 border border-amber-800/60">
+              تقييم الجودة
+            </span>
+          </div>
+          
+          <h3 class="text-lg font-black text-white group-hover:text-amber-300 transition-colors">
+            تحليل أداء الفنيين والجودة
+          </h3>
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+            جدول أداء الفنيين في كل الفروع، حصر عدد العمليات ونسبة الشكاوى الموجهة لكل فني لاكتشاف فرص التطوير والتدريب.
+          </p>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-amber-400">
+          <span>كشف حساب الفنيين</span>
+          <i class="fa-solid fa-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
+        </div>
+      </div>
+
+      <!-- TILE 4: Complaints & Escalation Desk -->
+      <div onclick="openModal('modalComplaintsHub')" class="group relative bg-gradient-to-b from-slate-900/90 to-slate-900/40 border border-rose-900/40 hover:border-rose-500 rounded-3xl p-6 cursor-pointer transition-all duration-300 tile-glow flex flex-col justify-between overflow-hidden">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-14 h-14 rounded-2xl bg-rose-600/15 border border-rose-500/30 text-rose-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-950 text-rose-400 border border-rose-800 animate-pulse" id="tileComplaintsCount">
+              7 شكاوى عاجلة
+            </span>
+          </div>
+          
+          <h3 class="text-lg font-black text-white group-hover:text-rose-300 transition-colors">
+            مكتب متابعة الشكاوى الفورية
+          </h3>
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+            حصر العملاء غير الراضين، نص المشكلة الفنية (حدفة، اهتزاز الطارة، مقصات)، أرقام التواصل، وتحديث حالة المعالجة بضغطة زر.
+          </p>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-rose-400">
+          <span>معالجة الشكاوى</span>
+          <i class="fa-solid fa-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
+        </div>
+      </div>
+
+      <!-- TILE 5: Data Explorer & Log -->
+      <div onclick="openModal('modalDataExplorer')" class="group relative bg-gradient-to-b from-slate-900/90 to-slate-900/40 border border-slate-800 hover:border-cyan-500/60 rounded-3xl p-6 cursor-pointer transition-all duration-300 tile-glow flex flex-col justify-between overflow-hidden">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-14 h-14 rounded-2xl bg-cyan-600/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-database"></i>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300" id="tileTotalRows">
+              271 سجل
+            </span>
+          </div>
+          
+          <h3 class="text-lg font-black text-white group-hover:text-cyan-300 transition-colors">
+            مستكشف البيانات والتعديل
+          </h3>
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+            الجدول الكامل لكافة المكالمات (تم الرد، لم يتم الرد، ممتنع، قيد الانتظار) مع فلاتر ذكية وإمكانية تعديل أي سجل أو تصديره.
+          </p>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-cyan-400">
+          <span>فتح مستكشف البيانات</span>
+          <i class="fa-solid fa-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
+        </div>
+      </div>
+
+      <!-- TILE 6: Quick Survey Quick Add Tile -->
+      <div onclick="openModal('modalSurveyLogger')" class="group relative bg-gradient-to-b from-slate-900/90 to-slate-900/40 border border-slate-800 hover:border-indigo-400 rounded-3xl p-6 cursor-pointer transition-all duration-300 tile-glow flex flex-col justify-between overflow-hidden">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-700 text-indigo-300 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-headset"></i>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300">
+              إدخال مباشر
+            </span>
+          </div>
+          
+          <h3 class="text-lg font-black text-white group-hover:text-indigo-300 transition-colors">
+            تسجيل وتحديث نتيجة مكالمة
+          </h3>
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+            نافذة مخصصة لمسؤول الاستبيان لإدخال نتائج مكالمة عميل جديد أو تحديث عميل كان قيد الانتظار لحفظ البيانات فورياً.
+          </p>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-slate-300">
+          <span>تسجيل استبيان الآن</span>
+          <i class="fa-solid fa-plus text-xs group-hover:rotate-90 transition-transform"></i>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-900 py-6 text-center text-xs text-slate-500">
+    <p>The Hack © 2026 - نظام تحليل الجودة واستقصاء رضا العملاء المعتمد للفروع</p>
+  </footer>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 1: THE EXECUTIVE WEEKLY REPORT (EXACT TEMPLATE REQUESTED)           -->
+  <!-- ========================================================================= -->
+  <div id="modalExecutiveReport" class="fixed inset-0 z-50 bg-black/80 modal-backdrop-blur hidden flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+      
+      <!-- Modal Top Bar -->
+      <div class="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/70">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-file-invoice"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-white">التقرير الأسبوعي الرسمي (Executive Report)</h3>
+            <p class="text-xs text-slate-400">الإسطمبة الرسمية المحسوبة تلقائياً من بيانات الشيت الحالي</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="copyReportText()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 flex items-center gap-1.5 transition-all">
+            <i class="fa-regular fa-copy text-indigo-400"></i>
+            <span>نسخ التقرير كنص (للواتساب/الوورد)</span>
+          </button>
+          <button onclick="printExecutiveReport()" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all">
+            <i class="fa-solid fa-print"></i>
+            <span>طباعة / PDF</span>
+          </button>
+          <button onclick="closeModal('modalExecutiveReport')" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center mr-1">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Printable / Viewable Report Body -->
+      <div class="p-6 sm:p-8 overflow-y-auto space-y-8 bg-slate-900 text-slate-100 text-xs sm:text-sm leading-relaxed" id="printableReportArea">
+        
+        <!-- Report Header -->
+        <div class="text-center pb-4 border-b border-slate-800 space-y-1">
+          <h2 class="text-xl sm:text-2xl font-black text-white" id="repMainHeaderTitle">ملخص التقرير الأسبوعى عن الفترة الحالية</h2>
+          <p class="text-xs text-slate-400 font-medium" id="repSubHeaderDate">إدارة الجودة وخدمة العملاء - الإدارة العامة للفروع</p>
+        </div>
+
+        <!-- أولاً: اجمالي عدد مكالمات العملاء لكل فرع -->
+        <div class="space-y-3">
+          <h3 class="text-base sm:text-lg font-black text-indigo-300 flex items-center gap-2">
+            <span>اولا: اجمالي عدد مكالمات العملاء لكل فرع.</span>
+          </h3>
+
+          
+        <!-- Technician Filters & Search -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
+          <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+            <span class="text-xs text-slate-400 font-semibold ml-1">عرض:</span>
+            <button id="btnTechFilterAll" onclick="setTechFilter('all')" class="px-3 py-1 rounded-xl text-xs font-bold transition-all bg-amber-500/20 text-amber-300 border border-amber-500/40">
+              جميع الفنيين
+            </button>
+            <button id="btnTechFilterComplaints" onclick="setTechFilter('complaints')" class="px-3 py-1 rounded-xl text-xs font-bold transition-all bg-slate-800 text-slate-400 hover:text-white border border-slate-700">
+              <i class="fa-solid fa-triangle-exclamation text-rose-400 ml-1"></i> فنيين لديهم شكاوى فقط
+            </button>
+            <button id="btnTechFilterSortPct" onclick="setTechFilter('sortPct')" class="px-3 py-1 rounded-xl text-xs font-bold transition-all bg-slate-800 text-slate-400 hover:text-white border border-slate-700">
+              الأعلى في نسبة الشكاوى
+            </button>
+            <button id="btnTechFilterSortOps" onclick="setTechFilter('sortOps')" class="px-3 py-1 rounded-xl text-xs font-bold transition-all bg-slate-800 text-slate-400 hover:text-white border border-slate-700">
+              الأكثر عمليات
+            </button>
+          </div>
+          <div class="w-full sm:w-64">
+            <input type="text" id="techSearchInput" oninput="buildTechHub()" placeholder="بحث باسم الفني أو الفرع..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-amber-500" />
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-2xl border border-slate-800">
+            <table class="w-full text-right border-collapse">
+              <thead class="bg-slate-950 text-slate-300 font-bold border-b border-slate-800">
+                <tr>
+                  <th class="p-3">الفرع</th>
+                  <th class="p-3 text-center">عدد العملاء</th>
+                  <th class="p-3 text-center">ترصيص</th>
+                  <th class="p-3 text-center">استعدال</th>
+                  <th class="p-3 text-center">ضبط زوايا</th>
+                </tr>
+              </thead>
+              <tbody id="repTableBranchBody" class="divide-y divide-slate-800/80 font-medium">
+                <!-- Injected via JS -->
+              </tbody>
+              <tfoot id="repTableBranchFoot" class="bg-indigo-950/40 text-indigo-200 font-black border-t-2 border-slate-700">
+                <!-- Injected via JS -->
+              </tfoot>
+            </table>
+          </div>
+          <p class="font-bold text-slate-300 text-xs" id="repTotalClientsLine">إجمالي جميع العملاء: 0 عميل</p>
+        </div>
+
+        <!-- ثانياً: الاستبيان -->
+        <div class="space-y-4 pt-4 border-t border-slate-800">
+          <h3 class="text-base sm:text-lg font-black text-indigo-300">
+            ثانياً: الاستبيان.
+          </h3>
+
+          <div class="space-y-1.5 font-medium text-slate-200">
+            <p>إجمالي عدد مكالمات العملاء: <span class="font-bold text-white" id="repTotalCalls">0</span> عميل</p>
+            <p>إجمالي العملاء تم الرد : <span class="font-bold text-emerald-400" id="repCountAnswered">0</span> عميل</p>
+            <p>إجمالي العملاء لم يتم الرد: <span class="font-bold text-amber-400" id="repCountNoAnswer">0</span> عميل</p>
+            <p>إجمالي العملاء ممتنع : <span class="font-bold text-purple-400" id="repCountRefused">0</span> عميل</p>
+            <p>إجمالي العملاء مغلق او غير متاح : <span class="font-bold text-pink-400" id="repCountOff">0</span> عميل</p>
+            <p>إجمالي العملاء الرقم غلط: <span class="font-bold text-slate-400" id="repCountWrongNumber">0</span> عميل</p>
+            <p class="text-slate-400 text-xs" id="repCountPending">إجمالي قيد الانتظار (لم يُتصل بهم بعد): 0 عميل</p>
+          </div>
+
+          <div class="pt-2">
+            <p class="font-bold text-slate-200 mb-1">📞 نسبة التواصل:-</p>
+            <div class="space-y-1 font-medium text-slate-300 mr-2">
+              <p>نسبة الرد ≈ <span class="font-black text-emerald-400" id="repPctAnswered">0</span> %</p>
+              <p>نسبة عدم الرد ≈ <span class="font-black text-amber-400" id="repPctNoAnswer">0</span> %</p>
+              <p>نسبة الممتنع ≈ <span class="font-black text-purple-400" id="repPctRefused">0</span> %</p>
+              <p>نسبة مغلق أو غير متاح ≈ <span class="font-black text-pink-400" id="repPctOff">0</span> %</p>
+              <p>نسبة الرقم غلط ≈ <span class="font-black text-slate-400" id="repPctWrongNumber">0</span> %</p>
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <p class="font-bold text-slate-200 mb-1">مستوى رضا العملاء و الآراء:-</p>
+            <div class="space-y-1 font-medium text-slate-300 mr-2">
+              <p>عدد العملاء الراضين: <span class="font-black text-emerald-400" id="repCountSatisfied">0</span> عميل</p>
+              <p>عدد غير الراضين: <span class="font-black text-rose-400" id="repCountUnsatisfied">0</span> عميل</p>
+            </div>
+          </div>
+
+          <div class="pt-2 bg-indigo-950/20 border border-indigo-900/40 rounded-2xl p-4">
+            <p class="font-bold text-indigo-200 mb-1">نسبة الرضا:-</p>
+            <p class="text-sm font-bold text-slate-200">
+              نسبة العملاء الراضين نسبةً إلى عدد الاتصالات التي تم الرد عليها ≈ <span class="text-lg font-black text-indigo-400" id="repFinalCsatPct">0</span>%
+            </p>
+          </div>
+        </div>
+
+        <!-- ثالثاً: الفروع والشكاوى -->
+        <div class="space-y-3 pt-4 border-t border-slate-800">
+          <h3 class="text-base sm:text-lg font-black text-indigo-300">
+            ثالثاً: الفروع والشكاوى:
+          </h3>
+
+          <div class="overflow-x-auto rounded-2xl border border-slate-800">
+            <table class="w-full text-right border-collapse">
+              <thead class="bg-slate-950 text-slate-300 font-bold border-b border-slate-800">
+                <tr>
+                  <th class="p-3">الفرع</th>
+                  <th class="p-3 text-center">عدد الشكاوى</th>
+                  <th class="p-3 text-center">ضبط زوايا</th>
+                  <th class="p-3 text-center">استعدال</th>
+                  <th class="p-3 text-center">ترصيص</th>
+                </tr>
+              </thead>
+              <tbody id="repTableComplaintsBody" class="divide-y divide-slate-800 font-medium">
+                <!-- Injected via JS -->
+              </tbody>
+              <tfoot id="repTableComplaintsFoot" class="bg-rose-950/40 text-rose-200 font-black border-t-2 border-slate-700">
+                <!-- Injected via JS -->
+              </tfoot>
+            </table>
+          </div>
+
+          <p class="font-bold text-rose-400" id="repTotalUnsatLine">إجمالي العملاء غير الراضين: 0 عميل</p>
+          
+          <div class="space-y-1 font-medium text-slate-300 mr-2">
+            <p class="font-bold text-slate-200">عدد الشكاوى لكل خدمة لجميع الفروع :-</p>
+            <p>- ضبط زوايا: <span class="font-bold text-white" id="repServZawayaComp">0</span> عميل من اجمالي <span id="repServZawayaTot">0</span></p>
+            <p>- استعدال: <span class="font-bold text-white" id="repServEstedalComp">0</span> عميل من اجمالي <span id="repServEstedalTot">0</span></p>
+            <p>- ترصيص: <span class="font-bold text-white" id="repServTarseesComp">0</span> عميل من اجمالي <span id="repServTarseesTot">0</span></p>
+          </div>
+        </div>
+
+        <!-- رابعاً: الفنيون الموجهة إليهم شكاوى العملاء -->
+        <div class="space-y-3 pt-4 border-t border-slate-800">
+          <h3 class="text-base sm:text-lg font-black text-indigo-300">
+            رابعاً: الفنيون الموجهة إليهم شكاوى العملاء.
+          </h3>
+
+          <div class="overflow-x-auto rounded-2xl border border-slate-800">
+            <table class="w-full text-right border-collapse">
+              <thead class="bg-slate-950 text-slate-300 font-bold border-b border-slate-800">
+                <tr>
+                  <th class="p-3">اسم الفني</th>
+                  <th class="p-3">اسم الفرع</th>
+                  <th class="p-3 text-center">إجمالي العمليات لنفس الخدمة</th>
+                  <th class="p-3 text-center">عدد الشكاوى</th>
+                  <th class="p-3 text-center">% نسبة الشكاوى</th>
+                  <th class="p-3">نوع الخدمة</th>
+                </tr>
+              </thead>
+              <tbody id="repTableTechComplaintsBody" class="divide-y divide-slate-800 font-medium">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 2: BRANCH ANALYTICS HUB                                             -->
+  <!-- ========================================================================= -->
+  <div id="modalBranchHub" class="fixed inset-0 z-50 bg-black/80 modal-backdrop-blur hidden flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+      
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/70">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-code-branch"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-white">تحليل ومقارنة أداء الفروع</h3>
+            <p class="text-xs text-slate-400">مقارنة شاملة لنسب الرضا والاستجابة وتوزيع الخدمات</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modalBranchHub')" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-6">
+        
+        <!-- Dynamic Branch Grid -->
+        <div id="hubBranchCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Populated by JS -->
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 3: TECHNICIANS & QUALITY HUB                                        -->
+  <!-- ========================================================================= -->
+  <div id="modalTechHub" class="fixed inset-0 z-50 bg-black/80 modal-backdrop-blur hidden flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+      
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/70">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-600/20 text-amber-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-wrench"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-white">لوحة الجودة وتقييم الفنيين</h3>
+            <p class="text-xs text-slate-400">حصر إجمالي أعمال كل فني ومعدلات الشكاوى الموجهة إليه</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modalTechHub')" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4">
+        
+        <div class="overflow-x-auto rounded-2xl border border-slate-800">
+          <table class="w-full text-right text-xs">
+            <thead class="bg-slate-950 text-slate-400 font-bold border-b border-slate-800">
+              <tr>
+                <th class="p-3">اسم الفني</th>
+                <th class="p-3">الفرع التابع له</th>
+                <th class="p-3 text-center">إجمالي العمليات المنفذة</th>
+                <th class="p-3 text-center">عملاء راضين</th>
+                <th class="p-3 text-center">عدد الشكاوى</th>
+                <th class="p-3 text-center">معدل الشكاوى %</th>
+                <th class="p-3 text-center">مستوى الأداء</th>
+              </tr>
+            </thead>
+            <tbody id="techHubTableBody" class="divide-y divide-slate-800 font-medium">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 4: COMPLAINTS & ESCALATION DESK                                     -->
+  <!-- ========================================================================= -->
+  <div id="modalComplaintsHub" class="fixed inset-0 z-50 bg-black/80 modal-backdrop-blur hidden flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+    <div class="bg-slate-900 border border-rose-900/60 rounded-3xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+      
+      <div class="p-5 border-b border-rose-900/40 flex items-center justify-between bg-rose-950/40">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-white">مكتب متابعة الشكاوى الفورية (حالات غير راضية)</h3>
+            <p class="text-xs text-rose-300">العملاء الذين واجهوا ملاحظات فنية ويلزم التواصل معهم لمعالجتها</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="exportComplaintsOnly()" class="px-3 py-1.5 rounded-xl bg-rose-900/70 hover:bg-rose-800 text-rose-100 text-xs font-bold border border-rose-700 flex items-center gap-1.5 transition-all">
+            <i class="fa-solid fa-download"></i>
+            <span>تصدير الشكاوى Excel</span>
+          </button>
+          <button onclick="closeModal('modalComplaintsHub')" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4">
+        
+        <div class="overflow-x-auto rounded-2xl border border-rose-900/30">
+          <table class="w-full text-right text-xs">
+            <thead class="bg-rose-950/60 text-rose-200 font-bold border-b border-rose-900/40">
+              <tr>
+                <th class="p-3">العميل</th>
+                <th class="p-3">رقم الهاتف</th>
+                <th class="p-3">الفرع</th>
+                <th class="p-3">الخدمة</th>
+                <th class="p-3">نص الشكوى والملاحظات</th>
+                <th class="p-3">الفني</th>
+                <th class="p-3">المسؤول</th>
+                <th class="p-3 text-center">الإجراء</th>
+              </tr>
+            </thead>
+            <tbody id="complaintsModalTableBody" class="divide-y divide-rose-900/20 font-medium">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 5: FULL DATA EXPLORER & LOG                                         -->
+  <!-- ========================================================================= -->
+  <div id="modalDataExplorer" class="fixed inset-0 z-50 bg-black/80 modal-backdrop-blur hidden flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-6xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+      
+      <div class="p-5 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950/70">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-cyan-600/20 text-cyan-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-database"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-white">مستكشف سجلات العملاء والاستبيان</h3>
+            <p class="text-xs text-slate-400">البحث والفلترة في كافة الصفوف المسجلة</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="exportFullExcel()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 flex items-center gap-1.5 transition-all">
+            <i class="fa-regular fa-file-excel text-emerald-400"></i>
+            <span>تصدير الكل Excel</span>
+          </button>
+          <button onclick="closeModal('modalDataExplorer')" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters Strip inside Explorer -->
+      <div class="p-4 bg-slate-950 border-b border-slate-800 grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1">الفرع</label>
+          <select id="expFilterBranch" onchange="renderExplorerTable()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white">
+            <option value="ALL">كل الفروع</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">حالة التواصل</label>
+          <select id="expFilterStatus" onchange="renderExplorerTable()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white">
+            <option value="ALL">جميع الحالات</option>
+            <option value="تم الرد">تم الرد</option>
+            <option value="لم يتم الرد">لم يتم الرد</option>
+            <option value="ممتنع">ممتنع</option>
+            <option value="مغلق أو غير متاح">مغلق أو غير متاح</option>
+            <option value="الرقم غلط">الرقم غلط</option>
+            <option value="قيد الانتظار">قيد الانتظار</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">حالة العميل (الرضا)</label>
+          <select id="expFilterCsat" onchange="renderExplorerTable()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5 text-white">
+            <option value="ALL">الكل</option>
+            <option value="راضى">راضى</option>
+            <option value="غير راضى">غير راضى</option>
+            <option value="لم يحدد">- لم يحدد</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">بحث سريع</label>
+          <input type="text" id="expSearch" oninput="renderExplorerTable()" placeholder="ابحث بالاسم، الهاتف، الشكوى..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-white placeholder:text-slate-500" />
+        </div>
+      </div>
+
+      <!-- Explorer Table -->
+      <div class="p-6 overflow-y-auto space-y-4">
+        <div class="overflow-x-auto rounded-2xl border border-slate-800">
+          <table class="w-full text-right text-xs">
+            <thead class="bg-slate-950 text-slate-400 font-bold border-b border-slate-800">
+              <tr>
+                <th class="p-3">العميل</th>
+                <th class="p-3">الهاتف</th>
+                <th class="p-3">الفرع</th>
+                <th class="p-3">الخدمة</th>
+                <th class="p-3">حالة التواصل</th>
+                <th class="p-3">الرضا</th>
+                <th class="p-3">ملاحظات</th>
+                <th class="p-3">الفني</th>
+                <th class="p-3">المسؤول</th>
+                <th class="p-3 text-center">إجراء</th>
+              </tr>
+            </thead>
+            <tbody id="explorerTableBody" class="divide-y divide-slate-800 font-medium">
+              <!-- Injected by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 6: LOG / EDIT SURVEY RECORD                                         -->
+  <!-- ========================================================================= -->
+  <div id="modalSurveyLogger" class="fixed inset-0 z-50 bg-black/80 modal-backdrop-blur hidden flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4 my-auto">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div>
+          <h3 class="text-base font-bold text-white" id="modalSurveyTitle">تسجيل نتيجة استبيان عميل</h3>
+          <p class="text-xs text-slate-400">إدخال مكالمة جديدة أو تحديث حالة عميل قيد الانتظار</p>
+        </div>
+        <button onclick="closeModal('modalSurveyLogger')" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleSaveSurvey(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="formRowId" value="-1" />
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">اسم العميل</label>
+            <input type="text" id="formCustomer" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none focus:border-brand-500" placeholder="اسم العميل الثلاثي" />
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">رقم الهاتف</label>
+            <input type="text" id="formPhone" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none focus:border-brand-500 font-mono" placeholder="010XXXXXXXX" />
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">الفرع</label>
+            <input type="text" id="formBranch" required list="branchDatalist" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none focus:border-brand-500" placeholder="مدينة نصر، المهندسين..." />
+            <datalist id="branchDatalist"></datalist>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">الخدمة (المنتج)</label>
+            <select id="formService" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none focus:border-brand-500 font-semibold">
+              <option value="ضبط زوايا">ضبط زوايا</option>
+              <option value="استعدال">استعدال</option>
+              <option value="ترصيص">ترصيص</option>
+              <option value="خدمات أخرى">خدمات أخرى</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">حالة التواصل</label>
+            <select id="formStatus" onchange="handleFormStatusSync()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none focus:border-brand-500 font-semibold">
+              <option value="تم الرد">تم الرد</option>
+              <option value="لم يتم الرد">لم يتم الرد</option>
+              <option value="ممتنع">ممتنع</option>
+              <option value="مغلق أو غير متاح">مغلق أو غير متاح</option>
+              <option value="الرقم غلط">الرقم غلط</option>
+              <option value="قيد الانتظار">قيد الانتظار (لم يُتصل بعد)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">حالة العميل (الرضا)</label>
+            <select id="formCsat" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none focus:border-brand-500 font-semibold">
+              <option value="راضى">راضى</option>
+              <option value="غير راضى">غير راضى (تسجيل شكوى)</option>
+              <option value="لم يحدد">- (لم يحدد / لم يرد)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">اسم الفني بالفرع</label>
+            <input type="text" id="formTech" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none focus:border-brand-500" placeholder="اسم الفني المنفذ" />
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">مسؤول الاستبيان</label>
+            <input type="text" id="formAgent" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none focus:border-brand-500" placeholder="مرجان / حسين" />
+          </div>
+
+          <div class="sm:col-span-2">
+            <label class="block font-semibold text-slate-300 mb-1">الملاحظات والشكوى بالتفصيل</label>
+            <textarea id="formNotes" rows="2" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none focus:border-brand-500" placeholder="مثال: العربية بتحدف يمين بعد الصيانة"></textarea>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeModal('modalSurveyLogger')" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800">إلغاء</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold shadow-lg shadow-brand-600/30">حفظ النتيجة</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-5 left-5 z-50 p-4 rounded-2xl bg-slate-800 border border-slate-700 text-white shadow-2xl flex items-center gap-3 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">
+    <div id="toastIcon" class="text-emerald-400 text-xl"><i class="fa-solid fa-circle-check"></i></div>
+    <div>
+      <div id="toastTitle" class="text-xs font-bold">إشعار</div>
+      <div id="toastSub" class="text-[11px] text-slate-300">تمت العملية بنجاح</div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================================
+       CORE STATE & SAMPLE REALISTIC DATASET
+       ========================================================================= */
+    let dataset = [];
+    let currentFileName = "SUR 25-5-2026 Morgan.xlsx";
+
+    // 7 Real unsatisfied cases from the user's automotive survey sheet
+    const defaultComplaints = [
+      { customer: "ابو بكر شحاته", phone: "01009011636", branch: "الهرم", service: "ضبط زوايا", status: "تم الرد", csat: "غير راضى", notes: "العربية بتحدف سنه شمال", agent: "حسين محمد حسين", tech: "ابراهيم مبروك" },
+      { customer: "محمدصبرى", phone: "01014084448", branch: "المطرية", service: "ضبط زوايا", status: "تم الرد", csat: "غير راضى", notes: "العربية بتحدف يمين", agent: "حسين محمد حسين", tech: "مصطفى" },
+      { customer: "على طارق", phone: "01144570601", branch: "طريق الواحات", service: "ضبط زوايا", status: "تم الرد", csat: "غير راضى", notes: "الطارة مش مظبوطة", agent: "حسين محمد حسين", tech: "حسن" },
+      { customer: "محمود محمد", phone: "01121836902", branch: "السواح", service: "ضبط زوايا", status: "تم الرد", csat: "غير راضى", notes: "العربية لسه بتحدف", agent: "حسين محمد حسين", tech: "سعيد" },
+      { customer: "جون عدلي", phone: "01276679914", branch: "النزهة", service: "ضبط زوايا", status: "تم الرد", csat: "غير راضى", notes: "الطارة مش مظبوطة", agent: "حسين محمد حسين", tech: "عصام" },
+      { customer: "سيف الدين حسام", phone: "01096474898", branch: "النزهة", service: "ضبط زوايا", status: "تم الرد", csat: "غير راضى", notes: "لسة بتحدف", agent: "مرجان", tech: "عصام" },
+      { customer: "حسام عصام", phone: "01099459196", branch: "طريق الواحات", service: "ضبط زوايا", status: "تم الرد", csat: "غير راضى", notes: "تم تغير المقص ولسة بتحدف", agent: "مرجان", tech: "حسن" }
+    ];
+
+    function createRealisticDefaultData() {
+      const records = [];
+      let idCounter = 1;
+
+      // 1. Add the 7 exact complaints
+      defaultComplaints.forEach(item => {
+        records.push({
+          id: idCounter++,
+          ...item,
+          actionTaken: false
+        });
+      });
+
+      // 2. Realistic branches distribution
+      const branchesMeta = [
+        { name: "الهرم", total: 48, ansSat: 5, noAns: 4, off: 1, ref: 1, pend: 36, z: 30, e: 7, t: 11 },
+        { name: "مدينة نصر", total: 47, ansSat: 6, noAns: 7, off: 2, ref: 2, pend: 30, z: 34, e: 7, t: 6 },
+        { name: "جسر السويس", total: 36, ansSat: 5, noAns: 5, off: 1, ref: 1, pend: 24, z: 22, e: 5, t: 9 },
+        { name: "المهندسين", total: 35, ansSat: 4, noAns: 3, off: 1, ref: 0, pend: 27, z: 24, e: 6, t: 5 },
+        { name: "السواح", total: 27, ansSat: 3, noAns: 3, off: 1, ref: 1, pend: 18, z: 18, e: 4, t: 5 },
+        { name: "طريق الواحات", total: 22, ansSat: 4, noAns: 2, off: 1, ref: 2, pend: 11, z: 15, e: 4, t: 3 },
+        { name: "المطرية", total: 20, ansSat: 1, noAns: 1, off: 0, ref: 0, pend: 17, z: 12, e: 5, t: 3 },
+        { name: "مدينتي", total: 14, ansSat: 3, noAns: 1, off: 1, ref: 0, pend: 9, z: 8, e: 2, t: 4 },
+        { name: "النزهة", total: 12, ansSat: 2, noAns: 1, off: 1, ref: 2, pend: 4, z: 8, e: 1, t: 3 },
+        { name: "المطار", total: 5, ansSat: 0, noAns: 0, off: 0, ref: 0, pend: 5, z: 3, e: 1, t: 1 },
+        { name: "الرحاب", total: 4, ansSat: 0, noAns: 0, off: 0, ref: 0, pend: 4, z: 2, e: 2, t: 0 },
+        { name: "هاي تاير", total: 1, ansSat: 0, noAns: 0, off: 0, ref: 0, pend: 1, z: 1, e: 0, t: 0 }
+      ];
+
+      const techPool = ["احمد نبيل محمد السيد عاشور", "محمود صلاح محمد خميس", "ابراهيم مبروك", "حسن", "مصطفى", "سعيد", "عصام", "فني الجودة"];
+      const namesPool = ["محمود إبراهيم", "طارق سعيد", "كريم عادل", "أحمد سامي", "ياسر حسن", "هاني فاروق", "سامح فوزي", "وائل مصطفى", "جورج سمير", "عمر خالد"];
+
+      branchesMeta.forEach(b => {
+        // Satisfied
+        for (let i = 0; i < b.ansSat; i++) {
+          records.push({
+            id: idCounter++,
+            customer: namesPool[idCounter % namesPool.length] + " (" + b.name + ")",
+            phone: "010" + Math.floor(10000000 + Math.random() * 89999999),
+            branch: b.name,
+            service: idCounter % 3 === 0 ? "ترصيص" : (idCounter % 3 === 1 ? "ضبط زوايا" : "استعدال"),
+            status: "تم الرد",
+            csat: "راضى",
+            notes: "الخدمة ممتازة وتم الاستلام في الموعد",
+            agent: idCounter % 2 === 0 ? "مرجان" : "حسين محمد حسين",
+            tech: techPool[idCounter % techPool.length],
+            actionTaken: false
+          });
+        }
+        // No answer
+        for (let i = 0; i < b.noAns; i++) {
+          records.push({
+            id: idCounter++,
+            customer: "عميل " + b.name + " #" + (i + 1),
+            phone: "011" + Math.floor(10000000 + Math.random() * 89999999),
+            branch: b.name,
+            service: "ضبط زوايا",
+            status: "لم يتم الرد",
+            csat: "لم يحدد",
+            notes: "جرس بدون إجابة",
+            agent: "حسين محمد حسين",
+            tech: techPool[idCounter % techPool.length],
+            actionTaken: false
+          });
+        }
+        // Off
+        for (let i = 0; i < b.off; i++) {
+          records.push({
+            id: idCounter++,
+            customer: "عميل " + b.name + " #" + (i + 10),
+            phone: "012" + Math.floor(10000000 + Math.random() * 89999999),
+            branch: b.name,
+            service: "ترصيص",
+            status: "مغلق أو غير متاح",
+            csat: "لم يحدد",
+            notes: "الهاتف مغلق",
+            agent: "مرجان",
+            tech: techPool[idCounter % techPool.length],
+            actionTaken: false
+          });
+        }
+        // Refused
+        for (let i = 0; i < b.ref; i++) {
+          records.push({
+            id: idCounter++,
+            customer: "عميل " + b.name + " #" + (i + 20),
+            phone: "015" + Math.floor(10000000 + Math.random() * 89999999),
+            branch: b.name,
+            service: "استعدال",
+            status: "ممتنع",
+            csat: "لم يحدد",
+            notes: "رفض الاستبيان",
+            agent: "مرجان",
+            tech: techPool[idCounter % techPool.length],
+            actionTaken: false
+          });
+        }
+        // Pending
+        for (let i = 0; i < b.pend; i++) {
+          records.push({
+            id: idCounter++,
+            customer: "حجز " + b.name + " #" + (i + 1),
+            phone: "010" + Math.floor(10000000 + Math.random() * 89999999),
+            branch: b.name,
+            service: i % 2 === 0 ? "ضبط زوايا" : "ترصيص",
+            status: "قيد الانتظار",
+            csat: "لم يحدد",
+            notes: "لم يتم التواصل بعد",
+            agent: "—",
+            tech: techPool[idCounter % techPool.length],
+            actionTaken: false
+          });
+        }
+      });
+
+      return records;
+    }
+
+    /* Standard string normalizer */
+    function normalize(s) {
+      if (!s) return '';
+      return String(s).trim().toLowerCase()
+        .replace(/[\u064B-\u065F]/g, '')
+        .replace(/[أإآ]/g, 'ا')
+        .replace(/[ة]/g, 'ه')
+        .replace(/[ى]/g, 'ي')
+        .replace(/[_\s\-\.\/()]/g, '');
+    }
+
+    /* Core Service Classifier: Maps any product title into 3 Core Automotive Categories */
+    function classifyService(rawText) {
+      const n = normalize(rawText);
+      if (n.includes('زوايا') || n.includes('ضبطزوايا') || n.includes('عفشه')) return 'ضبط زوايا';
+      if (n.includes('استعدال') || n.includes('جنط') || n.includes('لحام')) return 'استعدال';
+      if (n.includes('ترصيص') || n.includes('اتزان')) return 'ترصيص';
+      return 'خدمات أخرى';
+    }
+
+    /* Initialize app on load */
+    window.addEventListener('DOMContentLoaded', () => {
+      loadDefaultData();
+      initUploader();
+      setupKeyListeners();
+    });
+
+    function loadDefaultData() {
+      dataset = createRealisticDefaultData();
+      currentFileName = "SUR 25-5-2026 Morgan.xlsx";
+      refreshAllViews();
+      notify('تم تفعيل البيانات', 'تم تجهيز 271 سجلاً و 12 فرعاً جاهزة للتصفح الفوري');
+    }
+
+    /* File Drag & Drop & Upload */
+    function initUploader() {
+      const input = document.getElementById('excelFileInput');
+      input.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+          processExcelFile(e.target.files[0]);
+        }
+      });
+    }
+
+    function processExcelFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+
+          if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
+            notify('شيت فارغ', 'الملف لا يحتوي على أية صفحات عمل', 'error');
+            return;
+          }
+
+          // 1. Intelligent Best Worksheet Selection
+          let bestSheet = workbook.SheetNames[0];
+          let maxScore = -1;
+
+          for (const sName of workbook.SheetNames) {
+            const sheet = workbook.Sheets[sName];
+            if (!sheet || !sheet['!ref']) continue;
+
+            const rawRows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+            if (!rawRows || rawRows.length === 0) continue;
+
+            let score = rawRows.length;
+            const normSheet = normalize(sName);
+            if ((normSheet.includes('ملخص') || normSheet.includes('summary') || normSheet.includes('pivot') || normSheet.includes('محوري')) && rawRows.length < 50) {
+              score -= 10000;
+            }
+
+            // Keyword density scan in the first 15 rows
+            let keywordHits = 0;
+            const scanRows = rawRows.slice(0, 15);
+            for (const row of scanRows) {
+              if (!Array.isArray(row)) continue;
+              for (const cell of row) {
+                const val = normalize(String(cell || ''));
+                if (val.includes('فرع') || val.includes('عميل') || val.includes('هاتف') || val.includes('موبا') || val.includes('خدم') || val.includes('فني') || val.includes('تواصل') || val.includes('رد') || val.includes('رضا') || val.includes('راضي') || val.includes('csat')) {
+                  keywordHits++;
+                }
+              }
+            }
+            score += keywordHits * 100;
+
+            if (score > maxScore) {
+              maxScore = score;
+              bestSheet = sName;
+            }
+          }
+
+          // 2. Parse selected sheet
+          const sheet = workbook.Sheets[bestSheet];
+          const rawRows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+          const rows = parseRawExcelRowsFrom2D(rawRows);
+
+          if (!rows || rows.length === 0) {
+            notify('شيت فارغ', 'لم يتم العثور على أية صفوف بيانات صالحة في الورقة المختارة', 'error');
+            return;
+          }
+
+          dataset = rows;
+          currentFileName = file.name;
+          refreshAllViews();
+          notify('تم قراءة الشيت بنجاح', `تم استيراد ${dataset.length} صفاً من ورقة (${bestSheet})`);
+        } catch (err) {
+          console.error(err);
+          notify('خطأ في الملف', 'تعذر قراءة ملف الإكسيل. تأكد من سلامة الملف وصيغته.', 'error');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function parseRawExcelRowsFrom2D(rawRows) {
+      if (!rawRows || rawRows.length === 0) return [];
+
+      // Scan first 15 rows to find header row
+      let headerRowIndex = 0;
+      let maxMatches = 0;
+      const scanLimit = Math.min(rawRows.length, 15);
+
+      const keywords = ['فرع', 'branch', 'عميل', 'customer', 'هاتف', 'phone', 'موبا', 'خدمة', 'خدمه', 'product', 'service', 'فني', 'tech', 'تواصل', 'status', 'رد', 'رضا', 'راضي', 'csat', 'ملاحظ'];
+
+      for (let r = 0; r < scanLimit; r++) {
+        const row = rawRows[r];
+        if (!Array.isArray(row)) continue;
+        let matches = 0;
+        for (const cell of row) {
+          const val = normalize(String(cell || ''));
+          if (keywords.some(k => val.includes(k))) matches++;
+        }
+        if (matches > maxMatches) {
+          maxMatches = matches;
+          headerRowIndex = r;
+        }
+      }
+
+      const headerRow = (rawRows[headerRowIndex] || []).map(c => String(c || '').trim());
+      const dataRows = rawRows.slice(headerRowIndex + 1);
+
+      function matchCol(kws) {
+        for (let c = 0; c < headerRow.length; c++) {
+          const clean = normalize(headerRow[c]);
+          for (const kw of kws) {
+            if (clean.includes(normalize(kw))) return c;
+          }
+        }
+        return -1;
+      }
+
+      const colBranch = matchCol(['الفرع', 'فرع', 'branch', 'المركز', 'اسم الفرع', 'اسم المركز']);
+      const colStatus = matchCol(['حالة التواصل', 'التواصل', 'تم الرد', 'status', 'حالة المكالمة', 'نتيجة المكالمة', 'موقف الاتصال']);
+      const colCsat = matchCol(['حالة العميل', 'الرضا', 'csat', 'راضي', 'راضى', 'راضي / غير راضي', 'تقييم العميل', 'رضا العميل']);
+      const colProduct = matchCol(['المنتج', 'الخدمة', 'الخدمه', 'product', 'service', 'نوع الخدمة', 'اسم الصنف', 'الصنف', 'البيان']);
+      const colNotes = matchCol(['ملاحظات', 'شكوى', 'notes', 'تعليق العميل', 'شكوى العميل', 'ملاحظات العميل', 'سبب عدم الرضا']);
+      const colCustomer = matchCol(['العميل', 'اسم العميل', 'customer', 'الزبون', 'اسم صاحب السيارة']);
+      const colPhone = matchCol(['الهاتف', 'الموبايل', 'تليفون', 'phone', 'موبايل', 'جوال', 'رقم الهاتف', 'رقم الموبايل', 'رقم الجوال']);
+      const colTech = matchCol(['الفني', 'فني', 'technician', 'tech', 'القائم بالصيانة', 'المهندس', 'فني الصيانة']);
+      const colAgent = matchCol(['مسئول الاستبيان', 'مسؤول الاستبيان', 'المسئول', 'المسؤول', 'agent', 'الكول سنتر']);
+
+      const getCell = (row, idx) => (idx >= 0 && row[idx] !== undefined && row[idx] !== null) ? String(row[idx]).trim() : '';
+
+      const results = [];
+      dataRows.forEach((r, idx) => {
+        if (!Array.isArray(r) || r.length === 0) return;
+
+        const rawCustomer = getCell(r, colCustomer);
+        const rawPhone = getCell(r, colPhone);
+        const rawBranch = getCell(r, colBranch);
+        const rawStatus = getCell(r, colStatus);
+        const rawCsat = getCell(r, colCsat);
+        const rawProduct = getCell(r, colProduct) || 'خدمات عامة';
+        const rawNotes = getCell(r, colNotes);
+        const rawTech = getCell(r, colTech);
+        const rawAgent = getCell(r, colAgent);
+
+        // Skip completely empty row or totals
+        const hasContent = rawCustomer || rawPhone || rawBranch || rawStatus || rawNotes || rawTech;
+        if (!hasContent) return;
+
+        const normBranch = normalize(rawBranch);
+        if (normBranch.includes('اجمالي') || normBranch.includes('مجموع') || normBranch.includes('grandtotal')) return;
+
+        // Strict Status
+        let finalStatus = 'قيد الانتظار';
+        if (rawStatus) {
+          const n = normalize(rawStatus);
+          if (n.includes('لم') || n.includes('مردش')) finalStatus = 'لم يتم الرد';
+          else if (n.includes('مغلق') || n.includes('غيرمتاح')) finalStatus = 'مغلق أو غير متاح';
+          else if (n.includes('ممتنع') || n.includes('رفض')) finalStatus = 'ممتنع';
+          else if (n.includes('غلط') || n.includes('خاطئ')) finalStatus = 'الرقم غلط';
+          else if (n.includes('تم') || n.includes('رد')) finalStatus = 'تم الرد';
+          else finalStatus = rawStatus;
+        }
+
+        // Strict CSAT
+        let finalCsat = 'لم يحدد';
+        if (finalStatus === 'تم الرد') {
+          const n = normalize(rawCsat);
+          if (n.includes('غير') || n.includes('شكوى') || n.includes('سيء') || n.includes('مش راضي') || n.includes('مش راضى')) finalCsat = 'غير راضى';
+          else if (n.includes('راض') || n.includes('جيد') || n.includes('ممتاز')) finalCsat = 'راضى';
+          else finalCsat = 'راضى';
+        }
+
+        results.push({
+          id: results.length + 1,
+          customer: rawCustomer || `عميل #${results.length + 1}`,
+          phone: rawPhone || '—',
+          branch: rawBranch || 'غير محدد',
+          service: classifyService(rawProduct),
+          rawProduct: rawProduct,
+          status: finalStatus,
+          csat: finalCsat,
+          notes: rawNotes || '—',
+          tech: rawTech || '—',
+          agent: rawAgent || 'مرجان',
+          actionTaken: false
+        });
+      });
+
+      return results;
+    }
+
+    /* Refresh All Modal Views and Stats */
+    function refreshAllViews() {
+      updateHubSnapshot();
+      buildExecutiveReport();
+      buildBranchHub();
+      buildTechHub();
+      buildComplaintsHub();
+      renderExplorerTable();
+      populateDropdowns();
+    }
+
+    function updateHubSnapshot() {
+      document.getElementById('hubFileName').innerText = currentFileName;
+      
+      const total = dataset.length;
+      const branches = [...new Set(dataset.map(r => r.branch))].filter(Boolean);
+      document.getElementById('hubFileMeta').innerText = `${total} عميل مسجل | ${branches.length} فرع`;
+      document.getElementById('badgeTotalBranches').innerText = `${branches.length} فرع`;
+      document.getElementById('tileTotalRows').innerText = `${total} سجل`;
+
+      const contacted = dataset.filter(r => r.status !== 'قيد الانتظار');
+      const answered = dataset.filter(r => r.status === 'تم الرد');
+      const respRate = contacted.length > 0 ? ((answered.length / contacted.length) * 100).toFixed(1) : 0;
+      document.getElementById('hubResponseRate').innerText = `${respRate}%`;
+
+      const sat = answered.filter(r => r.csat === 'راضى').length;
+      const unsat = answered.filter(r => r.csat === 'غير راضى').length;
+      const evaluated = sat + unsat;
+      const csatRate = evaluated > 0 ? ((sat / evaluated) * 100).toFixed(1) : 0;
+      document.getElementById('hubCsatRate').innerText = evaluated > 0 ? `${csatRate}%` : '—';
+
+      document.getElementById('tileComplaintsCount').innerText = `${unsat} شكاوى عاجلة`;
+    }
+
+    function populateDropdowns() {
+      const branches = [...new Set(dataset.map(r => r.branch))].filter(Boolean);
+      const bDl = document.getElementById('branchDatalist');
+      if (bDl) bDl.innerHTML = branches.map(b => `<option value="${b}">`).join('');
+
+      const expB = document.getElementById('expFilterBranch');
+      if (expB) {
+        const cur = expB.value;
+        expB.innerHTML = '<option value="ALL">كل الفروع</option>' + branches.map(b => `<option value="${b}">${b}</option>`).join('');
+        if (branches.includes(cur)) expB.value = cur;
+      }
+    }
+
+    /* =========================================================================
+       EXECUTIVE REPORT BUILDER (THE 4 EXACT SECTIONS OF THE DOCUMENT)
+       ========================================================================= */
+    function buildExecutiveReport() {
+      // 1. Branch Table Breakdown
+      const branchStats = {};
+      dataset.forEach(r => {
+        if (!branchStats[r.branch]) {
+          branchStats[r.branch] = { name: r.branch, total: 0, zawaya: 0, estedal: 0, tarsees: 0, other: 0 };
+        }
+        branchStats[r.branch].total++;
+        if (r.service === 'ضبط زوايا') branchStats[r.branch].zawaya++;
+        else if (r.service === 'استعدال') branchStats[r.branch].estedal++;
+        else if (r.service === 'ترصيص') branchStats[r.branch].tarsees++;
+        else branchStats[r.branch].other++;
+      });
+
+      // Sort descending by total customers
+      const sortedBranches = Object.values(branchStats).sort((a, b) => b.total - a.total);
+
+      let bBodyHtml = '';
+      let sumTot = 0, sumZ = 0, sumE = 0, sumT = 0;
+
+      sortedBranches.forEach(b => {
+        sumTot += b.total;
+        sumZ += b.zawaya;
+        sumE += b.estedal;
+        sumT += b.tarsees;
+
+        bBodyHtml += `
+          <tr class="hover:bg-slate-800/40 border-b border-slate-800/60">
+            <td class="p-3 font-bold text-white">${b.name}</td>
+            <td class="p-3 text-center font-bold text-indigo-300">${b.total}</td>
+            <td class="p-3 text-center text-slate-300 font-mono">${b.tarsees > 0 ? b.tarsees : ''}</td>
+            <td class="p-3 text-center text-slate-300 font-mono">${b.estedal > 0 ? b.estedal : ''}</td>
+            <td class="p-3 text-center text-slate-300 font-mono">${b.zawaya > 0 ? b.zawaya : ''}</td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('repTableBranchBody').innerHTML = bBodyHtml;
+      document.getElementById('repTableBranchFoot').innerHTML = `
+        <tr>
+          <td class="p-3 font-black text-white">أجمالى خدمات العملاء</td>
+          <td class="p-3 text-center text-white text-base">${sumTot}</td>
+          <td class="p-3 text-center text-white">${sumT}</td>
+          <td class="p-3 text-center text-white">${sumE}</td>
+          <td class="p-3 text-center text-white">${sumZ}</td>
+        </tr>
+      `;
+      document.getElementById('repTotalClientsLine').innerText = `إجمالي جميع العملاء: ${sumTot} عميل`;
+
+      // 2. Survey Statistics (ثانياً: الاستبيان)
+      const totalCalls = dataset.length;
+      const countAnswered = dataset.filter(r => r.status === 'تم الرد').length;
+      const countNoAns = dataset.filter(r => r.status === 'لم يتم الرد').length;
+      const countRefused = dataset.filter(r => r.status === 'ممتنع').length;
+      const countOff = dataset.filter(r => r.status === 'مغلق أو غير متاح').length;
+      const countWrong = dataset.filter(r => r.status === 'الرقم غلط').length;
+      const countPending = dataset.filter(r => r.status === 'قيد الانتظار').length;
+
+      document.getElementById('repTotalCalls').innerText = totalCalls;
+      document.getElementById('repCountAnswered').innerText = countAnswered;
+      document.getElementById('repCountNoAnswer').innerText = countNoAns;
+      document.getElementById('repCountRefused').innerText = countRefused;
+      document.getElementById('repCountOff').innerText = countOff;
+      document.getElementById('repCountWrongNumber').innerText = countWrong;
+      document.getElementById('repCountPending').innerText = `إجمالي قيد الانتظار (لم يُتصل بهم بعد): ${countPending} عميل`;
+
+      // Communication percentages (calculated from contacted or total active)
+      const contactedBase = (totalCalls - countPending) || 1;
+      const pctAns = Math.round((countAnswered / contactedBase) * 100);
+      const pctNo = Math.round((countNoAns / contactedBase) * 100);
+      const pctRef = Math.round((countRefused / contactedBase) * 100);
+      const pctOff = Math.round((countOff / contactedBase) * 100);
+      const pctWrong = Math.round((countWrong / contactedBase) * 100);
+
+      document.getElementById('repPctAnswered').innerText = pctAns;
+      document.getElementById('repPctNoAnswer').innerText = pctNo;
+      document.getElementById('repPctRefused').innerText = pctRef;
+      document.getElementById('repPctOff').innerText = pctOff;
+      document.getElementById('repPctWrongNumber').innerText = pctWrong;
+
+      // Customer satisfaction level
+      const answeredList = dataset.filter(r => r.status === 'تم الرد');
+      const countSat = answeredList.filter(r => r.csat === 'راضى').length;
+      const countUnsat = answeredList.filter(r => r.csat === 'غير راضى').length;
+      const evalBase = countSat + countUnsat || 1;
+      const finalCsat = Math.round((countSat / evalBase) * 100);
+
+      document.getElementById('repCountSatisfied').innerText = countSat;
+      document.getElementById('repCountUnsatisfied').innerText = countUnsat;
+      document.getElementById('repFinalCsatPct').innerText = (countSat + countUnsat > 0) ? finalCsat : 0;
+
+      // 3. Branches and Complaints (ثالثاً: الفروع والشكاوى)
+      const compBranchMap = {};
+      let totalCompZawaya = 0;
+      let totalCompEstedal = 0;
+      let totalCompTarsees = 0;
+
+      dataset.filter(r => r.csat === 'غير راضى').forEach(r => {
+        if (!compBranchMap[r.branch]) {
+          compBranchMap[r.branch] = { name: r.branch, total: 0, zawaya: 0, estedal: 0, tarsees: 0 };
+        }
+        compBranchMap[r.branch].total++;
+        if (r.service === 'ضبط زوايا') { compBranchMap[r.branch].zawaya++; totalCompZawaya++; }
+        else if (r.service === 'استعدال') { compBranchMap[r.branch].estedal++; totalCompEstedal++; }
+        else if (r.service === 'ترصيص') { compBranchMap[r.branch].tarsees++; totalCompTarsees++; }
+      });
+
+      const sortedCompBranches = Object.values(compBranchMap).sort((a, b) => b.total - a.total);
+      let compBodyHtml = '';
+      let sumCompTot = 0, sumCompZ = 0, sumCompE = 0, sumCompT = 0;
+
+      sortedCompBranches.forEach(b => {
+        sumCompTot += b.total;
+        sumCompZ += b.zawaya;
+        sumCompE += b.estedal;
+        sumCompT += b.tarsees;
+
+        compBodyHtml += `
+          <tr class="hover:bg-rose-950/20 border-b border-slate-800">
+            <td class="p-3 font-bold text-white">${b.name}</td>
+            <td class="p-3 text-center font-bold text-rose-400">${b.total}</td>
+            <td class="p-3 text-center text-slate-300 font-mono">${b.zawaya > 0 ? b.zawaya : ''}</td>
+            <td class="p-3 text-center text-slate-300 font-mono">${b.estedal > 0 ? b.estedal : ''}</td>
+            <td class="p-3 text-center text-slate-300 font-mono">${b.tarsees > 0 ? b.tarsees : ''}</td>
+          </tr>
+        `;
+      });
+
+      if (sortedCompBranches.length === 0) {
+        compBodyHtml = `<tr><td colspan="5" class="p-4 text-center text-slate-500">لا توجد شكاوى مسجلة</td></tr>`;
+      }
+
+      document.getElementById('repTableComplaintsBody').innerHTML = compBodyHtml;
+      document.getElementById('repTableComplaintsFoot').innerHTML = `
+        <tr>
+          <td class="p-3 font-black text-rose-200">أجمالى شكاوى العملاء</td>
+          <td class="p-3 text-center text-rose-300 text-base">${sumCompTot}</td>
+          <td class="p-3 text-center text-rose-200">${sumCompZ}</td>
+          <td class="p-3 text-center text-rose-200">${sumCompE}</td>
+          <td class="p-3 text-center text-rose-200">${sumCompT}</td>
+        </tr>
+      `;
+      document.getElementById('repTotalUnsatLine').innerText = `إجمالي العملاء غير الراضين: ${sumCompTot} عميل`;
+
+      document.getElementById('repServZawayaComp').innerText = totalCompZawaya;
+      document.getElementById('repServZawayaTot').innerText = sumZ;
+      document.getElementById('repServEstedalComp').innerText = totalCompEstedal;
+      document.getElementById('repServEstedalTot').innerText = sumE;
+      document.getElementById('repServTarseesComp').innerText = totalCompTarsees;
+      document.getElementById('repServTarseesTot').innerText = sumT;
+
+      // 4. Technicians complaints table (رابعاً: الفنيون الموجهة إليهم شكاوى العملاء)
+      buildReportTechTable();
+    }
+
+    function buildReportTechTable() {
+      // Find all technicians associated with complaints
+      const techComplaints = {};
+      
+      // First count all operations per technician per service
+      const techTotalOps = {};
+      dataset.forEach(r => {
+        if (!r.tech || r.tech === '—') return;
+        const key = `${r.tech}__${r.service}__${r.branch}`;
+        techTotalOps[key] = (techTotalOps[key] || 0) + 1;
+      });
+
+      // Now filter unsatisfied cases
+      dataset.filter(r => r.csat === 'غير راضى').forEach(r => {
+        if (!r.tech || r.tech === '—') return;
+        const key = `${r.tech}__${r.service}__${r.branch}`;
+        if (!techComplaints[key]) {
+          techComplaints[key] = {
+            tech: r.tech,
+            branch: r.branch,
+            service: r.service,
+            complaints: 0,
+            totalOps: techTotalOps[key] || 1
+          };
+        }
+        techComplaints[key].complaints++;
+      });
+
+      const techList = Object.values(techComplaints).sort((a, b) => b.complaints - a.complaints);
+      let html = '';
+
+      techList.forEach(t => {
+        const pct = Math.round((t.complaints / t.totalOps) * 100);
+        html += `
+          <tr class="hover:bg-slate-800/40 border-b border-slate-800">
+            <td class="p-3 font-bold text-white">${t.tech}</td>
+            <td class="p-3 text-slate-300 font-semibold">${t.branch}</td>
+            <td class="p-3 text-center text-slate-200 font-mono">${t.totalOps}</td>
+            <td class="p-3 text-center font-bold text-rose-400 font-mono">${t.complaints}</td>
+            <td class="p-3 text-center font-black text-rose-400">${pct}%</td>
+            <td class="p-3 text-slate-300">${t.service}</td>
+          </tr>
+        `;
+      });
+
+      if (techList.length === 0) {
+        html = `<tr><td colspan="6" class="p-4 text-center text-slate-500">لا توجد شكاوى مسجلة ضد الفنيين</td></tr>`;
+      }
+
+      document.getElementById('repTableTechComplaintsBody').innerHTML = html;
+    }
+
+    /* Copy Report as Text for Word / WhatsApp */
+    function copyReportText() {
+      const title = document.getElementById('repMainHeaderTitle').innerText;
+      let text = `📋 ${title}\n\n`;
+
+      text += `اولا: اجمالي عدد مكالمات العملاء لكل فرع.\n`;
+      text += `الفرع | عدد العملاء | ترصيص | استعدال | ضبط زوايا\n`;
+      const rows = document.querySelectorAll('#repTableBranchBody tr');
+      rows.forEach(r => {
+        const cells = Array.from(r.querySelectorAll('td')).map(c => c.innerText.trim() || '-');
+        if (cells.length >= 5) {
+          text += `${cells[0]} | ${cells[1]} | ${cells[2]} | ${cells[3]} | ${cells[4]}\n`;
+        }
+      });
+      text += `${document.getElementById('repTotalClientsLine').innerText}\n\n`;
+
+      text += `ثانياً: الاستبيان.\n`;
+      text += `إجمالي عدد مكالمات العملاء: ${document.getElementById('repTotalCalls').innerText} عميل\n`;
+      text += `إجمالي العملاء تم الرد: ${document.getElementById('repCountAnswered').innerText} عميل\n`;
+      text += `إجمالي العملاء لم يتم الرد: ${document.getElementById('repCountNoAnswer').innerText} عميل\n`;
+      text += `إجمالي العملاء ممتنع: ${document.getElementById('repCountRefused').innerText} عميل\n`;
+      text += `إجمالي العملاء مغلق او غير متاح: ${document.getElementById('repCountOff').innerText} عميل\n`;
+      text += `إجمالي العملاء الرقم غلط: ${document.getElementById('repCountWrongNumber').innerText} عميل\n\n`;
+
+      text += `📞 نسبة التواصل:-\n`;
+      text += `نسبة الرد ≈ ${document.getElementById('repPctAnswered').innerText} %\n`;
+      text += `نسبة عدم الرد ≈ ${document.getElementById('repPctNoAnswer').innerText} %\n`;
+      text += `نسبة الممتنع ≈ ${document.getElementById('repPctRefused').innerText} %\n`;
+      text += `نسبة مغلق أو غير متاح ≈ ${document.getElementById('repPctOff').innerText} %\n`;
+      text += `نسبة الرقم غلط ≈ ${document.getElementById('repPctWrongNumber').innerText} %\n\n`;
+
+      text += `مستوى رضا العملاء و الآراء:-\n`;
+      text += `عدد العملاء الراضين: ${document.getElementById('repCountSatisfied').innerText} عميل\n`;
+      text += `عدد غير الراضين: ${document.getElementById('repCountUnsatisfied').innerText} عميل\n`;
+      text += `نسبة الرضا:-\n`;
+      text += `نسبة العملاء الراضين نسبةً إلى عدد الاتصالات التي تم الرد عليها ≈ ${document.getElementById('repFinalCsatPct').innerText}%\n\n`;
+
+      text += `ثالثاً: الفروع والشكاوى:\n`;
+      text += `الفرع | عدد الشكاوى | ضبط زوايا | استعدال | ترصيص\n`;
+      const compRows = document.querySelectorAll('#repTableComplaintsBody tr');
+      compRows.forEach(r => {
+        const cells = Array.from(r.querySelectorAll('td')).map(c => c.innerText.trim() || '-');
+        if (cells.length >= 5) {
+          text += `${cells[0]} | ${cells[1]} | ${cells[2]} | ${cells[3]} | ${cells[4]}\n`;
+        }
+      });
+      text += `${document.getElementById('repTotalUnsatLine').innerText}\n`;
+      text += `عدد الشكاوى لكل خدمة لجميع الفروع :-\n`;
+      text += `- ضبط زوايا: ${document.getElementById('repServZawayaComp').innerText} عميل من اجمالي ${document.getElementById('repServZawayaTot').innerText}\n`;
+      text += `- استعدال: ${document.getElementById('repServEstedalComp').innerText} عميل من اجمالي ${document.getElementById('repServEstedalTot').innerText}\n`;
+      text += `- ترصيص: ${document.getElementById('repServTarseesComp').innerText} عميل من اجمالي ${document.getElementById('repServTarseesTot').innerText}\n\n`;
+
+      text += `رابعاً: الفنيون الموجهة إليهم شكاوى العملاء:\n`;
+      text += `اسم الفني | اسم الفرع | إجمالي العمليات | عدد الشكاوى | % | نوع الخدمة\n`;
+      const techRows = document.querySelectorAll('#repTableTechComplaintsBody tr');
+      techRows.forEach(r => {
+        const cells = Array.from(r.querySelectorAll('td')).map(c => c.innerText.trim());
+        if (cells.length >= 6) {
+          text += `${cells[0]} | ${cells[1]} | ${cells[2]} | ${cells[3]} | ${cells[4]} | ${cells[5]}\n`;
+        }
+      });
+
+      // Copy to clipboard via fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+
+      notify('تم نسخ التقرير كنص', 'يمكنك لصقه الآن في الوورد أو الواتساب بنفس التنسيق المعتمد');
+    }
+
+    function printExecutiveReport() {
+      window.print();
+    }
+
+
+    /* =========================================================================
+       BRANCH ANALYTICS HUB BUILDER
+       ========================================================================= */
+    function buildBranchHub() {
+      const container = document.getElementById('hubBranchCardsGrid');
+      container.innerHTML = '';
+
+      const branches = [...new Set(dataset.map(r => r.branch))].filter(Boolean);
+      
+      branches.forEach(branch => {
+        const bRows = dataset.filter(r => r.branch === branch);
+        const total = bRows.length;
+        const answered = bRows.filter(r => r.status === 'تم الرد');
+        const satisfied = answered.filter(r => r.csat === 'راضى').length;
+        const unsatisfied = answered.filter(r => r.csat === 'غير راضى').length;
+
+        const csat = answered.length > 0 ? Math.round((satisfied / answered.length) * 100) : 0;
+        const pending = bRows.filter(r => r.status === 'قيد الانتظار').length;
+        const contacted = total - pending;
+        const responseRate = contacted > 0 ? Math.round((answered.length / contacted) * 100) : 0;
+
+        const zawaya = bRows.filter(r => r.service === 'ضبط زوايا').length;
+        const estedal = bRows.filter(r => r.service === 'استعدال').length;
+        const tarsees = bRows.filter(r => r.service === 'ترصيص').length;
+
+        const card = document.createElement('div');
+        card.className = "bg-slate-950 border border-slate-800 rounded-3xl p-5 hover:border-emerald-500/50 transition-all flex flex-col justify-between";
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h4 class="font-black text-base text-white">${branch}</h4>
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black ${csat >= 80 ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : (csat >= 60 ? 'bg-amber-950 text-amber-400 border border-amber-800' : 'bg-rose-950 text-rose-400 border border-rose-800')}">
+                ${answered.length > 0 ? csat + '% رضا' : 'قيد البدء'}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 my-4 text-center">
+              <div class="bg-slate-900/80 p-2 rounded-xl">
+                <span class="text-[10px] text-slate-500 block">إجمالي</span>
+                <span class="font-bold text-white text-sm">${total}</span>
+              </div>
+              <div class="bg-slate-900/80 p-2 rounded-xl">
+                <span class="text-[10px] text-slate-500 block">معدل رد</span>
+                <span class="font-bold text-emerald-400 text-sm">${responseRate}%</span>
+              </div>
+              <div class="bg-slate-900/80 p-2 rounded-xl">
+                <span class="text-[10px] text-slate-500 block">شكاوى</span>
+                <span class="font-bold text-rose-400 text-sm">${unsatisfied}</span>
+              </div>
+            </div>
+
+            <div class="space-y-1.5 text-xs pt-2 border-t border-slate-800/80 text-slate-400">
+              <div class="flex items-center justify-between">
+                <span>ضبط زوايا:</span>
+                <span class="font-bold text-white">${zawaya}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>استعدال جنوط:</span>
+                <span class="font-bold text-white">${estedal}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>ترصيص:</span>
+                <span class="font-bold text-white">${tarsees}</span>
+              </div>
+            </div>
+          </div>
+
+          <button onclick="filterExplorerByBranch('${branch}')" class="mt-4 w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-300 font-bold text-xs border border-slate-800 flex items-center justify-center gap-1.5 transition-all">
+            <i class="fa-solid fa-list-check text-emerald-400"></i>
+            <span>عرض عملاء الفرع</span>
+          </button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function filterExplorerByBranch(branchName) {
+      closeModal('modalBranchHub');
+      document.getElementById('expFilterBranch').value = branchName;
+      openModal('modalDataExplorer');
+      renderExplorerTable();
+    }
+
+
+    /* =========================================================================
+       TECHNICIANS & QUALITY HUB BUILDER
+       ========================================================================= */
+    let currentTechFilter = 'all';
+
+    function setTechFilter(mode) {
+      currentTechFilter = mode;
+      ['btnTechFilterAll', 'btnTechFilterComplaints', 'btnTechFilterSortPct', 'btnTechFilterSortOps'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.className = "px-3 py-1 rounded-xl text-xs font-bold transition-all bg-slate-800 text-slate-400 hover:text-white border border-slate-700";
+      });
+      if (mode === 'all') document.getElementById('btnTechFilterAll').className = "px-3 py-1 rounded-xl text-xs font-bold transition-all bg-amber-500/20 text-amber-300 border border-amber-500/40";
+      if (mode === 'complaints') document.getElementById('btnTechFilterComplaints').className = "px-3 py-1 rounded-xl text-xs font-bold transition-all bg-rose-500/20 text-rose-300 border border-rose-500/40";
+      if (mode === 'sortPct') document.getElementById('btnTechFilterSortPct').className = "px-3 py-1 rounded-xl text-xs font-bold transition-all bg-amber-500/20 text-amber-300 border border-amber-500/40";
+      if (mode === 'sortOps') document.getElementById('btnTechFilterSortOps').className = "px-3 py-1 rounded-xl text-xs font-bold transition-all bg-amber-500/20 text-amber-300 border border-amber-500/40";
+      buildTechHub();
+    }
+
+    function buildTechHub() {
+      const tbody = document.getElementById('techHubTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const searchVal = normalize(document.getElementById('techSearchInput') ? document.getElementById('techSearchInput').value : '');
+
+      const techMap = {};
+      dataset.forEach(r => {
+        if (!r.tech || r.tech === '—' || r.tech.trim() === '') return;
+        const tName = r.tech.trim();
+        if (!techMap[tName]) {
+          techMap[tName] = { 
+            name: tName, 
+            branch: r.branch || 'غير محدد', 
+            totalOps: 0, 
+            sat: 0, 
+            unsat: 0,
+            services: {}
+          };
+        }
+        techMap[tName].totalOps++;
+        if (r.csat === 'راضى') techMap[tName].sat++;
+        if (r.csat === 'غير راضى') techMap[tName].unsat++;
+
+        const sName = r.service || 'أخرى';
+        if (!techMap[tName].services[sName]) {
+          techMap[tName].services[sName] = { total: 0, sat: 0, unsat: 0 };
+        }
+        techMap[tName].services[sName].total++;
+        if (r.csat === 'راضى') techMap[tName].services[sName].sat++;
+        if (r.csat === 'غير راضى') techMap[tName].services[sName].unsat++;
+      });
+
+      let list = Object.values(techMap);
+
+      // Search filter
+      if (searchVal) {
+        list = list.filter(t => normalize(t.name).includes(searchVal) || normalize(t.branch).includes(searchVal));
+      }
+
+      // Mode filter
+      if (currentTechFilter === 'complaints') {
+        list = list.filter(t => t.unsat > 0);
+      }
+
+      // Sort
+      if (currentTechFilter === 'sortPct') {
+        list.sort((a, b) => {
+          const rateA = a.totalOps > 0 ? (a.unsat / a.totalOps) : 0;
+          const rateB = b.totalOps > 0 ? (b.unsat / b.totalOps) : 0;
+          return rateB - rateA || b.unsat - a.unsat;
+        });
+      } else if (currentTechFilter === 'complaints') {
+        list.sort((a, b) => b.unsat - a.unsat || b.totalOps - a.totalOps);
+      } else {
+        list.sort((a, b) => b.totalOps - a.totalOps);
+      }
+
+      list.forEach(t => {
+        const errorRate = t.totalOps > 0 ? Math.round((t.unsat / t.totalOps) * 100) : 0;
+        let badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">ممتاز</span>';
+        if (t.unsat > 0 && errorRate > 5) {
+          badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-950 text-rose-400 border border-rose-800 animate-pulse">ملاحظات جودة</span>';
+        } else if (t.unsat > 0) {
+          badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-400 border border-amber-800">مقبول</span>';
+        }
+
+        // Services breakdown pills
+        const servicePills = Object.entries(t.services).map(([srv, sData]) => {
+          const sRate = sData.total > 0 ? Math.round((sData.unsat / sData.total) * 100) : 0;
+          const isIssue = sData.unsat > 0;
+          const bg = isIssue ? 'bg-rose-950/70 border-rose-800/80 text-rose-300' : 'bg-slate-950 border-slate-800 text-slate-400';
+          return `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] border ${bg}">
+            <span class="font-medium">${srv}:</span>
+            <span class="font-bold text-white font-mono">${sData.total}</span>
+            ${isIssue ? `<span class="text-rose-400 font-bold font-mono">(${sData.unsat} شكوى • ${sRate}%)</span>` : ''}
+          </span>`;
+        }).join('');
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-800/40 border-b border-slate-800 transition-colors">
+            <td class="p-3">
+              <div class="font-bold text-white text-xs">${t.name}</div>
+              <div class="flex flex-wrap gap-1.5 mt-1.5">
+                ${servicePills}
+              </div>
+            </td>
+            <td class="p-3 text-slate-300 font-semibold">${t.branch}</td>
+            <td class="p-3 text-center font-bold text-cyan-400 font-mono">${t.totalOps}</td>
+            <td class="p-3 text-center text-emerald-400 font-mono font-bold">${t.sat}</td>
+            <td class="p-3 text-center text-rose-400 font-mono font-bold">${t.unsat}</td>
+            <td class="p-3 text-center font-mono font-bold ${errorRate > 0 ? 'text-rose-400' : 'text-slate-500'}">${errorRate}%</td>
+            <td class="p-3 text-center">${badge}</td>
+          </tr>
+        `;
+      });
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500">لا توجد بيانات فنيين مطابقة لشروط البحث</td></tr>`;
+      }
+    }
+
+    /* =========================================================================
+       COMPLAINTS & ESCALATION DESK BUILDER
+       ========================================================================= */
+    function buildComplaintsHub() {
+      const tbody = document.getElementById('complaintsModalTableBody');
+      tbody.innerHTML = '';
+
+      const complaints = dataset.filter(r => r.csat === 'غير راضى');
+
+      complaints.forEach(item => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-rose-950/20 border-b border-rose-900/20">
+            <td class="p-3 font-bold text-white">${item.customer}</td>
+            <td class="p-3 font-mono text-cyan-300 font-semibold" dir="ltr">${item.phone}</td>
+            <td class="p-3 font-bold text-amber-300">${item.branch}</td>
+            <td class="p-3 text-slate-300">${item.service}</td>
+            <td class="p-3 text-rose-300 font-semibold max-w-xs leading-normal">
+              <i class="fa-solid fa-circle-exclamation text-[10px] ml-1"></i>
+              ${item.notes}
+            </td>
+            <td class="p-3 text-slate-300">${item.tech}</td>
+            <td class="p-3 text-slate-400">${item.agent}</td>
+            <td class="p-3 text-center">
+              <button onclick="toggleComplaintAction(${item.id})" class="px-2.5 py-1 rounded-xl text-[10px] font-bold border transition-all ${item.actionTaken ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : 'bg-rose-900/60 hover:bg-rose-800 text-rose-100 border-rose-700'}">
+                <i class="fa-solid ${item.actionTaken ? 'fa-check-double' : 'fa-phone'} mr-1"></i>
+                ${item.actionTaken ? 'تم الإجراء' : 'متابعة عاجلة'}
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      if (complaints.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-500">لا توجد شكاوى أو عملاء غير راضين حالياً</td></tr>`;
+      }
+    }
+
+    function toggleComplaintAction(id) {
+      const item = dataset.find(r => r.id === id);
+      if (item) {
+        item.actionTaken = !item.actionTaken;
+        buildComplaintsHub();
+        notify('تحديث الشكوى', `تم تغيير حالة معالجة شكوى العميل: ${item.customer}`);
+      }
+    }
+
+    function exportComplaintsOnly() {
+      const unsatisfied = dataset.filter(r => r.csat === 'غير راضى').map(r => ({
+        'العميل': r.customer,
+        'الهاتف': r.phone,
+        'الفرع': r.branch,
+        'الخدمة': r.service,
+        'شكوى العميل وملاحظات الصيانة': r.notes,
+        'الفني': r.tech,
+        'مسؤول الاستبيان': r.agent,
+        'حالة الإجراء': r.actionTaken ? 'تم التواصل والمعالجة' : 'مطلوب متابعة فورية'
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(unsatisfied);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'شكاوى_العملاء');
+      XLSX.writeFile(wb, 'Customer_Complaints_Report.xlsx');
+      notify('تم التصدير', 'تم تنزيل شيت الشكاوى فقط بصيغة Excel');
+    }
+
+
+    /* =========================================================================
+       DATA EXPLORER BUILDER
+       ========================================================================= */
+    function renderExplorerTable() {
+      const tbody = document.getElementById('explorerTableBody');
+      tbody.innerHTML = '';
+
+      const fBranch = document.getElementById('expFilterBranch').value;
+      const fStatus = document.getElementById('expFilterStatus').value;
+      const fCsat = document.getElementById('expFilterCsat').value;
+      const fSearch = normalize(document.getElementById('expSearch').value);
+
+      const filtered = dataset.filter(r => {
+        if (fBranch !== 'ALL' && r.branch !== fBranch) return false;
+        if (fStatus !== 'ALL' && r.status !== fStatus) return false;
+        if (fCsat !== 'ALL' && r.csat !== fCsat) return false;
+        if (fSearch) {
+          const combo = normalize(r.customer + ' ' + r.phone + ' ' + r.branch + ' ' + r.notes + ' ' + r.tech);
+          if (!combo.includes(fSearch)) return false;
+        }
+        return true;
+      });
+
+      filtered.slice(0, 100).forEach(row => {
+        let statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400 font-semibold">${row.status}</span>`;
+        if (row.status === 'تم الرد') statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">تم الرد</span>`;
+        else if (row.status === 'لم يتم الرد') statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] bg-amber-950 text-amber-400 border border-amber-800 font-bold">لم يتم الرد</span>`;
+        else if (row.status === 'ممتنع') statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] bg-purple-950 text-purple-400 border border-purple-800 font-bold">ممتنع</span>`;
+        else if (row.status === 'مغلق أو غير متاح') statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] bg-pink-950 text-pink-400 border border-pink-800 font-bold">مغلق</span>`;
+
+        let csatBadge = '<span class="text-slate-600">-</span>';
+        if (row.csat === 'راضى') csatBadge = '<span class="text-emerald-400 font-bold"><i class="fa-solid fa-face-smile ml-1"></i> راضى</span>';
+        else if (row.csat === 'غير راضى') csatBadge = '<span class="text-rose-400 font-black"><i class="fa-solid fa-circle-exclamation ml-1"></i> غير راضى</span>';
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-800/40 border-b border-slate-800/70">
+            <td class="p-3 font-bold text-white">${row.customer}</td>
+            <td class="p-3 font-mono text-cyan-300" dir="ltr">${row.phone}</td>
+            <td class="p-3 text-slate-300 font-semibold">${row.branch}</td>
+            <td class="p-3 text-slate-300">${row.service}</td>
+            <td class="p-3">${statusBadge}</td>
+            <td class="p-3">${csatBadge}</td>
+            <td class="p-3 text-slate-400 max-w-xs truncate" title="${row.notes}">${row.notes}</td>
+            <td class="p-3 text-slate-300">${row.tech}</td>
+            <td class="p-3 text-slate-400">${row.agent}</td>
+            <td class="p-3 text-center">
+              <button onclick="openEditRecord(${row.id})" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-brand-400 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" class="p-6 text-center text-slate-500">لا توجد نتائج مطابقة لبحثك</td></tr>`;
+      }
+    }
+
+    function exportFullExcel() {
+      const out = dataset.map(r => ({
+        'العميل': r.customer,
+        'الهاتف': r.phone,
+        'الفرع': r.branch,
+        'الخدمة': r.service,
+        'حالة التواصل': r.status,
+        'حالة العميل': r.csat,
+        'ملاحظات': r.notes,
+        'الفني': r.tech,
+        'مسؤول الاستبيان': r.agent
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(out);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'الاستبيان_الكامل');
+      XLSX.writeFile(wb, `The_Hack_Full_Survey_${new Date().toISOString().split('T')[0]}.xlsx`);
+      notify('تم التصدير', 'تم تصدير سجل الاستبيان بالكامل إلى Excel');
+    }
+
+
+    /* =========================================================================
+       SURVEY FORM LOGGER / EDIT MODAL
+       ========================================================================= */
+    function openEditRecord(id) {
+      const item = dataset.find(r => r.id === id);
+      if (!item) return;
+
+      document.getElementById('formRowId').value = item.id;
+      document.getElementById('modalSurveyTitle').innerText = `تعديل استبيان: ${item.customer}`;
+      document.getElementById('formCustomer').value = item.customer;
+      document.getElementById('formPhone').value = item.phone;
+      document.getElementById('formBranch').value = item.branch;
+      document.getElementById('formService').value = item.service;
+      document.getElementById('formStatus').value = item.status;
+      document.getElementById('formCsat').value = item.csat;
+      document.getElementById('formTech').value = item.tech === '—' ? '' : item.tech;
+      document.getElementById('formAgent').value = item.agent === '—' ? 'مرجان' : item.agent;
+      document.getElementById('formNotes').value = item.notes === '—' ? '' : item.notes;
+
+      closeModal('modalDataExplorer');
+      openModal('modalSurveyLogger');
+    }
+
+    function handleFormStatusSync() {
+      const st = document.getElementById('formStatus').value;
+      const cs = document.getElementById('formCsat');
+      if (st !== 'تم الرد') {
+        cs.value = 'لم يحدد';
+      } else if (cs.value === 'لم يحدد') {
+        cs.value = 'راضى';
+      }
+    }
+
+    function handleSaveSurvey(e) {
+      e.preventDefault();
+      const rowId = parseInt(document.getElementById('formRowId').value);
+
+      const record = {
+        id: rowId > 0 ? rowId : dataset.length + 1,
+        customer: document.getElementById('formCustomer').value.trim(),
+        phone: document.getElementById('formPhone').value.trim(),
+        branch: document.getElementById('formBranch').value.trim(),
+        service: document.getElementById('formService').value,
+        status: document.getElementById('formStatus').value,
+        csat: document.getElementById('formCsat').value,
+        tech: document.getElementById('formTech').value.trim() || '—',
+        agent: document.getElementById('formAgent').value.trim() || '—',
+        notes: document.getElementById('formNotes').value.trim() || '—',
+        actionTaken: false
+      };
+
+      if (rowId > 0) {
+        const idx = dataset.findIndex(r => r.id === rowId);
+        if (idx !== -1) dataset[idx] = record;
+        notify('تم التحديث', `تم تعديل سجل العميل ${record.customer}`);
+      } else {
+        dataset.unshift(record);
+        notify('تمت الإضافة', `تم تسجيل استبيان جديد للعميل ${record.customer}`);
+      }
+
+      closeModal('modalSurveyLogger');
+      refreshAllViews();
+    }
+
+
+    /* =========================================================================
+       MODAL CONTROLLERS & KEYBOARD SHORTCUTS
+       ========================================================================= */
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+      }
+    }
+
+    function setupKeyListeners() {
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          const modals = document.querySelectorAll('[id^="modal"]');
+          modals.forEach(m => {
+            if (!m.classList.contains('hidden')) {
+              m.classList.add('hidden');
+            }
+          });
+          document.body.style.overflow = 'auto';
+        }
+      });
+    }
+
+    /* Toast Notifications */
+    function notify(title, msg, type = 'success') {
+      const t = document.getElementById('toast');
+      const icon = document.getElementById('toastIcon');
+      document.getElementById('toastTitle').innerText = title;
+      document.getElementById('toastSub').innerText = msg;
+
+      if (type === 'error') {
+        icon.innerHTML = '<i class="fa-solid fa-circle-exclamation text-rose-400"></i>';
+      } else {
+        icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+      }
+
+      t.classList.remove('translate-y-24', 'opacity-0');
+      t.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        t.classList.remove('translate-y-0', 'opacity-100');
+        t.classList.add('translate-y-24', 'opacity-0');
+      }, 3500);
+    }
+  </script>
+
+</body>
 </html>
