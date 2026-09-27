@@ -8,6 +8,8 @@ interface KPICardsProps {
   onFilterActionRequired?: () => void;
   onFilterPending?: () => void;
   onFilterAnswered?: () => void;
+  onFilterSatisfaction?: () => void;
+  onFilterTotal?: () => void;
 }
 
 interface CardProps {
@@ -78,7 +80,15 @@ const KPICard: React.FC<CardProps> = ({
   </div>
 );
 
-export const KPICards: React.FC<KPICardsProps> = ({ kpis, totalRecords, onFilterActionRequired, onFilterPending, onFilterAnswered }) => {
+export const KPICards: React.FC<KPICardsProps> = ({ 
+  kpis, 
+  totalRecords, 
+  onFilterActionRequired, 
+  onFilterPending, 
+  onFilterAnswered,
+  onFilterSatisfaction,
+  onFilterTotal
+}) => {
   const contactPct = kpis.totalWorkload > 0 ? Math.round((kpis.contacted / kpis.totalWorkload) * 100) : 0;
   const isFiltered = totalRecords && totalRecords > 0 && kpis.totalWorkload < totalRecords;
   const filteredPct = totalRecords && totalRecords > 0 ? Math.round((kpis.totalWorkload / totalRecords) * 100) : 100;
@@ -159,12 +169,17 @@ export const KPICards: React.FC<KPICardsProps> = ({ kpis, totalRecords, onFilter
           <div className="flex items-center justify-between">
             <span className="text-emerald-400 font-bold">{kpis.satisfied} راضى</span>
             <span className="text-rose-400 font-bold">{kpis.unsatisfied} غير راضى</span>
-            <span className="text-[10px] text-slate-500">
-              ({kpis.satisfied + kpis.unsatisfied} تم تقييمهم)
-            </span>
+            {onFilterSatisfaction ? (
+              <span className="text-cyan-400 font-bold underline text-[10px]">تحليل الفروع ←</span>
+            ) : (
+              <span className="text-[10px] text-slate-500">
+                ({kpis.satisfied + kpis.unsatisfied} تم تقييمهم)
+              </span>
+            )}
           </div>
         }
         accent="border-emerald-900/40"
+        onClick={onFilterSatisfaction}
       />
 
       {/* 5. Escalations */}
