@@ -3,6 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- PWA & Mobile Meta Tags -->
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#0b0f19" />
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="The Hack" />
+  <meta name="application-name" content="The Hack" />
+
   <title>The Hack - بوابة تحليلات الجودة ورضا العملاء</title>
 
   <!-- Google Fonts: Cairo & Inter -->
@@ -274,6 +286,19 @@
 
       <!-- Quick Actions -->
       <div class="flex items-center gap-3">
+        <!-- PWA Mobile Install Button -->
+        <button id="pwaInstallBtn" onclick="handlePwaInstall()" class="px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer" title="تثبيت التطبيق على هاتفك">
+          <i class="fa-solid fa-download text-sm animate-bounce"></i>
+          <span class="hidden sm:inline">تثبيت التطبيق</span>
+          <span class="sm:hidden">تثبيت</span>
+        </button>
+
+        <!-- Offline Status Badge -->
+        <div id="offlineIndicator" class="hidden px-2.5 py-1.5 rounded-xl text-[11px] font-bold bg-amber-950/90 text-amber-300 border border-amber-800 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+          <span class="hidden sm:inline">وضع أوفلاين</span>
+        </div>
+
         <!-- Sun & Moon Theme Toggle Button -->
         <button id="themeToggleBtn" onclick="toggleTheme()" class="px-3.5 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 flex items-center gap-2 text-xs font-bold transition-all shadow-sm cursor-pointer" title="التبديل إلى الوضع النهاري (Light Mode)">
           <i id="themeToggleIcon" class="fa-solid fa-sun text-amber-400 text-base transition-transform duration-300"></i>
@@ -522,6 +547,71 @@
     </div>
 
   </main>
+
+  
+  <!-- ========================================================================= -->
+  <!-- MODAL 7: MOBILE INSTALL GUIDE (PWA OFFLINE APP)                            -->
+  <!-- ========================================================================= -->
+  <div id="modalIosInstall" class="fixed inset-0 z-50 bg-black/80 modal-backdrop-blur hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 my-auto">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-mobile-screen-button"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-white">تثبيت التطبيق على هاتفك</h3>
+            <p class="text-xs text-slate-400">ليعمل معك كتطبيق كامل بدون إنترنت (Offline)</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modalIosInstall')" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs leading-relaxed text-slate-300">
+        
+        <!-- Android Guide -->
+        <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+          <div class="font-bold text-emerald-400 flex items-center gap-2">
+            <i class="fa-brands fa-android text-base"></i>
+            <span>لهواتف أندرويد (Chrome / Samsung):</span>
+          </div>
+          <p class="text-slate-400">
+            اضغط على زر <strong class="text-white">"تثبيت التطبيق"</strong> الأخضر، أو من خيارات المتصفح (⋮) اختر <strong class="text-white">"تثبيت التطبيق"</strong> أو <strong class="text-white">"إضافة إلى الشاشة الرئيسية"</strong>.
+          </p>
+        </div>
+
+        <!-- iPhone Guide -->
+        <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+          <div class="font-bold text-indigo-400 flex items-center gap-2">
+            <i class="fa-brands fa-apple text-base"></i>
+            <span>لهواتف آيفون (Safari):</span>
+          </div>
+          <ol class="list-decimal list-inside space-y-1.5 text-slate-400 pr-1">
+            <li>اضغط على زر <strong class="text-white">المشاركة ⎋ (Share)</strong> أسفل شاشة Safari.</li>
+            <li>مرر لأسفل واختر <strong class="text-white">"إضافة إلى الصفحة الرئيسية ➕" (Add to Home Screen)</strong>.</li>
+            <li>اضغط على <strong class="text-white">"إضافة" (Add)</strong> أعلى الزاوية.</li>
+          </ol>
+        </div>
+
+        <!-- Offline Feature Highlight -->
+        <div class="p-3 rounded-xl bg-indigo-950/40 border border-indigo-800/40 flex items-center gap-2.5 text-indigo-300">
+          <i class="fa-solid fa-bolt text-amber-400 text-sm"></i>
+          <span>بعد التثبيت، يمكنك فتح التطبيق وتصفحه ورفع الشيتات حتى عند انقطاع الإنترنت تماماً!</span>
+        </div>
+
+      </div>
+
+      <div class="pt-2">
+        <button onclick="closeModal('modalIosInstall')" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-all">
+          فهمت ذلك، إغلاق
+        </button>
+      </div>
+
+    </div>
+  </div>
 
   <!-- Footer -->
   <footer class="border-t border-slate-900 py-6 text-center text-xs text-slate-500">
@@ -1197,6 +1287,95 @@
       return records;
     }
 
+    
+    /* =========================================================================
+       PROGRESSIVE WEB APP (PWA) & OFFLINE PERSISTENCE
+       ========================================================================= */
+    let deferredPrompt = null;
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+          .then((reg) => {
+            console.log('The Hack PWA: Service Worker Active on scope:', reg.scope);
+          })
+          .catch((err) => {
+            console.warn('The Hack PWA: SW registration failed:', err);
+          });
+      });
+    }
+
+    // Capture Native PWA Install Prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btn = document.getElementById('pwaInstallBtn');
+      if (btn) btn.classList.remove('hidden');
+    });
+
+    window.addEventListener('appinstalled', () => {
+      notify('تم التثبيت', 'تم تثبيت تطبيق The Hack على هاتفك بنجاح وهو جاهز للعمل أوفلاين');
+      deferredPrompt = null;
+    });
+
+    function handlePwaInstall() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            notify('جاري التثبيت', 'تمت إضافة التطبيق لشاشة هاتفك');
+          }
+          deferredPrompt = null;
+        });
+      } else {
+        openModal('modalIosInstall');
+      }
+    }
+
+    // Network Status Sync (Online / Offline)
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    function updateOnlineStatus() {
+      const indicator = document.getElementById('offlineIndicator');
+      if (!navigator.onLine) {
+        if (indicator) indicator.classList.remove('hidden');
+        notify('وضع الأوفلاين', 'أنت الآن تعمل بدون اتصال بالإنترنت، كافة الوظائف والبيانات متاحة', 'warning');
+      } else {
+        if (indicator) indicator.classList.add('hidden');
+      }
+    }
+
+    // Local Storage Offline Data Backup
+    function saveDatasetLocally() {
+      try {
+        localStorage.setItem('the_hack_dataset', JSON.stringify(dataset));
+        localStorage.setItem('the_hack_filename', currentFileName);
+      } catch (err) {
+        console.warn('LocalStorage save failed:', err);
+      }
+    }
+
+    function loadStoredOrFallbackData() {
+      try {
+        const saved = localStorage.getItem('the_hack_dataset');
+        const savedName = localStorage.getItem('the_hack_filename');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            dataset = parsed;
+            currentFileName = savedName || "SUR 25-5-2026 Morgan.xlsx";
+            refreshAllViews();
+            return true;
+          }
+        }
+      } catch (err) {
+        console.warn('LocalStorage load failed:', err);
+      }
+      return false;
+    }
+
     /* Standard string normalizer */
     function normalize(s) {
       if (!s) return '';
@@ -1259,9 +1438,18 @@
 
     /* Initialize app on load */
     window.addEventListener('DOMContentLoaded', () => {
-      loadDefaultData();
+      const isLight = document.documentElement.classList.contains('light');
+      if (typeof applyThemeUI === 'function') applyThemeUI(isLight);
+
+      if (!loadStoredOrFallbackData()) {
+        loadDefaultData();
+      } else {
+        notify('جاهز للعمل أوفلاين', `تم استرجاع ${dataset.length} سجلاً محفوظاً على الهاتف`);
+      }
+
       initUploader();
       setupKeyListeners();
+      if (typeof updateOnlineStatus === 'function') updateOnlineStatus();
     });
 
     function loadDefaultData() {
@@ -1342,6 +1530,7 @@
 
           dataset = rows;
           currentFileName = file.name;
+          saveDatasetLocally();
           refreshAllViews();
           notify('تم قراءة الشيت بنجاح', `تم استيراد ${dataset.length} صفاً من ورقة (${bestSheet})`);
         } catch (err) {
