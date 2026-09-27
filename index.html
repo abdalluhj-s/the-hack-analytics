@@ -92,6 +92,149 @@
         display: none !important;
       }
     }
+  
+    /* =========================================================================
+       LIGHT MODE THEME STYLES
+       ========================================================================= */
+    html.light body {
+      background-color: #f1f5f9 !important;
+      color: #0f172a !important;
+    }
+    html.light header {
+      background-color: rgba(255, 255, 255, 0.9) !important;
+      border-color: #e2e8f0 !important;
+    }
+    html.light header h1 {
+      color: #0f172a !important;
+    }
+    html.light header p {
+      color: #64748b !important;
+    }
+    html.light #themeToggleBtn {
+      background-color: #f1f5f9 !important;
+      border-color: #cbd5e1 !important;
+      color: #334155 !important;
+    }
+    html.light #themeToggleBtn:hover {
+      background-color: #e2e8f0 !important;
+    }
+    html.light h2 {
+      color: #0f172a !important;
+    }
+    html.light p {
+      color: #475569 !important;
+    }
+
+    /* Top Row in Light Mode */
+    html.light .border-dashed {
+      background-color: #ffffff !important;
+      border-color: #cbd5e1 !important;
+    }
+    html.light .border-dashed:hover {
+      background-color: #f8fafc !important;
+      border-color: #6366f1 !important;
+    }
+    html.light .border-dashed h3 {
+      color: #0f172a !important;
+    }
+    html.light .border-dashed button {
+      background-color: #f1f5f9 !important;
+      border-color: #cbd5e1 !important;
+      color: #334155 !important;
+    }
+    html.light .border-dashed button:hover {
+      background-color: #e2e8f0 !important;
+    }
+    html.light .lg\:col-span-4 {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+    }
+    html.light #hubFileName {
+      color: #0f172a !important;
+    }
+
+    /* 6 Executive Hub Cards in Light Mode */
+    html.light .grid > [onclick^="openModal"] {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05) !important;
+    }
+    html.light .grid > [onclick^="openModal"]:hover {
+      background-color: #f8fafc !important;
+      border-color: #cbd5e1 !important;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+    }
+    html.light .grid > [onclick^="openModal"] h3 {
+      color: #0f172a !important;
+    }
+    html.light .grid > [onclick^="openModal"] p {
+      color: #475569 !important;
+    }
+    html.light .grid > [onclick^="openModal"] .border-t {
+      border-color: #f1f5f9 !important;
+    }
+
+    /* Modals in Light Mode */
+    html.light .modal-backdrop-blur > div {
+      background-color: #ffffff !important;
+      border-color: #cbd5e1 !important;
+      color: #0f172a !important;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+    }
+    html.light .modal-backdrop-blur [class*="bg-slate-950"],
+    html.light .modal-backdrop-blur [class*="bg-rose-950"] {
+      background-color: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+    }
+    html.light .modal-backdrop-blur [class*="bg-slate-900"] {
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+    }
+    html.light .modal-backdrop-blur h2,
+    html.light .modal-backdrop-blur h3 {
+      color: #0f172a !important;
+    }
+    html.light .modal-backdrop-blur p {
+      color: #64748b !important;
+    }
+    html.light .modal-backdrop-blur table {
+      border-color: #e2e8f0 !important;
+      background-color: #ffffff !important;
+    }
+    html.light .modal-backdrop-blur thead {
+      background-color: #f1f5f9 !important;
+      color: #334155 !important;
+      border-color: #e2e8f0 !important;
+    }
+    html.light .modal-backdrop-blur th {
+      color: #334155 !important;
+    }
+    html.light .modal-backdrop-blur td {
+      border-color: #f1f5f9 !important;
+      color: #1e293b !important;
+    }
+    html.light .modal-backdrop-blur tbody tr:hover {
+      background-color: #f8fafc !important;
+    }
+    html.light .modal-backdrop-blur input,
+    html.light .modal-backdrop-blur select,
+    html.light .modal-backdrop-blur textarea {
+      background-color: #f8fafc !important;
+      border-color: #cbd5e1 !important;
+      color: #0f172a !important;
+    }
+    html.light .modal-backdrop-blur button[onclick^="closeModal"] {
+      background-color: #f1f5f9 !important;
+      color: #64748b !important;
+    }
+    html.light .modal-backdrop-blur button[onclick^="closeModal"]:hover {
+      background-color: #e2e8f0 !important;
+      color: #0f172a !important;
+    }
+    html.light footer {
+      border-color: #e2e8f0 !important;
+      color: #64748b !important;
+    }
   </style>
 
   <script>
@@ -131,6 +274,12 @@
 
       <!-- Quick Actions -->
       <div class="flex items-center gap-3">
+        <!-- Sun & Moon Theme Toggle Button -->
+        <button id="themeToggleBtn" onclick="toggleTheme()" class="px-3.5 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 flex items-center gap-2 text-xs font-bold transition-all shadow-sm cursor-pointer" title="التبديل إلى الوضع النهاري (Light Mode)">
+          <i id="themeToggleIcon" class="fa-solid fa-sun text-amber-400 text-base transition-transform duration-300"></i>
+          <span id="themeToggleText" class="hidden sm:inline">الوضع النهاري</span>
+        </button>
+
         <button onclick="openModal('modalSurveyLogger')" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-brand-600/30 transition-all">
           <i class="fa-solid fa-plus"></i>
           <span>تسجيل استبيان جديد</span>
@@ -1067,6 +1216,46 @@
       if (n.includes('ترصيص') || n.includes('اتزان')) return 'ترصيص';
       return 'خدمات أخرى';
     }
+
+    
+    /* =========================================================================
+       DARK / LIGHT MODE THEME TOGGLE LOGIC
+       ========================================================================= */
+    function applyThemeUI(isLight) {
+      const btn = document.getElementById('themeToggleBtn');
+      const icon = document.getElementById('themeToggleIcon');
+      const text = document.getElementById('themeToggleText');
+
+      if (isLight) {
+        document.documentElement.classList.add('light');
+        if (icon) icon.className = 'fa-solid fa-moon text-indigo-600 text-base transition-transform duration-300';
+        if (btn) btn.title = 'التبديل إلى الوضع الليلي (Dark Mode)';
+        if (text) text.innerText = 'الوضع الليلي';
+      } else {
+        document.documentElement.classList.remove('light');
+        if (icon) icon.className = 'fa-solid fa-sun text-amber-400 text-base transition-transform duration-300';
+        if (btn) btn.title = 'التبديل إلى الوضع النهاري (Light Mode)';
+        if (text) text.innerText = 'الوضع النهاري';
+      }
+    }
+
+    function toggleTheme() {
+      const isCurrentlyLight = document.documentElement.classList.contains('light');
+      const nextIsLight = !isCurrentlyLight;
+      localStorage.setItem('the_hack_theme', nextIsLight ? 'light' : 'dark');
+      applyThemeUI(nextIsLight);
+      notify(nextIsLight ? 'الوضع النهاري' : 'الوضع الليلي', nextIsLight ? 'تم تفعيل الوضع النهاري المضيء' : 'تم تفعيل الوضع الليلي الداكن');
+    }
+
+    // Auto-load saved theme preference before render
+    (function() {
+      try {
+        const saved = localStorage.getItem('the_hack_theme');
+        if (saved === 'light') {
+          document.documentElement.classList.add('light');
+        }
+      } catch(e) {}
+    })();
 
     /* Initialize app on load */
     window.addEventListener('DOMContentLoaded', () => {
