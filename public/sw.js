@@ -1,5 +1,5 @@
 // The Hack Analytics - Progressive Web App Service Worker
-const CACHE_NAME = 'the-hack-cache-v2';
+const CACHE_NAME = 'the-hack-cache-v3';
 
 const ASSETS_TO_PRECACHE = [
   './',
