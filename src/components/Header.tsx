@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Wrench, 
   Upload, 
@@ -49,7 +49,32 @@ export const Header: React.FC<HeaderProps> = ({
   kpis,
 }) => {
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [currentDateTime, setCurrentDateTime] = useState<string>('');
   const { theme, toggleTheme } = useTheme();
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      try {
+        const formatted = new Intl.DateTimeFormat('ar-EG', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true,
+        }).format(now);
+        setCurrentDateTime(formatted);
+      } catch {
+        setCurrentDateTime(now.toLocaleTimeString('ar-EG'));
+      }
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handlePrint = () => {
     setShowExportMenu(false);
@@ -60,57 +85,65 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="border-b border-slate-800/80 bg-[#0c121e]/90 backdrop-blur-md sticky top-0 z-30 transition-colors print:hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
         
-        {/* ── Brand Logo & Title ── */}
-        <div className="flex items-center gap-3">
+        {/* ── Brand Logo, Title & Live Date/Time ── */}
+        <div className="flex flex-wrap items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center shadow-lg shadow-amber-500/20 text-slate-950 flex-shrink-0">
             <Wrench className="w-5 h-5 stroke-[2.5]" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-2">
                 <span>The Hack</span>
-                <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                  Automotive Pro
+                <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                  بوابة تحليلات الجودة ورضا العملاء
                 </span>
               </h1>
             </div>
             <p className="text-[11px] sm:text-xs text-slate-400 font-medium line-clamp-1">
-              منظومة تحليلات استبيانات ومكالمات رضا عملاء مراكز صيانة السيارات
+              منظومة الرقابة والتحليلات المتخصصة لمراكز صيانة وخدمات السيارات
             </p>
           </div>
+
+          {/* Live Date/Time badge */}
+          {currentDateTime && (
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-900/90 border border-slate-800 text-[11px] font-mono text-cyan-300 mr-2 shadow-inner">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>{currentDateTime}</span>
+            </div>
+          )}
         </div>
 
         {/* ── Organized Actions & Controls ── */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-          
-          {/* 1. Quick Entry (Primary CTA) */}
+
+          {/* 1. Upload Excel Sheet (Highlighted Primary CTA) */}
+          <button
+            onClick={onOpenUpload}
+            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/25 transition-all active:scale-95 border border-amber-400/50"
+            title="رفع واستيراد شيت إكسيل جديد لقراءة البيانات"
+          >
+            <Upload className="w-4 h-4 stroke-[2.5]" />
+            <span>رفع شيت إكسيل جديد</span>
+          </button>
+
+          {/* 2. Quick Entry */}
           <button
             onClick={onOpenQuickEntry}
-            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 hover:border-slate-600 transition-all active:scale-95"
             title="إضافة وتسجيل مكالمة استبيان جديدة"
           >
-            <PlusCircle className="w-4 h-4 stroke-[2.5]" />
+            <PlusCircle className="w-3.5 h-3.5 text-emerald-400" />
             <span>تسجيل مكالمة سريعة</span>
           </button>
 
-          {/* 2. Download Official Excel Template */}
+          {/* 3. Download Official Excel Template */}
           <button
             onClick={downloadExcelTemplate}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30 hover:border-amber-400 transition-all active:scale-95"
             title="تحميل إسطمبة الإكسيل المعتمدة الجاهزة لتعبئة بيانات الفروع"
           >
             <Download className="w-3.5 h-3.5 text-amber-400" />
-            <span>تحميل الإسطمبة (Excel)</span>
-          </button>
-
-          {/* 3. Upload Excel Sheet */}
-          <button
-            onClick={onOpenUpload}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 hover:border-slate-600 transition-all active:scale-95"
-            title="رفع واستيراد شيت إكسيل جديد"
-          >
-            <Upload className="w-3.5 h-3.5 text-amber-400" />
-            <span>رفع شيت إكسيل</span>
+            <span>تحميل الإسطمبة</span>
           </button>
 
           {/* 4. Export Menu Dropdown */}

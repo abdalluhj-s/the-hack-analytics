@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Header } from './components/Header';
-import { KPICards } from './components/KPICards';
+import { QuickSummaryChips } from './components/QuickSummaryChips';
+import { MainHubCards, PortalType } from './components/MainHubCards';
+import { ExecutiveGlanceBar } from './components/ExecutiveGlanceBar';
+import { PortalDrawerModal } from './components/PortalDrawerModal';
+import { ExecutiveReportModal } from './components/ExecutiveReportModal';
 import { FilterBar } from './components/FilterBar';
-import { OutcomeChart } from './components/OutcomeChart';
 import { BranchCSATChart } from './components/BranchCSATChart';
 import { BranchPerformanceTable } from './components/BranchPerformanceTable';
 import { BranchDashboardModal } from './components/BranchDashboardModal';
@@ -14,10 +17,20 @@ import { ExcelUploaderModal } from './components/ExcelUploaderModal';
 import { SupabaseSettingsModal } from './components/SupabaseSettingsModal';
 import { InstallPwaModal } from './components/InstallPwaModal';
 import { usePwaInstall } from './hooks/usePwaInstall';
-import { Smartphone } from 'lucide-react';
+import { 
+  Building2, 
+  Wrench, 
+  AlertTriangle, 
+  Search, 
+  Smartphone, 
+  FileSpreadsheet, 
+  Download, 
+  Upload, 
+  PlusCircle,
+  FileText
+} from 'lucide-react';
 
 import { SurveyRecord, FilterOptions } from './types/survey';
-import { INITIAL_RECORDS } from './data/mockData';
 import {
   calculateKPIs,
   calculateBranchPerformance,
@@ -32,17 +45,13 @@ import {
   clearAllSurveysInSupabase 
 } from './utils/supabase';
 import { downloadExcelTemplate } from './utils/excelParser';
-import { BarChart3, AlertTriangle, Building2, PhoneCall, Sparkles, FileSpreadsheet, Download, Upload, PlusCircle, Wrench } from 'lucide-react';
 
 const LOCAL_STORAGE_KEY = 'the_hack_survey_records_v3';
-
-type Tab = 'dashboard' | 'branches' | 'technicians' | 'escalations' | 'calls';
 
 export function App() {
   // ─── Records ───────────────────────────────────────────
   const [records, setRecords] = useState<SurveyRecord[]>(() => {
     try {
-      // Clear legacy storage keys
       localStorage.removeItem('the_hack_survey_records_v1');
       localStorage.removeItem('the_hack_survey_records_v2');
 
@@ -50,7 +59,6 @@ export function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Exclude any legacy mock items
           const realOnly = parsed.filter(r => !r.id?.startsWith('REC-') && !r.id?.startsWith('HACK-'));
           return realOnly;
         }
@@ -105,10 +113,10 @@ export function App() {
     onlyActionRequired: false,
   });
 
-  // ─── Active Tab ────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  // ─── Active Portal Full-Screen Modal ───────────────────
+  const [activePortalModal, setActivePortalModal] = useState<PortalType | null>(null);
 
-  // ─── Modals ────────────────────────────────────────────
+  // ─── Sub Modals ────────────────────────────────────────
   const [quickEntry, setQuickEntry] = useState<{ open: boolean; record: SurveyRecord | null }>({ open: false, record: null });
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isSupabaseOpen, setIsSupabaseOpen] = useState(false);
@@ -167,7 +175,6 @@ export function App() {
           const minDate = sevenDaysAgo.toISOString().split('T')[0];
           if (rDate < minDate) return false;
         } else {
-          // Exact date match (e.g. '2026-09-24')
           if (rDate !== filters.date) return false;
         }
       }
@@ -265,10 +272,7 @@ export function App() {
 
   const handleImport = (newRecords: SurveyRecord[], mode: 'replace' | 'append') => {
     if (mode === 'replace') {
-      // 1. Reset state arrays
       setRecords(newRecords);
-
-      // 2. Clear old caches and keys from localStorage
       try {
         localStorage.removeItem(LOCAL_STORAGE_KEY);
         localStorage.removeItem('the_hack_survey_records_v1');
@@ -277,7 +281,6 @@ export function App() {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newRecords));
       } catch {}
 
-      // 3. Clear IndexedDB databases if present
       if (typeof window !== 'undefined' && window.indexedDB && window.indexedDB.databases) {
         window.indexedDB.databases().then(dbs => {
           dbs.forEach(db => {
@@ -288,10 +291,7 @@ export function App() {
         }).catch(() => {});
       }
 
-      // 4. Reset filters so old date or branch filters don't hide imported records
       resetFilters();
-
-      // 5. Sync to Supabase with clearFirst
       syncSurveysToSupabase(newRecords, { clearFirst: true }).catch(() => {});
     } else {
       setRecords(prev => [...newRecords, ...prev]);
@@ -324,64 +324,10 @@ export function App() {
     }
   };
 
-  // ─── Tab config ────────────────────────────────────────
-  const tabs: { id: Tab; label: string; icon: React.ReactNode; count?: number; color: string }[] = [
-    {
-      id: 'dashboard',
-      label: 'الرئيسية والمؤشرات',
-      icon: <BarChart3 className="w-4 h-4" />,
-      color: 'amber',
-    },
-    {
-      id: 'branches',
-      label: 'تحليل الفروع والرضا',
-      icon: <Building2 className="w-4 h-4" />,
-      count: branchPerformance.length,
-      color: 'cyan',
-    },
-    {
-      id: 'technicians',
-      label: 'تحليل وشكاوى الفنيين',
-      icon: <Wrench className="w-4 h-4" />,
-      count: totalTechsWithComplaints,
-      color: 'emerald',
-    },
-    {
-      id: 'escalations',
-      label: 'متابعة الشكاوى',
-      icon: <AlertTriangle className="w-4 h-4" />,
-      count: kpis.unsatisfied,
-      color: 'rose',
-    },
-    {
-      id: 'calls',
-      label: 'بيانات الشيت والمكالمات',
-      icon: <PhoneCall className="w-4 h-4" />,
-      count: filteredRecords.length,
-      color: 'indigo',
-    },
-  ];
-
-  const tabActiveClass: Record<string, string> = {
-    amber: 'bg-amber-500 text-slate-950',
-    cyan: 'bg-cyan-500 text-slate-950',
-    emerald: 'bg-[#5a823b] text-white',
-    rose: 'bg-rose-500 text-white',
-    indigo: 'bg-indigo-500 text-white',
-  };
-
-  const tabHoverClass: Record<string, string> = {
-    amber: 'hover:text-amber-300',
-    cyan: 'hover:text-cyan-400',
-    emerald: 'hover:text-[#a1d66c]',
-    rose: 'hover:text-rose-400',
-    indigo: 'hover:text-indigo-400',
-  };
-
   return (
     <div className="min-h-screen bg-[#080c14] text-slate-100 pb-20">
 
-      {/* ── Navbar ── */}
+      {/* ── Executive Header with Live Clock & Direct Upload CTA ── */}
       <Header
         onOpenUpload={() => setIsUploadOpen(true)}
         onOpenQuickEntry={() => setQuickEntry({ open: true, record: null })}
@@ -396,43 +342,43 @@ export function App() {
         kpis={kpis}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-5 lg:px-8 pt-6 space-y-5">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
 
         {/* ── Empty State Hero Banner when no records exist ── */}
         {records.length === 0 && (
-          <div className="rounded-2xl p-6 sm:p-8 bg-gradient-to-br from-slate-900 via-[#111724] to-[#0c121e] border-2 border-dashed border-amber-500/40 text-center space-y-4 shadow-2xl animate-fade-in">
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto shadow-inner">
-              <FileSpreadsheet className="w-7 h-7 stroke-[2]" />
+          <div className="rounded-3xl p-8 sm:p-12 bg-gradient-to-br from-slate-900 via-[#111724] to-[#0c121e] border-2 border-dashed border-amber-500/40 text-center space-y-5 shadow-2xl animate-fade-in">
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto shadow-inner">
+              <FileSpreadsheet className="w-8 h-8 stroke-[2]" />
             </div>
-            <div className="max-w-xl mx-auto space-y-1.5">
-              <h2 className="text-xl font-black text-white">
+            <div className="max-w-xl mx-auto space-y-2">
+              <h2 className="text-xl sm:text-2xl font-black text-white">
                 منظومة The Hack جاهزة لاستقبال بيانات الفروع
               </h2>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                تم تفريغ البيانات السابقة بالكامل بناءً على طلبك. يمكنك الآن البدء إما بتحميل <strong className="text-amber-400">الإسطمبة المعتمدة</strong> لتعبئتها بإكسيل، أو <strong className="text-amber-400">رفع شيت الإكسيل</strong> الحالي الخاص بمراكز الصيانة لحساب كافة المؤشرات والداشبورد بدقة 100%.
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                المنظومة مصممة خصيصاً لمراكز خدمة السيارات. يمكنك البدء الآن برفع شيت الإكسيل لاستخراج التقرير الأسبوعي الرسمي، تحليل الفروع والفنيين ومتابعة الشكاوى بدقة 100%.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
               <button
-                onClick={downloadExcelTemplate}
-                className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 transition-all active:scale-95"
-              >
-                <Download className="w-4 h-4 stroke-[2.5]" />
-                <span>تحميل إسطمبة الإكسيل المعتمدة (Template)</span>
-              </button>
-
-              <button
                 onClick={() => setIsUploadOpen(true)}
-                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-600 flex items-center gap-2 transition-all active:scale-95"
+                className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-xl shadow-amber-500/25 transition-all active:scale-95"
               >
-                <Upload className="w-4 h-4 text-amber-400" />
+                <Upload className="w-4 h-4 stroke-[2.5]" />
                 <span>رفع شيت إكسيل جديد</span>
               </button>
 
               <button
+                onClick={downloadExcelTemplate}
+                className="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm border border-slate-700 flex items-center gap-2 transition-all active:scale-95"
+              >
+                <Download className="w-4 h-4 text-amber-400" />
+                <span>تحميل الإسطمبة المعتمدة (Excel)</span>
+              </button>
+
+              <button
                 onClick={() => setQuickEntry({ open: true, record: null })}
-                className="px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 flex items-center gap-1.5 transition-all"
+                className="px-4 py-3 rounded-2xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-semibold text-xs sm:text-sm border border-slate-700 flex items-center gap-1.5 transition-all"
               >
                 <PlusCircle className="w-4 h-4 text-emerald-400" />
                 <span>تسجيل مكالمة سريعة</span>
@@ -441,363 +387,178 @@ export function App() {
           </div>
         )}
 
-        {/* ── KPI Summary ── */}
-        <KPICards
-          kpis={kpis}
-          totalRecords={records.length}
-          onFilterActionRequired={() => setActiveTab('escalations')}
-          onFilterPending={() => { setFilters(p => ({ ...p, callOutcome: 'قيد الانتظار', onlyActionRequired: false })); setActiveTab('calls'); }}
-          onFilterAnswered={() => { setFilters(p => ({ ...p, callOutcome: 'تم الرد', onlyActionRequired: false })); setActiveTab('calls'); }}
-          onFilterSatisfaction={() => setActiveTab('branches')}
-          onFilterTotal={() => setActiveTab('calls')}
-        />
-
-        {/* ── Tab Navigation ── */}
-        <div className="flex items-center gap-2 border-b border-slate-800/80 pb-0 overflow-x-auto">
-          {tabs.map(tab => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-t-xl text-xs font-bold whitespace-nowrap border-b-2 transition-all
-                  ${isActive
-                    ? `${tabActiveClass[tab.color]} border-transparent shadow-md`
-                    : `text-slate-400 border-transparent bg-transparent ${tabHoverClass[tab.color]}`
-                  }`}
-              >
-                {tab.icon}
-                <span>{tab.label}</span>
-                {tab.count !== undefined && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
-                    isActive ? 'bg-black/20' : 'bg-slate-800 text-slate-300'
-                  }`}>
-                    {tab.count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-          <div className="mr-auto hidden lg:flex items-center gap-1.5 text-[11px] text-amber-400/70 font-medium pb-2 pr-1">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>دقة حسابية 100%</span>
-          </div>
-        </div>
-
-        {/* ── Global Filter Bar ── */}
-        <FilterBar
-          filters={filters}
-          onFilterChange={setFilters}
-          availableBranches={availableBranches}
-          availableAgents={availableAgents}
-          availableDates={availableDates}
-          onResetFilters={resetFilters}
-          filteredCount={filteredRecords.length}
-          totalCount={records.length}
-        />
-
-        {/* ══════════════════════════════════
-            TAB 1: الرئيسية — Overview Hub
-        ══════════════════════════════════ */}
-        {activeTab === 'dashboard' && (
+        {/* ── Active State: Clean Executive Portal Hub ── */}
+        {records.length > 0 && (
           <div className="space-y-6 animate-fade-in">
-            {/* Quick Navigation Cards Hub */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between px-1">
-                <span className="text-xs font-bold text-slate-300">
-                  لوحات وأقسام التحليل المتخصصة (اضغط للذهاب مباشرة للتابة):
-                </span>
-                <span className="text-[11px] text-slate-500">
-                  كل قسم منظم في تابة مستقلة بدقة وتفصيل كامل
-                </span>
-              </div>
+            
+            {/* 1. Top Quick Bar: 4 Lightweight Summary Chips */}
+            <QuickSummaryChips
+              kpis={kpis}
+              totalRecords={records.length}
+              onOpenReport={() => setActivePortalModal('report')}
+              onOpenBranches={() => setActivePortalModal('branches')}
+              onOpenTechnicians={() => setActivePortalModal('technicians')}
+              onOpenEscalations={() => setActivePortalModal('escalations')}
+              onOpenExplorer={() => setActivePortalModal('explorer')}
+            />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* 1. Branch Tab Hub Card */}
-                <div
-                  onClick={() => setActiveTab('branches')}
-                  className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-cyan-950/30 border border-slate-800 hover:border-cyan-500/50 cursor-pointer transition-all hover:scale-[1.02] shadow-xl group flex flex-col justify-between space-y-3"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="w-10 h-10 rounded-xl bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 flex items-center justify-center group-hover:bg-cyan-500 group-hover:text-slate-950 transition-colors">
-                      <Building2 className="w-5 h-5 stroke-[2.5]" />
-                    </div>
-                    <span className="text-xs font-bold text-cyan-400 group-hover:translate-x-[-3px] transition-transform flex items-center gap-1">
-                      <span>عرض الفروع</span>
-                      <span>←</span>
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="text-base font-black text-white group-hover:text-cyan-300 transition-colors">
-                      تحليل الفروع والرضا
-                    </h4>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                      إجمالي مكالمات الفروع ({branchSummary.totalCalls} مكالمة) • {branchPerformance.length} فروع • نسبة الرضا {branchSummary.overallBranchCSAT}%
-                    </p>
-                  </div>
-                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
-                    <span className="text-emerald-400 font-bold">{branchSummary.totalSatisfied} راضى</span>
-                    <span className="text-rose-400 font-bold">{branchSummary.totalUnsatisfied} غير راضى</span>
-                  </div>
-                </div>
-
-                {/* 2. Technicians Tab Hub Card */}
-                <div
-                  onClick={() => setActiveTab('technicians')}
-                  className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-emerald-950/30 border border-slate-800 hover:border-[#a1d66c]/50 cursor-pointer transition-all hover:scale-[1.02] shadow-xl group flex flex-col justify-between space-y-3"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="w-10 h-10 rounded-xl bg-[#5a823b]/20 text-[#a1d66c] border border-[#5a823b]/40 flex items-center justify-center group-hover:bg-[#5a823b] group-hover:text-white transition-colors">
-                      <Wrench className="w-5 h-5 stroke-[2.5]" />
-                    </div>
-                    <span className="text-xs font-bold text-[#a1d66c] group-hover:translate-x-[-3px] transition-transform flex items-center gap-1">
-                      <span>عرض الفنيين</span>
-                      <span>←</span>
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="text-base font-black text-white group-hover:text-[#a1d66c] transition-colors">
-                      تحليل وشكاوى الفنيين
-                    </h4>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                      تحليل مجمع شامل • نسبة الشكاوى في الخدمة نفسها • كم مرة عملها وكم صح وكم شكوى
-                    </p>
-                  </div>
-                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
-                    <span className="text-rose-400 font-bold">{totalTechsWithComplaints} فني لديهم شكاوى</span>
-                    <span className="text-[#a1d66c] font-bold">فلتر الأكثر مشاكل</span>
-                  </div>
-                </div>
-
-                {/* 3. Escalations Tab Hub Card */}
-                <div
-                  onClick={() => setActiveTab('escalations')}
-                  className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-rose-950/30 border border-slate-800 hover:border-rose-500/50 cursor-pointer transition-all hover:scale-[1.02] shadow-xl group flex flex-col justify-between space-y-3"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center group-hover:bg-rose-500 group-hover:text-white transition-colors">
-                      <AlertTriangle className="w-5 h-5 stroke-[2.5]" />
-                    </div>
-                    <span className="text-xs font-bold text-rose-400 group-hover:translate-x-[-3px] transition-transform flex items-center gap-1">
-                      <span>متابعة الشكاوى</span>
-                      <span>←</span>
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="text-base font-black text-white group-hover:text-rose-300 transition-colors">
-                      متابعة شكاوى العملاء
-                    </h4>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                      سجلات العملاء غير الراضين • أرقام الهواتف والتواصل • الإجراءات والحلول الفورية
-                    </p>
-                  </div>
-                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
-                    <span className="text-rose-400 font-bold">{kpis.unsatisfied} شكوى مسجلة</span>
-                    <span className="text-slate-400">اتصال وواتساب مباشر</span>
-                  </div>
-                </div>
-
-                {/* 4. Calls Tab Hub Card */}
-                <div
-                  onClick={() => setActiveTab('calls')}
-                  className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-indigo-950/30 border border-slate-800 hover:border-indigo-500/50 cursor-pointer transition-all hover:scale-[1.02] shadow-xl group flex flex-col justify-between space-y-3"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white transition-colors">
-                      <PhoneCall className="w-5 h-5 stroke-[2.5]" />
-                    </div>
-                    <span className="text-xs font-bold text-indigo-400 group-hover:translate-x-[-3px] transition-transform flex items-center gap-1">
-                      <span>عرض السجل</span>
-                      <span>←</span>
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="text-base font-black text-white group-hover:text-indigo-300 transition-colors">
-                      بيانات الشيت وسجل المكالمات
-                    </h4>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                      كافة السجلات الفعلية من ملفات الإكسيل • بحث سريع وفرز وتعديل للبيانات
-                    </p>
-                  </div>
-                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
-                    <span className="text-cyan-400 font-bold">{filteredRecords.length} سجل مفروز</span>
-                    <span className="text-slate-400">إجمالي الشيت {records.length}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Distribution Chart for Call Outcomes & Executive Summary */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              <OutcomeChart kpis={kpis} />
-
-              <div className="bg-[#111724] border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-amber-400" />
-                    <h3 className="text-sm font-bold text-white">ملخص أداء المنظومة والعمليات</h3>
-                  </div>
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold font-mono">
-                    {records.length} صف مقروء
-                  </span>
-                </div>
-
-                <div className="space-y-3 text-xs">
-                  <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
-                    <span className="text-slate-300">معدل الاستجابة والرد العام:</span>
-                    <strong className="text-cyan-400 font-mono text-sm">{kpis.responseRate}% ({kpis.answered} تم الرد)</strong>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
-                    <span className="text-slate-300">معدل الرضا العام (CSAT):</span>
-                    <strong className="text-emerald-400 font-mono text-sm">{kpis.csat}% ({kpis.satisfied} عميل راضٍ)</strong>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
-                    <span className="text-slate-300">إجمالي الفروع النشطة:</span>
-                    <button 
-                      onClick={() => setActiveTab('branches')} 
-                      className="text-cyan-400 hover:text-cyan-300 font-bold font-mono underline"
-                    >
-                      {branchPerformance.length} فروع (عرض التفاصيل ←)
-                    </button>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
-                    <span className="text-slate-300">الفنيون محل الشكاوى:</span>
-                    <button 
-                      onClick={() => setActiveTab('technicians')} 
-                      className="text-rose-400 hover:text-rose-300 font-bold font-mono underline"
-                    >
-                      {totalTechsWithComplaints} فني (عرض تحليل الفنيين ←)
-                    </button>
-                  </div>
-                </div>
-
-                <div className="pt-2 text-[11px] text-slate-500 text-center">
-                  انقر على أي قسم بالأعلى أو استخدم شريط التبويبات للتنقل السلس
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ══════════════════════════════════
-            TAB 2: الفروع — Branch Matrix & Analytics
-        ══════════════════════════════════ */}
-        {activeTab === 'branches' && (
-          <div className="space-y-6 animate-fade-in">
-            {/* Executive Header Banner */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-[#111724] to-cyan-950/30 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xl">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 flex items-center justify-center shadow-inner">
-                  <Building2 className="w-5 h-5 stroke-[2.5]" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-white flex items-center gap-2">
-                    <span>تحليل بيانات الفروع ومكالمات الرضا الشاملة</span>
-                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
-                      {branchPerformance.length} فروع
-                    </span>
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    إجمالي مكالمات الفروع بالكامل، أعداد الراضيين وغير الراضيين، ونسب الرضا والأداء لكل فرع
-                  </p>
-                </div>
-              </div>
-
-              <div className="text-xs text-slate-400 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 font-medium">
-                إجمالي مكالمات الفروع: <strong className="text-white font-mono">{branchSummary.totalCalls}</strong>
-              </div>
-            </div>
-
-            {/* Branch Summary Cards (All Branch Calls, Satisfied, Unsatisfied, CSAT) */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 shadow-lg">
-                <div className="text-slate-400 text-xs font-medium">إجمالي مكالمات كافة الفروع</div>
-                <div className="text-2xl font-black text-white font-mono mt-1">{branchSummary.totalCalls}</div>
-                <div className="text-[11px] text-cyan-400 mt-1 font-medium">{branchSummary.totalAnswered} مكالمة تم الرد عليها</div>
-              </div>
-
-              <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/30 shadow-lg">
-                <div className="text-emerald-300 text-xs font-medium">إجمالي العملاء الراضيين</div>
-                <div className="text-2xl font-black text-emerald-400 font-mono mt-1">{branchSummary.totalSatisfied}</div>
-                <div className="text-[11px] text-emerald-400 font-bold mt-1">معدل الرضا العام: {branchSummary.overallBranchCSAT}%</div>
-              </div>
-
-              <div className="p-4 rounded-xl bg-rose-950/20 border border-rose-500/30 shadow-lg">
-                <div className="text-rose-300 text-xs font-medium">إجمالي غير الراضيين (الشكاوى)</div>
-                <div className="text-2xl font-black text-rose-400 font-mono mt-1">{branchSummary.totalUnsatisfied}</div>
-                <div className="text-[11px] text-rose-400 mt-1 truncate">
-                  أكثر فرع: {branchSummary.mostComplaintsBranch?.branch || '-'} ({branchSummary.mostComplaintsBranch?.unsatisfied || 0} شكوى)
-                </div>
-              </div>
-
-              <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-500/30 shadow-lg">
-                <div className="text-amber-300 text-xs font-medium">الفرع الأعلى في الرضا 🏆</div>
-                <div className="text-lg font-black text-white truncate mt-1">
-                  {branchSummary.bestBranch?.branch || '-'}
-                </div>
-                <div className="text-[11px] text-amber-400 font-mono font-bold mt-1">
-                  نسبة رضا {branchSummary.bestBranch?.csat || 0}% ({branchSummary.bestBranch?.satisfied || 0} راضٍ)
-                </div>
-              </div>
-            </div>
-
-            {/* Comparison Chart */}
-            <BranchCSATChart
+            {/* 2. Core Navigation: 5 Main Hub Cards */}
+            <MainHubCards
+              onSelectPortal={portal => setActivePortalModal(portal)}
+              kpis={kpis}
+              totalRecords={records.length}
               branchPerformance={branchPerformance}
-              onClickBranch={openBranchDashboard}
+              totalTechsWithComplaints={totalTechsWithComplaints}
+              bestBranchName={branchSummary.bestBranch?.branch}
+              bestBranchCsat={branchSummary.bestBranch?.csat}
             />
 
-            {/* Full Branch Performance Table */}
-            <BranchPerformanceTable
-              branches={branchPerformance}
-              selectedBranch={filters.branch}
-              onSelectBranch={branch => setFilters(p => ({ ...p, branch }))}
-              onOpenBranchDashboard={openBranchDashboard}
-              compact={false}
+            {/* 3. Minimal Executive Status Bar (No heavy tables cluttering landing page) */}
+            <ExecutiveGlanceBar
+              kpis={kpis}
+              totalRecords={records.length}
+              branchPerformance={branchPerformance}
+              bestBranch={branchSummary.bestBranch}
+              totalTechsWithComplaints={totalTechsWithComplaints}
+              onOpenReport={() => setActivePortalModal('report')}
             />
-          </div>
-        )}
 
-        {/* ══════════════════════════════════
-            TAB 3: تحليل وشكاوى الفنيين — Technicians
-        ══════════════════════════════════ */}
-        {activeTab === 'technicians' && (
-          <div className="space-y-6 animate-fade-in">
-            <TechnicianComplaintsTable records={filteredRecords} />
-          </div>
-        )}
-
-        {/* ══════════════════════════════════
-            TAB 4: متابعة الشكاوى — Escalations
-        ══════════════════════════════════ */}
-        {activeTab === 'escalations' && (
-          <div className="space-y-6 animate-fade-in">
-            <EscalationsTable
-              records={filteredRecords}
-              onToggleActionTaken={handleToggleAction}
-            />
-          </div>
-        )}
-
-        {/* ══════════════════════════════════
-            TAB 5: بيانات الشيت وسجل المكالمات — All Calls
-        ══════════════════════════════════ */}
-        {activeTab === 'calls' && (
-          <div className="animate-fade-in">
-            <WorkloadTable
-              records={filteredRecords}
-              onUpdateRecord={handleSave}
-              onSelectRecordForQuickEntry={rec => setQuickEntry({ open: true, record: rec })}
-            />
           </div>
         )}
 
       </main>
 
-      {/* ── Modals ── */}
+      {/* ═══════════════════════════════════════════════════════════════
+          THE 5 DEDICATED FULL-SCREEN MODALS / DRAWERS
+      ═══════════════════════════════════════════════════════════════ */}
+
+      {/* 1. Official Standardized Executive Report Modal */}
+      <ExecutiveReportModal
+        isOpen={activePortalModal === 'report'}
+        onClose={() => setActivePortalModal(null)}
+        records={filteredRecords.length > 0 ? filteredRecords : records}
+      />
+
+      {/* 2. Branch Analysis & Comparison Portal Drawer */}
+      <PortalDrawerModal
+        isOpen={activePortalModal === 'branches'}
+        onClose={() => setActivePortalModal(null)}
+        title="تحليل ومقارنة أداء الفروع ورضا العملاء"
+        subtitle={`إجمالي مكالمات الفروع (${branchSummary.totalCalls} مكالمة) • ${branchPerformance.length} فروع • نسبة الرضا العام ${branchSummary.overallBranchCSAT}%`}
+        icon={<Building2 className="w-5 h-5 text-cyan-400 stroke-[2.2]" />}
+        badge={`${branchPerformance.length} فروع`}
+        accentColor="cyan"
+      >
+        <div className="space-y-6">
+          {/* Branch Top Metrics Bar */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg">
+              <div className="text-slate-400 text-xs font-medium">إجمالي مكالمات كافة الفروع</div>
+              <div className="text-2xl font-black text-white font-mono mt-1">{branchSummary.totalCalls}</div>
+              <div className="text-[11px] text-cyan-400 mt-1 font-medium">{branchSummary.totalAnswered} مكالمة تم الرد عليها</div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 shadow-lg">
+              <div className="text-emerald-300 text-xs font-medium">إجمالي العملاء الراضيين</div>
+              <div className="text-2xl font-black text-emerald-400 font-mono mt-1">{branchSummary.totalSatisfied}</div>
+              <div className="text-[11px] text-emerald-400 font-bold mt-1">معدل الرضا العام: {branchSummary.overallBranchCSAT}%</div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-rose-950/20 border border-rose-500/30 shadow-lg">
+              <div className="text-rose-300 text-xs font-medium">إجمالي غير الراضيين (الشكاوى)</div>
+              <div className="text-2xl font-black text-rose-400 font-mono mt-1">{branchSummary.totalUnsatisfied}</div>
+              <div className="text-[11px] text-rose-400 mt-1 truncate">
+                أكثر فرع: {branchSummary.mostComplaintsBranch?.branch || '-'} ({branchSummary.mostComplaintsBranch?.unsatisfied || 0} شكوى)
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-amber-950/20 border border-amber-500/30 shadow-lg">
+              <div className="text-amber-300 text-xs font-medium">الفرع الأعلى في الرضا 🏆</div>
+              <div className="text-lg font-black text-white truncate mt-1">
+                {branchSummary.bestBranch?.branch || '-'}
+              </div>
+              <div className="text-[11px] text-amber-400 font-mono font-bold mt-1">
+                نسبة رضا {branchSummary.bestBranch?.csat || 0}% ({branchSummary.bestBranch?.satisfied || 0} راضٍ)
+              </div>
+            </div>
+          </div>
+
+          {/* Comparison CSAT Chart */}
+          <BranchCSATChart
+            branchPerformance={branchPerformance}
+            onClickBranch={openBranchDashboard}
+          />
+
+          {/* Full Branch Performance Table */}
+          <BranchPerformanceTable
+            branches={branchPerformance}
+            selectedBranch={filters.branch}
+            onSelectBranch={branch => setFilters(p => ({ ...p, branch }))}
+            onOpenBranchDashboard={openBranchDashboard}
+            compact={false}
+          />
+        </div>
+      </PortalDrawerModal>
+
+      {/* 3. Technician Quality & Performance Portal Drawer */}
+      <PortalDrawerModal
+        isOpen={activePortalModal === 'technicians'}
+        onClose={() => setActivePortalModal(null)}
+        title="تحليل جودة وأداء الفنيين والخدمات"
+        subtitle="فحص أداء وجودة الفنيين، إجمالي العمليات، كم مرة صح وكم شكوى، ونسبة الشكاوى في الخدمة نفسها"
+        icon={<Wrench className="w-5 h-5 text-[#a1d66c] stroke-[2.2]" />}
+        badge={`${totalTechsWithComplaints} فني لديهم شكاوى`}
+        accentColor="emerald"
+      >
+        <TechnicianComplaintsTable records={filteredRecords.length > 0 ? filteredRecords : records} />
+      </PortalDrawerModal>
+
+      {/* 4. Instant Escalations Office Portal Drawer */}
+      <PortalDrawerModal
+        isOpen={activePortalModal === 'escalations'}
+        onClose={() => setActivePortalModal(null)}
+        title="مكتب متابعة الشكاوى الفورية وغرفة العمليات"
+        subtitle={`${kpis.unsatisfied} حالة عدم رضا مسجلة • اتصال هاتفي مباشر ورسائل واتساب فورية`}
+        icon={<AlertTriangle className="w-5 h-5 text-rose-400 stroke-[2.2]" />}
+        badge={`${kpis.unsatisfied} شكوى حرجة`}
+        accentColor="rose"
+      >
+        <EscalationsTable
+          records={filteredRecords}
+          onToggleActionTaken={handleToggleAction}
+        />
+      </PortalDrawerModal>
+
+      {/* 5. Data Explorer & Calls Log Portal Drawer */}
+      <PortalDrawerModal
+        isOpen={activePortalModal === 'explorer'}
+        onClose={() => setActivePortalModal(null)}
+        title="مستكشف البيانات وسجل مكالمات الاستبيان"
+        subtitle={`عرض وبحث وفلترة في ${filteredRecords.length} سجل من إجمالي ${records.length} صف مقروء بدقة`}
+        icon={<Search className="w-5 h-5 text-indigo-400 stroke-[2.2]" />}
+        badge={`${filteredRecords.length} سجل`}
+        accentColor="indigo"
+      >
+        <div className="space-y-4">
+          <FilterBar
+            filters={filters}
+            onFilterChange={setFilters}
+            availableBranches={availableBranches}
+            availableAgents={availableAgents}
+            availableDates={availableDates}
+            onResetFilters={resetFilters}
+            filteredCount={filteredRecords.length}
+            totalCount={records.length}
+          />
+          <WorkloadTable
+            records={filteredRecords}
+            onUpdateRecord={handleSave}
+            onSelectRecordForQuickEntry={rec => setQuickEntry({ open: true, record: rec })}
+          />
+        </div>
+      </PortalDrawerModal>
+
+      {/* ── Sub Modals ── */}
       <QuickEntryModal
         isOpen={quickEntry.open}
         onClose={() => setQuickEntry({ open: false, record: null })}

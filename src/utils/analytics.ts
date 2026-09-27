@@ -85,10 +85,13 @@ export function classifyCallOutcome(
     norm.includes('مقفول') ||
     norm.includes('رقم خاطئ') ||
     norm.includes('خاطي') ||
+    norm.includes('غلط') ||
+    norm.includes('مش رقمه') ||
     norm.includes('غير صحيح') ||
     norm.includes('switched') ||
     norm.includes('unreachable') ||
-    norm.includes('out of service')
+    norm.includes('out of service') ||
+    norm.includes('wrong')
   ) {
     return 'مغلق أو غير متاح';
   }
@@ -643,5 +646,364 @@ export function calculateConsolidatedTechnicians(
   results.sort((a, b) => b.complaintsCount - a.complaintsCount || b.percentage - a.percentage || b.totalOperations - a.totalOperations);
   return results;
 }
+
+export interface ExecutiveReportData {
+  formattedPeriod: string;
+  startDate: string;
+  endDate: string;
+  totalWorkload: number;
+  branchServiceRows: {
+    branch: string;
+    zawayah: number;
+    esteadal: number;
+    tarsees: number;
+    others: number;
+    total: number;
+  }[];
+  branchServiceTotals: {
+    zawayah: number;
+    esteadal: number;
+    tarsees: number;
+    others: number;
+    total: number;
+  };
+  survey: {
+    totalCalls: number;
+    answered: number;
+    answeredPct: number;
+    noAnswer: number;
+    noAnswerPct: number;
+    refused: number;
+    refusedPct: number;
+    switchedOff: number;
+    switchedOffPct: number;
+    wrongNumber: number;
+    wrongNumberPct: number;
+    satisfied: number;
+    unsatisfied: number;
+    csat: number;
+  };
+  branchComplaintRows: {
+    branch: string;
+    zawayah: number;
+    esteadal: number;
+    tarsees: number;
+    others: number;
+    total: number;
+  }[];
+  branchComplaintTotals: {
+    zawayah: number;
+    esteadal: number;
+    tarsees: number;
+    others: number;
+    total: number;
+  };
+  serviceComplaintSummary: {
+    service: string;
+    complaints: number;
+    totalOperations: number;
+    percentage: number;
+  }[];
+  technicians: {
+    technician: string;
+    branch: string;
+    serviceType: string;
+    totalOperations: number;
+    complaintsCount: number;
+    percentage: number;
+  }[];
+}
+
+/**
+ * Computes the exact standardized 4-part executive management report data
+ */
+export function generateExecutiveReportData(records: SurveyRecord[]): ExecutiveReportData {
+  const totalWorkload = records.length;
+
+  // 1. Determine period
+  const validDates = records
+    .map(r => r.date?.trim())
+    .filter((d): d is string => !!d && /^\d{4}-\d{2}-\d{2}$/.test(d))
+    .sort();
+
+  let startDate = '';
+  let endDate = '';
+  let formattedPeriod = 'الفترة الحالية المسجلة';
+
+  if (validDates.length > 0) {
+    startDate = validDates[0];
+    endDate = validDates[validDates.length - 1];
+
+    const monthsAr = [
+      'يناير', 'فبراير', 'مارس', 'إبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+    ];
+
+    const formatD = (dStr: string) => {
+      const parts = dStr.split('-');
+      if (parts.length === 3) {
+        const day = parseInt(parts[2], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const year = parts[0];
+        return `${day} ${monthsAr[m] || ''} ${year}`;
+      }
+      return dStr;
+    };
+
+    if (startDate === endDate) {
+      formattedPeriod = formatD(startDate);
+    } else {
+      formattedPeriod = `من ${formatD(startDate)} إلى ${formatD(endDate)}`;
+    }
+  }
+
+  // 2. Part 1: Branch Service Breakdown
+  const branchMap: Record<string, { zawayah: number; esteadal: number; tarsees: number; others: number; total: number }> = {};
+  
+  for (const r of records) {
+    const branch = (r.branch || '').trim() || 'فرع غير محدد';
+    if (!branchMap[branch]) {
+      branchMap[branch] = { zawayah: 0, esteadal: 0, tarsees: 0, others: 0, total: 0 };
+    }
+    const b = branchMap[branch];
+    b.total++;
+
+    const normProduct = normalizeArabic(r.product || '').toLowerCase();
+    const isZawayah = normProduct.includes('زوايا');
+    const isEsteadal = normProduct.includes('استعدال');
+    const isTarsees = normProduct.includes('ترصيص');
+
+    if (isZawayah) b.zawayah++;
+    if (isEsteadal) b.esteadal++;
+    if (isTarsees) b.tarsees++;
+    if (!isZawayah && !isEsteadal && !isTarsees) b.others++;
+  }
+
+  const branchServiceRows = Object.entries(branchMap)
+    .map(([branch, counts]) => ({ branch, ...counts }))
+    .sort((a, b) => b.total - a.total);
+
+  const branchServiceTotals = branchServiceRows.reduce(
+    (acc, row) => ({
+      zawayah: acc.zawayah + row.zawayah,
+      esteadal: acc.esteadal + row.esteadal,
+      tarsees: acc.tarsees + row.tarsees,
+      others: acc.others + row.others,
+      total: acc.total + row.total,
+    }),
+    { zawayah: 0, esteadal: 0, tarsees: 0, others: 0, total: 0 }
+  );
+
+  // 3. Part 2: Survey Breakdown
+  let answered = 0;
+  let noAnswer = 0;
+  let refused = 0;
+  let switchedOff = 0;
+  let wrongNumber = 0;
+  let satisfied = 0;
+  let unsatisfied = 0;
+
+  for (const r of records) {
+    const outcome = classifyCallOutcome(r.callStatus, r.satisfaction);
+    const sat = classifySatisfaction(r.satisfaction, outcome, r.customerNotes);
+
+    const normStatus = normalizeArabic(r.callStatus || '').toLowerCase();
+    const normNotes = normalizeArabic(r.customerNotes || '').toLowerCase();
+    const isWrong = normStatus.includes('غلط') || normStatus.includes('خاطئ') || normNotes.includes('غلط') || normNotes.includes('مش رقمه');
+
+    if (isWrong) {
+      wrongNumber++;
+    } else if (outcome === 'مغلق أو غير متاح') {
+      switchedOff++;
+    } else if (outcome === 'تم الرد') {
+      answered++;
+    } else if (outcome === 'لم يتم الرد') {
+      noAnswer++;
+    } else if (outcome === 'ممتنع') {
+      refused++;
+    }
+
+    if (sat === 'راضى') satisfied++;
+    if (sat === 'غير راضى') unsatisfied++;
+  }
+
+  const calcPct = (cnt: number) => totalWorkload > 0 ? Math.round((cnt / totalWorkload) * 100) : 0;
+  const csat = answered > 0 ? Math.round((satisfied / answered) * 100) : 0;
+
+  const survey = {
+    totalCalls: totalWorkload,
+    answered,
+    answeredPct: calcPct(answered),
+    noAnswer,
+    noAnswerPct: calcPct(noAnswer),
+    refused,
+    refusedPct: calcPct(refused),
+    switchedOff,
+    switchedOffPct: calcPct(switchedOff),
+    wrongNumber,
+    wrongNumberPct: calcPct(wrongNumber),
+    satisfied,
+    unsatisfied,
+    csat,
+  };
+
+  // 4. Part 3: Branch Complaints Breakdown
+  const complaintBranchMap: Record<string, { zawayah: number; esteadal: number; tarsees: number; others: number; total: number }> = {};
+  
+  for (const r of records) {
+    const outcome = classifyCallOutcome(r.callStatus, r.satisfaction);
+    const sat = classifySatisfaction(r.satisfaction, outcome, r.customerNotes);
+    if (sat !== 'غير راضى') continue;
+
+    const branch = (r.branch || '').trim() || 'فرع غير محدد';
+    if (!complaintBranchMap[branch]) {
+      complaintBranchMap[branch] = { zawayah: 0, esteadal: 0, tarsees: 0, others: 0, total: 0 };
+    }
+    const b = complaintBranchMap[branch];
+    b.total++;
+
+    const normProduct = normalizeArabic(r.product || '').toLowerCase();
+    const isZawayah = normProduct.includes('زوايا');
+    const isEsteadal = normProduct.includes('استعدال');
+    const isTarsees = normProduct.includes('ترصيص');
+
+    if (isZawayah) b.zawayah++;
+    if (isEsteadal) b.esteadal++;
+    if (isTarsees) b.tarsees++;
+    if (!isZawayah && !isEsteadal && !isTarsees) b.others++;
+  }
+
+  const branchComplaintRows = Object.entries(complaintBranchMap)
+    .map(([branch, counts]) => ({ branch, ...counts }))
+    .sort((a, b) => b.total - a.total);
+
+  const branchComplaintTotals = branchComplaintRows.reduce(
+    (acc, row) => ({
+      zawayah: acc.zawayah + row.zawayah,
+      esteadal: acc.esteadal + row.esteadal,
+      tarsees: acc.tarsees + row.tarsees,
+      others: acc.others + row.others,
+      total: acc.total + row.total,
+    }),
+    { zawayah: 0, esteadal: 0, tarsees: 0, others: 0, total: 0 }
+  );
+
+  const serviceComplaintSummary = [
+    {
+      service: 'ضبط زوايا',
+      complaints: branchComplaintTotals.zawayah,
+      totalOperations: branchServiceTotals.zawayah,
+      percentage: branchServiceTotals.zawayah > 0 ? Math.round((branchComplaintTotals.zawayah / branchServiceTotals.zawayah) * 100) : 0,
+    },
+    {
+      service: 'استعدال',
+      complaints: branchComplaintTotals.esteadal,
+      totalOperations: branchServiceTotals.esteadal,
+      percentage: branchServiceTotals.esteadal > 0 ? Math.round((branchComplaintTotals.esteadal / branchServiceTotals.esteadal) * 100) : 0,
+    },
+    {
+      service: 'ترصيص',
+      complaints: branchComplaintTotals.tarsees,
+      totalOperations: branchServiceTotals.tarsees,
+      percentage: branchServiceTotals.tarsees > 0 ? Math.round((branchComplaintTotals.tarsees / branchServiceTotals.tarsees) * 100) : 0,
+    },
+  ];
+
+  if (branchServiceTotals.others > 0 || branchComplaintTotals.others > 0) {
+    serviceComplaintSummary.push({
+      service: 'خدمات أخرى',
+      complaints: branchComplaintTotals.others,
+      totalOperations: branchServiceTotals.others,
+      percentage: branchServiceTotals.others > 0 ? Math.round((branchComplaintTotals.others / branchServiceTotals.others) * 100) : 0,
+    });
+  }
+
+  // 5. Part 4: Technician Complaints
+  const techStats = calculateTechnicianComplaints(records);
+  const technicians = techStats.map(t => ({
+    technician: t.technician,
+    branch: t.branch,
+    serviceType: t.serviceType,
+    totalOperations: t.totalOperations,
+    complaintsCount: t.complaintsCount,
+    percentage: t.percentage,
+  }));
+
+  return {
+    formattedPeriod,
+    startDate,
+    endDate,
+    totalWorkload,
+    branchServiceRows,
+    branchServiceTotals,
+    survey,
+    branchComplaintRows,
+    branchComplaintTotals,
+    serviceComplaintSummary,
+    technicians,
+  };
+}
+
+/**
+ * Formats the Executive Report into clean, standardized Arabic text
+ * identical to management templates for instant WhatsApp/Email copy.
+ */
+export function generateExecutiveReportText(data: ExecutiveReportData): string {
+  const lines: string[] = [];
+
+  lines.push(`ملخص التقرير الأسبوعي عن ${data.formattedPeriod}`);
+  lines.push('');
+  lines.push('أولاً: إجمالي عدد مكالمات العملاء لكل فرع:');
+  lines.push('--------------------------------------------------');
+  lines.push('الفرع | ضبط زوايا | استعدال | ترصيص | عدد العملاء');
+  lines.push('--------------------------------------------------');
+  for (const b of data.branchServiceRows) {
+    lines.push(`${b.branch} | ${b.zawayah} | ${b.esteadal} | ${b.tarsees} | ${b.total}`);
+  }
+  lines.push('--------------------------------------------------');
+  lines.push(`أجمالى خدمات العملاء: ضبط زوايا: ${data.branchServiceTotals.zawayah} | استعدال: ${data.branchServiceTotals.esteadal} | ترصيص: ${data.branchServiceTotals.tarsees}`);
+  lines.push(`إجمالي جميع العملاء: ${data.totalWorkload} عميل`);
+  lines.push('');
+  lines.push('ثانياً: الاستبيان ومعدلات التواصل:');
+  lines.push('--------------------------------------------------');
+  lines.push(`• إجمالي عدد مكالمات العملاء: ${data.survey.totalCalls} عميل`);
+  lines.push(`• إجمالي العملاء تم الرد: ${data.survey.answered} عميل (≈ ${data.survey.answeredPct}%)`);
+  lines.push(`• إجمالي العملاء لم يتم الرد: ${data.survey.noAnswer} عميل (≈ ${data.survey.noAnswerPct}%)`);
+  lines.push(`• إجمالي العملاء ممتنع: ${data.survey.refused} عميل (≈ ${data.survey.refusedPct}%)`);
+  lines.push(`• إجمالي العملاء مغلق أو غير متاح: ${data.survey.switchedOff} عميل (≈ ${data.survey.switchedOffPct}%)`);
+  lines.push(`• إجمالي العملاء الرقم غلط: ${data.survey.wrongNumber} عميل (≈ ${data.survey.wrongNumberPct}%)`);
+  lines.push('');
+  lines.push('مستوى رضا العملاء والآراء:');
+  lines.push(`• عدد العملاء الراضين: ${data.survey.satisfied} عميل`);
+  lines.push(`• عدد غير الراضين: ${data.survey.unsatisfied} عميل`);
+  lines.push(`• نسبة الرضا (من إجمالي الاتصالات التي تم الرد عليها) ≈ ${data.survey.csat}%`);
+  lines.push('');
+  lines.push('ثالثاً: الفروع والشكاوى:');
+  lines.push('--------------------------------------------------');
+  lines.push('الفرع | ترصيص | استعدال | ضبط زوايا | عدد الشكاوى');
+  lines.push('--------------------------------------------------');
+  for (const b of data.branchComplaintRows) {
+    lines.push(`${b.branch} | ${b.tarsees} | ${b.esteadal} | ${b.zawayah} | ${b.total}`);
+  }
+  lines.push('--------------------------------------------------');
+  lines.push(`إجمالي شكاوى العملاء: ${data.branchComplaintTotals.total} شكوى`);
+  lines.push(`إجمالي العملاء غير الراضين: ${data.survey.unsatisfied} عميل`);
+  lines.push('');
+  lines.push('عدد الشكاوى لكل خدمة لجميع الفروع:');
+  for (const s of data.serviceComplaintSummary) {
+    lines.push(`- ${s.service}: ${s.complaints} عميل من إجمالي ${s.totalOperations} عملية (${s.percentage}%)`);
+  }
+  lines.push('');
+  lines.push('رابعاً: الفنيون الموجهة إليهم شكاوى العملاء:');
+  lines.push('--------------------------------------------------');
+  lines.push('اسم الفني | الفرع | إجمالي العمليات | الشكاوى | % | نوع الخدمة');
+  lines.push('--------------------------------------------------');
+  for (const t of data.technicians) {
+    lines.push(`${t.technician} | ${t.branch} | ${t.totalOperations} | ${t.complaintsCount} | ${t.percentage}% | ${t.serviceType}`);
+  }
+
+  return lines.join('\n');
+}
+
 
 
