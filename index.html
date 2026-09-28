@@ -84,10 +84,120 @@
     .tile-glow:hover {
       box-shadow: 0 10px 30px -5px rgba(99, 102, 241, 0.25);
     }
+    
+    /* =========================================================================
+       EXECUTIVE MULTI-PAGE PRINT STYLING
+       ========================================================================= */
     @media print {
-      body * {
-        visibility: hidden;
+      @page {
+        size: A4 portrait;
+        margin: 12mm 15mm 15mm 15mm;
       }
+      html, body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        height: auto !important;
+        min-height: auto !important;
+        overflow: visible !important;
+        font-family: 'Cairo', sans-serif !important;
+      }
+      /* Hide regular screen DOM when printing */
+      body > *:not(#directPrintClone) {
+        display: none !important;
+      }
+      /* Direct print clone container is top-level and completely unconstrained */
+      #directPrintClone {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      #directPrintClone * {
+        color: #000000 !important;
+        background-color: transparent !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+      }
+      #directPrintClone .no-print {
+        display: none !important;
+      }
+      /* Headings & Section Dividers */
+      #directPrintClone h2 {
+        font-size: 18pt !important;
+        font-weight: 900 !important;
+        text-align: center !important;
+        margin-bottom: 6px !important;
+        color: #000000 !important;
+      }
+      #directPrintClone h3 {
+        font-size: 13pt !important;
+        font-weight: 800 !important;
+        margin-top: 18px !important;
+        margin-bottom: 8px !important;
+        color: #0f172a !important;
+        page-break-after: avoid !important;
+      }
+      #directPrintClone p, #directPrintClone span, #directPrintClone div {
+        font-size: 10pt !important;
+        color: #1e293b !important;
+      }
+      /* Tables */
+      #directPrintClone table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        page-break-inside: auto !important;
+        margin-top: 6px !important;
+        margin-bottom: 16px !important;
+      }
+      #directPrintClone thead {
+        display: table-header-group !important;
+      }
+      #directPrintClone tr {
+        page-break-inside: avoid !important;
+        page-break-after: auto !important;
+      }
+      #directPrintClone th, 
+      #directPrintClone td {
+        border: 1px solid #475569 !important;
+        padding: 6px 10px !important;
+        font-size: 9.5pt !important;
+        color: #000000 !important;
+      }
+      #directPrintClone th {
+        background-color: #f1f5f9 !important;
+        font-weight: 800 !important;
+        text-align: center !important;
+      }
+      #directPrintClone td {
+        text-align: right !important;
+      }
+      #directPrintClone td.text-center {
+        text-align: center !important;
+      }
+      /* Clean KPI Summary Cards in Print */
+      #directPrintClone .grid {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        margin-bottom: 12px !important;
+      }
+      #directPrintClone .grid > div {
+        border: 1px solid #cbd5e1 !important;
+        padding: 8px !important;
+        flex: 1 1 30% !important;
+        background: #f8fafc !important;
+        page-break-inside: avoid !important;
+      }
+      .page-break-before {
+        page-break-before: always !important;
+      }
+    }
+
       #printableReportArea, #printableReportArea * {
         visibility: visible;
       }
@@ -286,6 +396,13 @@
 
       <!-- Quick Actions -->
       <div class="flex items-center gap-3">
+        <!-- Interactive Charts Gallery Button -->
+        <button onclick="openModal('modalInteractiveCharts')" class="px-3.5 py-2.5 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-700/60 text-indigo-300 font-bold text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer" title="عرض الإسطمبات والرسوم البيانية المعتمدة">
+          <i class="fa-solid fa-chart-column text-indigo-400 text-sm"></i>
+          <span class="hidden md:inline">الإسطمبات البيانية (الـ 5 رسوم)</span>
+          <span class="md:hidden">الإسطمبات</span>
+        </button>
+
         <!-- PWA Mobile Install Button -->
         <button id="pwaInstallBtn" onclick="handlePwaInstall()" class="px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer" title="تثبيت التطبيق على هاتفك">
           <i class="fa-solid fa-download text-sm animate-bounce"></i>
@@ -385,6 +502,40 @@
 
     <!-- Grid of Executive Buttons / Tiles -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      
+      <!-- TILE 7: Interactive Executive Charts (The 5 Templates) -->
+      <div onclick="openModal('modalInteractiveCharts')" class="group relative bg-[#0d1424] hover:bg-[#10192d] border border-indigo-500/40 hover:border-indigo-400 rounded-3xl p-6 sm:p-7 cursor-pointer transition-all duration-300 shadow-lg shadow-black/40 hover:shadow-indigo-500/20 flex flex-col justify-between overflow-hidden md:col-span-2 lg:col-span-3">
+        <div class="absolute -top-16 -right-16 w-48 h-48 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none group-hover:bg-indigo-600/25 transition-all"></div>
+        
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600/30 to-brand-500/20 border border-indigo-500/40 text-indigo-300 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shrink-0 shadow-lg shadow-indigo-600/20">
+              <i class="fa-solid fa-chart-pie"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <h3 class="text-xl font-black text-white group-hover:text-indigo-300 transition-colors">
+                  معرض الإسطمبات والرسوم البيانية التفاعلية
+                </h3>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-950 text-indigo-300 border border-indigo-800">
+                  الـ 5 إسطمبات الرسمية
+                </span>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed max-w-3xl">
+                الرسوم البيانية الخمسة المعتمدة لإدارة الجودة: (1) استطلاع الخدمات وحالات التواصل • (2) استطلاع الخدمات راضي وغير راضي • (3) استطلاع الفروع وتوزيع الخدمات • (4) حصر العملاء غير الراضين والشكاوى • (5) تقرير شكر العملاء وإشادات الفروع، مع إمكانية التحميل الفوري للرسوم كصور PNG عالية الدقة.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 shrink-0">
+            <span class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition-all">
+              <span>فتح معرض الإسطمبات البيانية</span>
+              <i class="fa-solid fa-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
+            </span>
+          </div>
+        </div>
+      </div>
 
       <!-- TILE 1: Executive Standard Report (The Requested Template) -->
       <div onclick="openModal('modalExecutiveReport')" class="group relative bg-[#0d1424] hover:bg-[#10192d] border border-indigo-500/30 hover:border-indigo-500/80 rounded-3xl p-6 sm:p-7 cursor-pointer transition-all duration-300 shadow-lg shadow-black/40 hover:shadow-indigo-500/10 flex flex-col justify-between overflow-hidden">
@@ -613,6 +764,196 @@
     </div>
   </div>
 
+  
+  <!-- ========================================================================= -->
+  <!-- MODAL 8: INTERACTIVE CHARTS & OFFICIAL TEMPLATES GALLERY                  -->
+  <!-- ========================================================================= -->
+  <div id="modalInteractiveCharts" class="fixed inset-0 z-50 bg-black/85 modal-backdrop-blur hidden flex items-center justify-center p-2 sm:p-5 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-6xl w-full max-h-[94vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+      
+      <!-- Top Bar -->
+      <div class="p-4 sm:p-5 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950/80">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-xl shadow-md shadow-indigo-600/20">
+            <i class="fa-solid fa-chart-column"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base sm:text-lg font-black text-white">معرض الإسطمبات والرسوم البيانية المعتمدة</h3>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-800">
+                5 إسطمبات تفاعلية
+              </span>
+            </div>
+            <p class="text-xs text-slate-400" id="chartsSubHeaderPeriod">توليد تفاعلي تلقائي للرسوم البيانية المعتمدة من واقع الشيت الحالي</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="downloadAllChartsAsImages()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 flex items-center gap-1.5 transition-all">
+            <i class="fa-solid fa-camera text-indigo-400"></i>
+            <span>تحميل الرسوم الحالية كصور</span>
+          </button>
+          <button onclick="closeModal('modalInteractiveCharts')" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab Navigation for the 5 Charts -->
+      <div class="px-4 py-2.5 border-b border-slate-800 bg-slate-950/40 flex items-center gap-2 overflow-x-auto scrollbar-none text-xs">
+        <button id="tabBtnChartAll" onclick="switchChartTab('all')" class="px-3.5 py-1.5 rounded-xl font-bold transition-all bg-indigo-600 text-white shrink-0">
+          عرض جميع الإسطمبات (شامل)
+        </button>
+        <button id="tabBtnChart1" onclick="switchChartTab('chart1')" class="px-3.5 py-1.5 rounded-xl font-bold transition-all bg-slate-800 text-slate-300 hover:text-white shrink-0">
+          1. استطلاع الخدمات (حالات التواصل)
+        </button>
+        <button id="tabBtnChart2" onclick="switchChartTab('chart2')" class="px-3.5 py-1.5 rounded-xl font-bold transition-all bg-slate-800 text-slate-300 hover:text-white shrink-0">
+          2. استطلاع الخدمات (راضي vs غير راضي)
+        </button>
+        <button id="tabBtnChart3" onclick="switchChartTab('chart3')" class="px-3.5 py-1.5 rounded-xl font-bold transition-all bg-slate-800 text-slate-300 hover:text-white shrink-0">
+          3. استطلاع الفروع حسب كل خدمة
+        </button>
+        <button id="tabBtnChart4" onclick="switchChartTab('chart4')" class="px-3.5 py-1.5 rounded-xl font-bold transition-all bg-slate-800 text-slate-300 hover:text-white shrink-0">
+          4. استطلاع العملاء غير الراضين
+        </button>
+        <button id="tabBtnChart5" onclick="switchChartTab('chart5')" class="px-3.5 py-1.5 rounded-xl font-bold transition-all bg-slate-800 text-slate-300 hover:text-white shrink-0">
+          5. تقرير شكر العملاء الأسبوعي
+        </button>
+      </div>
+
+      <!-- Charts Body -->
+      <div class="p-4 sm:p-6 overflow-y-auto space-y-8 flex-1" id="interactiveChartsContainer">
+        
+        <!-- ============================================================= -->
+        <!-- CHART 1: DETAILED SURVEY BY SERVICE & CALL OUTCOMES           -->
+        <!-- ============================================================= -->
+        <div id="cardChart1" class="chart-card bg-slate-950/70 border border-slate-800 rounded-3xl p-5 sm:p-6 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+                <h4 class="text-sm sm:text-base font-black text-white" id="titleChart1">
+                  تقرير مفصل لأستطلاع رأي العملاء للخدمات الاسبوعى - (0) || الفترة الحالية
+                </h4>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">توزيع حالات التواصل (تم الرد، ممتنع، لم يتم الرد، مغلق/غير متاح، الرقم غلط) لكل خدمة على حدة</p>
+            </div>
+            <button onclick="downloadSingleChart('chart1Canvas', 'تقرير_مفصل_لاستطلاع_رأي_العملاء_للخدمات')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5 transition-all self-start sm:self-auto">
+              <i class="fa-solid fa-download"></i>
+              <span>تحميل كصورة PNG</span>
+            </button>
+          </div>
+
+          <div class="relative w-full h-80 sm:h-96">
+            <canvas id="chart1Canvas"></canvas>
+          </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- CHART 2: SATISFIED VS UNSATISFIED BY SERVICE                  -->
+        <!-- ============================================================= -->
+        <div id="cardChart2" class="chart-card bg-slate-950/70 border border-slate-800 rounded-3xl p-5 sm:p-6 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                <h4 class="text-sm sm:text-base font-black text-white" id="titleChart2">
+                  استطلاع رأي العملاء للخدمات - (0) || الفترة الحالية
+                </h4>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">مقارنة أعداد العملاء الراضين وغير الراضين في كل خدمة (ضبط زوايا، استعدال، ترصيص)</p>
+            </div>
+            <button onclick="downloadSingleChart('chart2Canvas', 'استطلاع_رأي_العملاء_للخدمات_راضي_وغير_راضي')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5 transition-all self-start sm:self-auto">
+              <i class="fa-solid fa-download"></i>
+              <span>تحميل كصورة PNG</span>
+            </button>
+          </div>
+
+          <div class="relative w-full h-80 sm:h-96">
+            <canvas id="chart2Canvas"></canvas>
+          </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- CHART 3: SURVEY RESPONSES PER BRANCH BY SERVICE               -->
+        <!-- ============================================================= -->
+        <div id="cardChart3" class="chart-card bg-slate-950/70 border border-slate-800 rounded-3xl p-5 sm:p-6 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                <h4 class="text-sm sm:text-base font-black text-white" id="titleChart3">
+                  استطلاع رأي العملاء حسب الفرع - (0) || الفترة الحالية
+                </h4>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">أعداد العملاء الذين تم الرد والتواصل معهم في كل فرع مقسمين تحت كل خدمة</p>
+            </div>
+            <button onclick="downloadSingleChart('chart3Canvas', 'استطلاع_رأي_العملاء_حسب_الفرع')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5 transition-all self-start sm:self-auto">
+              <i class="fa-solid fa-download"></i>
+              <span>تحميل كصورة PNG</span>
+            </button>
+          </div>
+
+          <div class="relative w-full h-96 sm:h-[420px]">
+            <canvas id="chart3Canvas"></canvas>
+          </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- CHART 4: UNSATISFIED CLIENTS BY BRANCH & SERVICE              -->
+        <!-- ============================================================= -->
+        <div id="cardChart4" class="chart-card bg-slate-950/70 border border-slate-800 rounded-3xl p-5 sm:p-6 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                <h4 class="text-sm sm:text-base font-black text-white" id="titleChart4">
+                  استطلاع رأي العملاء الغير راضين - (0) || الفترة الحالية
+                </h4>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">حصر العملاء غير الراضين والشكاوى الفنية المسجلة بالفروع تحت كل خدمة</p>
+            </div>
+            <button onclick="downloadSingleChart('chart4Canvas', 'استطلاع_رأي_العملاء_الغير_راضين')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5 transition-all self-start sm:self-auto">
+              <i class="fa-solid fa-download"></i>
+              <span>تحميل كصورة PNG</span>
+            </button>
+          </div>
+
+          <div class="relative w-full h-80 sm:h-96">
+            <canvas id="chart4Canvas"></canvas>
+          </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- CHART 5: CUSTOMER COMMENDATIONS / THANKS BY BRANCH            -->
+        <!-- ============================================================= -->
+        <div id="cardChart5" class="chart-card bg-slate-950/70 border border-slate-800 rounded-3xl p-5 sm:p-6 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                <h4 class="text-sm sm:text-base font-black text-white" id="titleChart5">
+                  تقرير شكر العملاء الاسبوعى - (0) || الفترة الحالية
+                </h4>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">حصر العملاء الراضين وعبارات الشكر والثناء المسجلة لكل فرع مرتبة تنازلياً</p>
+            </div>
+            <button onclick="downloadSingleChart('chart5Canvas', 'تقرير_شكر_العملاء_الاسبوعي')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5 transition-all self-start sm:self-auto">
+              <i class="fa-solid fa-download"></i>
+              <span>تحميل كصورة PNG</span>
+            </button>
+          </div>
+
+          <div class="relative w-full h-80 sm:h-96">
+            <canvas id="chart5Canvas"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer class="border-t border-slate-900 py-6 text-center text-xs text-slate-500">
     <p>The Hack © 2026 - نظام تحليل الجودة واستقصاء رضا العملاء المعتمد للفروع</p>
@@ -667,27 +1008,7 @@
           </h3>
 
           
-        <!-- Technician Filters & Search -->
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
-          <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-            <span class="text-xs text-slate-400 font-semibold ml-1">عرض:</span>
-            <button id="btnTechFilterAll" onclick="setTechFilter('all')" class="px-3 py-1 rounded-xl text-xs font-bold transition-all bg-amber-500/20 text-amber-300 border border-amber-500/40">
-              جميع الفنيين
-            </button>
-            <button id="btnTechFilterComplaints" onclick="setTechFilter('complaints')" class="px-3 py-1 rounded-xl text-xs font-bold transition-all bg-slate-800 text-slate-400 hover:text-white border border-slate-700">
-              <i class="fa-solid fa-triangle-exclamation text-rose-400 ml-1"></i> فنيين لديهم شكاوى فقط
-            </button>
-            <button id="btnTechFilterSortPct" onclick="setTechFilter('sortPct')" class="px-3 py-1 rounded-xl text-xs font-bold transition-all bg-slate-800 text-slate-400 hover:text-white border border-slate-700">
-              الأعلى في نسبة الشكاوى
-            </button>
-            <button id="btnTechFilterSortOps" onclick="setTechFilter('sortOps')" class="px-3 py-1 rounded-xl text-xs font-bold transition-all bg-slate-800 text-slate-400 hover:text-white border border-slate-700">
-              الأكثر عمليات
-            </button>
-          </div>
-          <div class="w-full sm:w-64">
-            <input type="text" id="techSearchInput" oninput="buildTechHub()" placeholder="بحث باسم الفني أو الفرع..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-amber-500" />
-          </div>
-        </div>
+        
 
         <div class="overflow-x-auto rounded-2xl border border-slate-800">
             <table class="w-full text-right border-collapse">
@@ -879,7 +1200,28 @@
       <div class="p-6 overflow-y-auto space-y-4">
         
         <div class="overflow-x-auto rounded-2xl border border-slate-800">
-          <table class="w-full text-right text-xs">
+          <!-- Technician Filters & Search -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800 mb-4">
+          <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+            <span class="text-xs text-slate-400 font-semibold ml-1">عرض:</span>
+            <button id="btnTechFilterAll" onclick="setTechFilter('all')" class="px-3 py-1 rounded-xl text-xs font-bold transition-all bg-amber-500/20 text-amber-300 border border-amber-500/40">
+              جميع الفنيين
+            </button>
+            <button id="btnTechFilterComplaints" onclick="setTechFilter('complaints')" class="px-3 py-1 rounded-xl text-xs font-bold transition-all bg-slate-800 text-slate-400 hover:text-white border border-slate-700">
+              <i class="fa-solid fa-triangle-exclamation text-rose-400 ml-1"></i> فنيين لديهم شكاوى فقط
+            </button>
+            <button id="btnTechFilterSortPct" onclick="setTechFilter('sortPct')" class="px-3 py-1 rounded-xl text-xs font-bold transition-all bg-slate-800 text-slate-400 hover:text-white border border-slate-700">
+              الأعلى في نسبة الشكاوى
+            </button>
+            <button id="btnTechFilterSortOps" onclick="setTechFilter('sortOps')" class="px-3 py-1 rounded-xl text-xs font-bold transition-all bg-slate-800 text-slate-400 hover:text-white border border-slate-700">
+              الأكثر عمليات
+            </button>
+          </div>
+          <div class="w-full sm:w-64">
+            <input type="text" id="techSearchInput" oninput="buildTechHub()" placeholder="بحث باسم الفني أو الفرع..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-amber-500" />
+          </div>
+        </div>
+        <table class="w-full text-right text-xs">
             <thead class="bg-slate-950 text-slate-400 font-bold border-b border-slate-800">
               <tr>
                 <th class="p-3">اسم الفني</th>
@@ -1651,6 +1993,439 @@
       return results;
     }
 
+    
+    /* =========================================================================
+       INTERACTIVE EXECUTIVE CHARTS ENGINE (CHART.JS IMPLEMENTATION)
+       ========================================================================= */
+    let chartInstances = {};
+    let activeChartTab = 'all';
+
+    // Native Chart.js plugin to draw values on top of bars
+    const barValuesPlugin = {
+      id: 'barValuesPlugin',
+      afterDatasetsDraw(chart) {
+        const { ctx } = chart;
+        const isLight = document.documentElement.classList.contains('light');
+        chart.data.datasets.forEach((dataset, i) => {
+          const meta = chart.getDatasetMeta(i);
+          if (meta.hidden) return;
+          meta.data.forEach((element, index) => {
+            const val = dataset.data[index];
+            if (val === undefined || val === null || val === 0) return;
+            ctx.save();
+            ctx.fillStyle = isLight ? '#0f172a' : '#f8fafc';
+            ctx.font = 'bold 11px Cairo, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(val, element.x, element.y - 4);
+            ctx.restore();
+          });
+        });
+      }
+    };
+
+    if (window.Chart) {
+      Chart.register(barValuesPlugin);
+    }
+
+    function switchChartTab(tabKey) {
+      activeChartTab = tabKey;
+      const tabs = ['all', 'chart1', 'chart2', 'chart3', 'chart4', 'chart5'];
+      tabs.forEach(t => {
+        const btn = document.getElementById('tabBtnChart' + (t === 'all' ? 'All' : t.replace('chart', '')));
+        if (btn) {
+          if (t === tabKey) {
+            btn.className = "px-3.5 py-1.5 rounded-xl font-bold transition-all bg-indigo-600 text-white shrink-0 shadow-sm";
+          } else {
+            btn.className = "px-3.5 py-1.5 rounded-xl font-bold transition-all bg-slate-800 text-slate-300 hover:text-white shrink-0";
+          }
+        }
+      });
+
+      // Show/hide cards
+      const cards = ['cardChart1', 'cardChart2', 'cardChart3', 'cardChart4', 'cardChart5'];
+      cards.forEach((cId, idx) => {
+        const el = document.getElementById(cId);
+        if (!el) return;
+        if (tabKey === 'all' || tabKey === 'chart' + (idx + 1)) {
+          el.classList.remove('hidden');
+      if (modalId === 'modalInteractiveCharts') {
+        setTimeout(() => {
+          renderAllInteractiveCharts();
+          Object.values(chartInstances).forEach(c => c && c.resize());
+        }, 150);
+      }
+        } else {
+          el.classList.add('hidden');
+        }
+      });
+
+      // Trigger resize for active charts
+      setTimeout(() => {
+        Object.values(chartInstances).forEach(c => c && c.resize());
+      }, 100);
+    }
+
+    function renderAllInteractiveCharts() {
+      if (!window.Chart || !dataset || dataset.length === 0) return;
+
+      const isLight = document.documentElement.classList.contains('light');
+      const textColor = isLight ? '#334155' : '#cbd5e1';
+      const gridColor = isLight ? '#e2e8f0' : '#1e293b';
+
+      // -----------------------------------------------------------------------
+      // CHART 1: تقرير مفصل لأستطلاع رأي العملاء للخدمات الاسبوعى
+      // -----------------------------------------------------------------------
+      const services = ['ضبط زوايا', 'استعدال', 'ترصيص'];
+      const statusOrder = ['تم الرد', 'ممتنع', 'لم يتم الرد', 'مغلق أو غير متاح', 'الرقم غلط'];
+      
+      const c1Labels = [];
+      const c1Data = [];
+      let c1Total = 0;
+
+      services.forEach(srv => {
+        statusOrder.forEach(st => {
+          const count = dataset.filter(r => r.service === srv && r.status === st).length;
+          c1Labels.push(`${st}\n(${srv})`);
+          c1Data.push(count);
+          c1Total += count;
+        });
+      });
+
+      const titleEl1 = document.getElementById('titleChart1');
+      if (titleEl1) {
+        titleEl1.innerText = `تقرير مفصل لأستطلاع رأي العملاء للخدمات الاسبوعى - (${c1Total}) || الفترة الحالية`;
+      }
+
+      if (chartInstances.chart1) chartInstances.chart1.destroy();
+      const ctx1 = document.getElementById('chart1Canvas');
+      if (ctx1) {
+        chartInstances.chart1 = new Chart(ctx1, {
+          type: 'bar',
+          data: {
+            labels: c1Labels.map(l => l.split('\n')),
+            datasets: [{
+              label: 'Total',
+              data: c1Data,
+              backgroundColor: '#38bdf8',
+              hoverBackgroundColor: '#0284c7',
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title: (items) => items[0].label.replace(',', ' - ')
+                }
+              }
+            },
+            scales: {
+              x: {
+                ticks: { color: textColor, font: { family: 'Cairo', size: 10 } },
+                grid: { display: false }
+              },
+              y: {
+                beginAtZero: true,
+                ticks: { color: textColor, font: { family: 'Cairo' } },
+                grid: { color: gridColor }
+              }
+            }
+          }
+        });
+      }
+
+      // -----------------------------------------------------------------------
+      // CHART 2: استطلاع رأي العملاء للخدمات (راضي vs غير راضي)
+      // -----------------------------------------------------------------------
+      const answeredRows = dataset.filter(r => r.status === 'تم الرد');
+      const c2Labels = [];
+      const c2Data = [];
+      let c2Total = 0;
+
+      services.forEach(srv => {
+        const satCount = answeredRows.filter(r => r.service === srv && r.csat === 'راضى').length;
+        const unsatCount = answeredRows.filter(r => r.service === srv && r.csat === 'غير راضى').length;
+
+        c2Labels.push(`راضي\n(${srv})`);
+        c2Data.push(satCount);
+
+        c2Labels.push(`غير راضي\n(${srv})`);
+        c2Data.push(unsatCount);
+
+        c2Total += (satCount + unsatCount);
+      });
+
+      const titleEl2 = document.getElementById('titleChart2');
+      if (titleEl2) {
+        titleEl2.innerText = `استطلاع رأي العملاء للخدمات - (${c2Total}) || الفترة الحالية`;
+      }
+
+      if (chartInstances.chart2) chartInstances.chart2.destroy();
+      const ctx2 = document.getElementById('chart2Canvas');
+      if (ctx2) {
+        chartInstances.chart2 = new Chart(ctx2, {
+          type: 'bar',
+          data: {
+            labels: c2Labels.map(l => l.split('\n')),
+            datasets: [{
+              label: 'Total',
+              data: c2Data,
+              backgroundColor: '#f59e0b',
+              hoverBackgroundColor: '#d97706',
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              x: {
+                ticks: { color: textColor, font: { family: 'Cairo', size: 11 } },
+                grid: { display: false }
+              },
+              y: {
+                beginAtZero: true,
+                ticks: { color: textColor, font: { family: 'Cairo' } },
+                grid: { color: gridColor }
+              }
+            }
+          }
+        });
+      }
+
+      // -----------------------------------------------------------------------
+      // CHART 3: استطلاع رأي العملاء حسب الفرع (موزع حسب الخدمة)
+      // -----------------------------------------------------------------------
+      const c3Labels = [];
+      const c3Data = [];
+      let c3Total = answeredRows.length;
+
+      services.forEach(srv => {
+        const srvRows = answeredRows.filter(r => r.service === srv);
+        const branchCounts = {};
+        srvRows.forEach(r => {
+          const b = r.branch || 'غير محدد';
+          branchCounts[b] = (branchCounts[b] || 0) + 1;
+        });
+
+        // Sort branches descending
+        const sortedBranches = Object.entries(branchCounts).sort((a, b) => b[1] - a[1]);
+        sortedBranches.forEach(([bName, bCount]) => {
+          c3Labels.push(`${bName}\n(${srv})`);
+          c3Data.push(bCount);
+        });
+      });
+
+      const titleEl3 = document.getElementById('titleChart3');
+      if (titleEl3) {
+        titleEl3.innerText = `استطلاع رأي العملاء حسب الفرع - (${c3Total}) || الفترة الحالية`;
+      }
+
+      if (chartInstances.chart3) chartInstances.chart3.destroy();
+      const ctx3 = document.getElementById('chart3Canvas');
+      if (ctx3) {
+        chartInstances.chart3 = new Chart(ctx3, {
+          type: 'bar',
+          data: {
+            labels: c3Labels.map(l => l.split('\n')),
+            datasets: [{
+              label: 'Total',
+              data: c3Data,
+              backgroundColor: '#f59e0b',
+              hoverBackgroundColor: '#d97706',
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              x: {
+                ticks: { color: textColor, font: { family: 'Cairo', size: 10 } },
+                grid: { display: false }
+              },
+              y: {
+                beginAtZero: true,
+                ticks: { color: textColor, font: { family: 'Cairo' } },
+                grid: { color: gridColor }
+              }
+            }
+          }
+        });
+      }
+
+      // -----------------------------------------------------------------------
+      // CHART 4: استطلاع رأي العملاء الغير راضين (الشكاوى بالفروع والخدمات)
+      // -----------------------------------------------------------------------
+      const unsatRows = dataset.filter(r => r.csat === 'غير راضى');
+      const c4Labels = [];
+      const c4Data = [];
+      let c4Total = unsatRows.length;
+
+      services.forEach(srv => {
+        const srvRows = unsatRows.filter(r => r.service === srv);
+        const branchCounts = {};
+        srvRows.forEach(r => {
+          const b = r.branch || 'غير محدد';
+          branchCounts[b] = (branchCounts[b] || 0) + 1;
+        });
+
+        // Sort branches descending
+        const sortedBranches = Object.entries(branchCounts).sort((a, b) => b[1] - a[1]);
+        sortedBranches.forEach(([bName, bCount]) => {
+          c4Labels.push(`${bName}\n(${srv})`);
+          c4Data.push(bCount);
+        });
+      });
+
+      const titleEl4 = document.getElementById('titleChart4');
+      if (titleEl4) {
+        titleEl4.innerText = `استطلاع رأي العملاء الغير راضين - (${c4Total}) || الفترة الحالية`;
+      }
+
+      if (chartInstances.chart4) chartInstances.chart4.destroy();
+      const ctx4 = document.getElementById('chart4Canvas');
+      if (ctx4) {
+        chartInstances.chart4 = new Chart(ctx4, {
+          type: 'bar',
+          data: {
+            labels: c4Labels.map(l => l.split('\n')),
+            datasets: [{
+              label: 'Total',
+              data: c4Data,
+              backgroundColor: '#f59e0b',
+              hoverBackgroundColor: '#e11d48',
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              x: {
+                ticks: { color: textColor, font: { family: 'Cairo', size: 10 } },
+                grid: { display: false }
+              },
+              y: {
+                beginAtZero: true,
+                ticks: { color: textColor, font: { family: 'Cairo' }, stepSize: 1 },
+                grid: { color: gridColor }
+              }
+            }
+          }
+        });
+      }
+
+      // -----------------------------------------------------------------------
+      // CHART 5: تقرير شكر العملاء الاسبوعى (الفروع الأكثر رضا وثناء)
+      // -----------------------------------------------------------------------
+      const satRows = dataset.filter(r => r.csat === 'راضى');
+      const branchSatCounts = {};
+      satRows.forEach(r => {
+        const b = r.branch || 'غير محدد';
+        branchSatCounts[b] = (branchSatCounts[b] || 0) + 1;
+      });
+
+      const sortedSatBranches = Object.entries(branchSatCounts).sort((a, b) => b[1] - a[1]);
+      const c5Labels = sortedSatBranches.map(x => x[0]);
+      const c5Data = sortedSatBranches.map(x => x[1]);
+      const c5Total = satRows.length;
+
+      const titleEl5 = document.getElementById('titleChart5');
+      if (titleEl5) {
+        titleEl5.innerText = `تقرير شكر العملاء الاسبوعى - (${c5Total}) || الفترة الحالية`;
+      }
+
+      if (chartInstances.chart5) chartInstances.chart5.destroy();
+      const ctx5 = document.getElementById('chart5Canvas');
+      if (ctx5) {
+        chartInstances.chart5 = new Chart(ctx5, {
+          type: 'bar',
+          data: {
+            labels: c5Labels,
+            datasets: [{
+              label: 'Total',
+              data: c5Data,
+              backgroundColor: '#f59e0b',
+              hoverBackgroundColor: '#d97706',
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              x: {
+                ticks: { color: textColor, font: { family: 'Cairo', size: 11 } },
+                grid: { display: false }
+              },
+              y: {
+                beginAtZero: true,
+                ticks: { color: textColor, font: { family: 'Cairo' }, stepSize: 1 },
+                grid: { color: gridColor }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // Function to download a single chart as PNG image
+    function downloadSingleChart(canvasId, fileName) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+
+      // Create a temporary canvas with dark background for clean export
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = canvas.width;
+      exportCanvas.height = canvas.height;
+      const eCtx = exportCanvas.getContext('2d');
+
+      const isLight = document.documentElement.classList.contains('light');
+      eCtx.fillStyle = isLight ? '#ffffff' : '#0b0f19';
+      eCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+      eCtx.drawImage(canvas, 0, 0);
+
+      const link = document.createElement('a');
+      link.download = `${fileName}_${Date.now()}.png`;
+      link.href = exportCanvas.toDataURL('image/png');
+      link.click();
+      notify('تم تحميل الرسم البياني', 'تم حفظ الصورة بصيغة PNG عالية الجودة');
+    }
+
+    // Function to download all 5 charts
+    function downloadAllChartsAsImages() {
+      const chartIds = [
+        ['chart1Canvas', '1_تقرير_مفصل_لاستطلاع_رأي_العملاء_للخدمات'],
+        ['chart2Canvas', '2_استطلاع_رأي_العملاء_للخدمات_راضي_وغير_راضي'],
+        ['chart3Canvas', '3_استطلاع_رأي_العملاء_حسب_الفرع'],
+        ['chart4Canvas', '4_استطلاع_رأي_العملاء_الغير_راضين'],
+        ['chart5Canvas', '5_تقرير_شكر_العملاء_الاسبوعي']
+      ];
+
+      chartIds.forEach(([id, name], idx) => {
+        setTimeout(() => {
+          downloadSingleChart(id, name);
+        }, idx * 400);
+      });
+    }
+
     /* Refresh All Modal Views and Stats */
     function refreshAllViews() {
       updateHubSnapshot();
@@ -1982,7 +2757,29 @@
     }
 
     function printExecutiveReport() {
-      window.print();
+      // 1. Remove any previous clone
+      const prev = document.getElementById('directPrintClone');
+      if (prev) prev.remove();
+
+      // 2. Clone the printable report area
+      const srcArea = document.getElementById('printableReportArea');
+      if (!srcArea) {
+        window.print();
+        return;
+      }
+
+      const clone = srcArea.cloneNode(true);
+      clone.id = 'directPrintClone';
+      document.body.appendChild(clone);
+
+      // 3. Trigger native print
+      setTimeout(() => {
+        window.print();
+        // 4. Cleanup clone after print dialog closes
+        setTimeout(() => {
+          if (clone && clone.parentNode) clone.remove();
+        }, 1500);
+      }, 150);
     }
 
 
