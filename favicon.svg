@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Rounded Squircle -->
+  <rect width="512" height="512" rx="128" fill="url(#bg)"/>
+  <rect x="8" y="8" width="496" height="496" rx="120" stroke="url(#gold)" stroke-width="8" stroke-opacity="0.3"/>
+  
+  <!-- Automotive Wrench & Gauge Graphic -->
+  <path d="M380 132c-32-32-84-32-116 0-26 26-30 65-12 95L138 341c-8 8-8 22 0 30l3c3 3 8 5 12 5s9-2 12-5l114-114c30 18 69 14 95-12 32-32 32-84 0-116l-38 38-34-34 38-38z" fill="url(#gold)"/>
+  <circle cx="160" cy="360" r="16" fill="#F59E0B"/>
+</svg>
