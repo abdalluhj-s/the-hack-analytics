@@ -399,7 +399,7 @@
         <!-- Interactive Charts Gallery Button -->
         <button onclick="openModal('modalInteractiveCharts')" class="px-3.5 py-2.5 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-700/60 text-indigo-300 font-bold text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer" title="عرض الإسطمبات والرسوم البيانية المعتمدة">
           <i class="fa-solid fa-chart-column text-indigo-400 text-sm"></i>
-          <span class="hidden md:inline">الإسطمبات البيانية (الـ 5 رسوم)</span>
+          <span class="hidden md:inline">الإسطمبات البيانية (الـ 7 رسوم)</span>
           <span class="md:hidden">الإسطمبات</span>
         </button>
 
@@ -519,7 +519,7 @@
                   معرض الإسطمبات والرسوم البيانية التفاعلية
                 </h3>
                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-950 text-indigo-300 border border-indigo-800">
-                  الـ 5 إسطمبات الرسمية
+                  الـ 7 إسطمبات الرسمية
                 </span>
               </div>
               <p class="text-xs text-slate-400 leading-relaxed max-w-3xl">
@@ -781,7 +781,7 @@
             <div class="flex items-center gap-2">
               <h3 class="text-base sm:text-lg font-black text-white">معرض الإسطمبات والرسوم البيانية المعتمدة</h3>
               <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-800">
-                5 إسطمبات تفاعلية
+                7 إسطمبات تفاعلية
               </span>
             </div>
             <p class="text-xs text-slate-400" id="chartsSubHeaderPeriod">توليد تفاعلي تلقائي للرسوم البيانية المعتمدة من واقع الشيت الحالي</p>
@@ -799,25 +799,31 @@
         </div>
       </div>
 
-      <!-- Tab Navigation for the 5 Charts -->
+      <!-- Tab Navigation for the 7 Official Charts -->
       <div class="px-4 py-2.5 border-b border-slate-800 bg-slate-950/40 flex items-center gap-2 overflow-x-auto scrollbar-none text-xs">
-        <button id="tabBtnChartAll" onclick="switchChartTab('all')" class="px-3.5 py-1.5 rounded-xl font-bold transition-all bg-indigo-600 text-white shrink-0">
-          عرض جميع الإسطمبات (شامل)
+        <button id="tabBtnChartAll" onclick="switchChartTab('all')" class="px-3.5 py-1.5 rounded-xl font-bold transition-all bg-indigo-600 text-white shrink-0 shadow-sm">
+          عرض جميع الإسطمبات (الـ 7 شامل)
+        </button>
+        <button id="tabBtnChart6" onclick="switchChartTab('chart6')" class="px-3.5 py-1.5 rounded-xl font-bold transition-all bg-slate-800 text-slate-300 hover:text-white shrink-0">
+          1. إجمالي حالات المكالمات
+        </button>
+        <button id="tabBtnChart7" onclick="switchChartTab('chart7')" class="px-3.5 py-1.5 rounded-xl font-bold transition-all bg-slate-800 text-slate-300 hover:text-white shrink-0">
+          2. أوامر الشغل للخدمات
         </button>
         <button id="tabBtnChart1" onclick="switchChartTab('chart1')" class="px-3.5 py-1.5 rounded-xl font-bold transition-all bg-slate-800 text-slate-300 hover:text-white shrink-0">
-          1. استطلاع الخدمات (حالات التواصل)
+          3. استطلاع الخدمات (مفصل)
         </button>
         <button id="tabBtnChart2" onclick="switchChartTab('chart2')" class="px-3.5 py-1.5 rounded-xl font-bold transition-all bg-slate-800 text-slate-300 hover:text-white shrink-0">
-          2. استطلاع الخدمات (راضي vs غير راضي)
+          4. الخدمات (راضي vs غير راضي)
         </button>
         <button id="tabBtnChart3" onclick="switchChartTab('chart3')" class="px-3.5 py-1.5 rounded-xl font-bold transition-all bg-slate-800 text-slate-300 hover:text-white shrink-0">
-          3. استطلاع الفروع حسب كل خدمة
+          5. استطلاع الفروع لكل خدمة
         </button>
         <button id="tabBtnChart4" onclick="switchChartTab('chart4')" class="px-3.5 py-1.5 rounded-xl font-bold transition-all bg-slate-800 text-slate-300 hover:text-white shrink-0">
-          4. استطلاع العملاء غير الراضين
+          6. العملاء غير الراضين (الشكاوى)
         </button>
         <button id="tabBtnChart5" onclick="switchChartTab('chart5')" class="px-3.5 py-1.5 rounded-xl font-bold transition-all bg-slate-800 text-slate-300 hover:text-white shrink-0">
-          5. تقرير شكر العملاء الأسبوعي
+          7. تقرير شكر العملاء (الإشادات)
         </button>
       </div>
 
@@ -825,6 +831,57 @@
       <div class="p-4 sm:p-6 overflow-y-auto space-y-8 flex-1" id="interactiveChartsContainer">
         
         <!-- ============================================================= -->
+        
+        <!-- ============================================================= -->
+        <!-- CHART 6: DETAILED TOTAL CALL OUTCOMES OVERVIEW                -->
+        <!-- ============================================================= -->
+        <div id="cardChart6" class="chart-card bg-slate-950/70 border border-slate-800 rounded-3xl p-5 sm:p-6 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                <h4 class="text-sm sm:text-base font-black text-white" id="titleChart6">
+                  تقرير مفصل لعدد المكالمات - (0) || الفترة الحالية
+                </h4>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">إجمالي حالات المكالمات لجميع الفروع والخدمات (تم الرد، لم يتم الرد، ممتنع، مغلق أو غير متاح، الرقم غلط)</p>
+            </div>
+            <button onclick="downloadSingleChart('chart6Canvas', 'تقرير_مفصل_لعدد_المكالمات')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5 transition-all self-start sm:self-auto">
+              <i class="fa-solid fa-download"></i>
+              <span>تحميل كصورة PNG</span>
+            </button>
+          </div>
+
+          <div class="relative w-full h-80 sm:h-96">
+            <canvas id="chart6Canvas"></canvas>
+          </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- CHART 7: WORK ORDERS PER SERVICE                              -->
+        <!-- ============================================================= -->
+        <div id="cardChart7" class="chart-card bg-slate-950/70 border border-slate-800 rounded-3xl p-5 sm:p-6 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                <h4 class="text-sm sm:text-base font-black text-white" id="titleChart7">
+                  عدد أوامر الشغل للخدمات - (0) || الفترة الحالية
+                </h4>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">إجمالي أوامر الشغل المنفذة في كل خدمة (ضبط زوايا، استعدال، ترصيص)</p>
+            </div>
+            <button onclick="downloadSingleChart('chart7Canvas', 'عدد_اوامر_الشغل_للخدمات')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5 transition-all self-start sm:self-auto">
+              <i class="fa-solid fa-download"></i>
+              <span>تحميل كصورة PNG</span>
+            </button>
+          </div>
+
+          <div class="relative w-full h-80 sm:h-96">
+            <canvas id="chart7Canvas"></canvas>
+          </div>
+        </div>
+
         <!-- CHART 1: DETAILED SURVEY BY SERVICE & CALL OUTCOMES           -->
         <!-- ============================================================= -->
         <div id="cardChart1" class="chart-card bg-slate-950/70 border border-slate-800 rounded-3xl p-5 sm:p-6 space-y-4">
@@ -1995,7 +2052,7 @@
 
     
     /* =========================================================================
-       INTERACTIVE EXECUTIVE CHARTS ENGINE (CHART.JS IMPLEMENTATION)
+       INTERACTIVE EXECUTIVE CHARTS ENGINE (7 OFFICIAL MANAGEMENT TEMPLATES)
        ========================================================================= */
     let chartInstances = {};
     let activeChartTab = 'all';
@@ -2030,7 +2087,7 @@
 
     function switchChartTab(tabKey) {
       activeChartTab = tabKey;
-      const tabs = ['all', 'chart1', 'chart2', 'chart3', 'chart4', 'chart5'];
+      const tabs = ['all', 'chart6', 'chart7', 'chart1', 'chart2', 'chart3', 'chart4', 'chart5'];
       tabs.forEach(t => {
         const btn = document.getElementById('tabBtnChart' + (t === 'all' ? 'All' : t.replace('chart', '')));
         if (btn) {
@@ -2043,24 +2100,19 @@
       });
 
       // Show/hide cards
-      const cards = ['cardChart1', 'cardChart2', 'cardChart3', 'cardChart4', 'cardChart5'];
-      cards.forEach((cId, idx) => {
+      const cards = ['cardChart6', 'cardChart7', 'cardChart1', 'cardChart2', 'cardChart3', 'cardChart4', 'cardChart5'];
+      cards.forEach(cId => {
         const el = document.getElementById(cId);
         if (!el) return;
-        if (tabKey === 'all' || tabKey === 'chart' + (idx + 1)) {
+        const key = cId.replace('cardC', 'c');
+        if (tabKey === 'all' || tabKey === key) {
           el.classList.remove('hidden');
-      if (modalId === 'modalInteractiveCharts') {
-        setTimeout(() => {
-          renderAllInteractiveCharts();
-          Object.values(chartInstances).forEach(c => c && c.resize());
-        }, 150);
-      }
         } else {
           el.classList.add('hidden');
         }
       });
 
-      // Trigger resize for active charts
+      // Trigger resize
       setTimeout(() => {
         Object.values(chartInstances).forEach(c => c && c.resize());
       }, 100);
@@ -2073,12 +2125,90 @@
       const textColor = isLight ? '#334155' : '#cbd5e1';
       const gridColor = isLight ? '#e2e8f0' : '#1e293b';
 
-      // -----------------------------------------------------------------------
-      // CHART 1: تقرير مفصل لأستطلاع رأي العملاء للخدمات الاسبوعى
-      // -----------------------------------------------------------------------
       const services = ['ضبط زوايا', 'استعدال', 'ترصيص'];
-      const statusOrder = ['تم الرد', 'ممتنع', 'لم يتم الرد', 'مغلق أو غير متاح', 'الرقم غلط'];
-      
+      const statusOrder = ['تم الرد', 'لم يتم الرد', 'ممتنع', 'مغلق أو غير متاح', 'الرقم غلط'];
+
+      // -----------------------------------------------------------------------
+      // CHART 6: تقرير مفصل لعدد المكالمات (Total Call Outcomes)
+      // -----------------------------------------------------------------------
+      const c6Labels = ['تم الرد', 'لم يتم الرد', 'ممتنع', 'مغلق أو غير متاح', 'الرقم غلط'];
+      const c6Data = c6Labels.map(st => dataset.filter(r => r.status === st).length);
+      const c6Total = c6Data.reduce((a, b) => a + b, 0);
+
+      const titleEl6 = document.getElementById('titleChart6');
+      if (titleEl6) {
+        titleEl6.innerText = `تقرير مفصل لعدد المكالمات - (${c6Total}) || الفترة الحالية`;
+      }
+
+      if (chartInstances.chart6) chartInstances.chart6.destroy();
+      const ctx6 = document.getElementById('chart6Canvas');
+      if (ctx6) {
+        chartInstances.chart6 = new Chart(ctx6, {
+          type: 'bar',
+          data: {
+            labels: c6Labels,
+            datasets: [{
+              label: 'Total',
+              data: c6Data,
+              backgroundColor: '#f59e0b',
+              hoverBackgroundColor: '#d97706',
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { color: textColor, font: { family: 'Cairo', size: 11 } }, grid: { display: false } },
+              y: { beginAtZero: true, ticks: { color: textColor, font: { family: 'Cairo' } }, grid: { color: gridColor } }
+            }
+          }
+        });
+      }
+
+      // -----------------------------------------------------------------------
+      // CHART 7: عدد أوامر الشغل للخدمات (Work Orders per Service)
+      // -----------------------------------------------------------------------
+      const c7Labels = ['ضبط زوايا', 'استعدال', 'ترصيص'];
+      const c7Data = c7Labels.map(srv => dataset.filter(r => r.service === srv).length);
+      const c7Total = c7Data.reduce((a, b) => a + b, 0);
+
+      const titleEl7 = document.getElementById('titleChart7');
+      if (titleEl7) {
+        titleEl7.innerText = `عدد أوامر الشغل للخدمات - (${c7Total}) || الفترة الحالية`;
+      }
+
+      if (chartInstances.chart7) chartInstances.chart7.destroy();
+      const ctx7 = document.getElementById('chart7Canvas');
+      if (ctx7) {
+        chartInstances.chart7 = new Chart(ctx7, {
+          type: 'bar',
+          data: {
+            labels: c7Labels,
+            datasets: [{
+              label: 'Total',
+              data: c7Data,
+              backgroundColor: '#f59e0b',
+              hoverBackgroundColor: '#d97706',
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { color: textColor, font: { family: 'Cairo', size: 12, weight: 'bold' } }, grid: { display: false } },
+              y: { beginAtZero: true, ticks: { color: textColor, font: { family: 'Cairo' } }, grid: { color: gridColor } }
+            }
+          }
+        });
+      }
+
+      // -----------------------------------------------------------------------
+      // CHART 1: تقرير مفصل لأستطلاع رأي العملاء للخدمات الاسبوعى (مقسم بالخدمات)
+      // -----------------------------------------------------------------------
       const c1Labels = [];
       const c1Data = [];
       let c1Total = 0;
@@ -2124,15 +2254,8 @@
               }
             },
             scales: {
-              x: {
-                ticks: { color: textColor, font: { family: 'Cairo', size: 10 } },
-                grid: { display: false }
-              },
-              y: {
-                beginAtZero: true,
-                ticks: { color: textColor, font: { family: 'Cairo' } },
-                grid: { color: gridColor }
-              }
+              x: { ticks: { color: textColor, font: { family: 'Cairo', size: 10 } }, grid: { display: false } },
+              y: { beginAtZero: true, ticks: { color: textColor, font: { family: 'Cairo' } }, grid: { color: gridColor } }
             }
           }
         });
@@ -2182,19 +2305,10 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-              legend: { display: false }
-            },
+            plugins: { legend: { display: false } },
             scales: {
-              x: {
-                ticks: { color: textColor, font: { family: 'Cairo', size: 11 } },
-                grid: { display: false }
-              },
-              y: {
-                beginAtZero: true,
-                ticks: { color: textColor, font: { family: 'Cairo' } },
-                grid: { color: gridColor }
-              }
+              x: { ticks: { color: textColor, font: { family: 'Cairo', size: 11 } }, grid: { display: false } },
+              y: { beginAtZero: true, ticks: { color: textColor, font: { family: 'Cairo' } }, grid: { color: gridColor } }
             }
           }
         });
@@ -2246,19 +2360,10 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-              legend: { display: false }
-            },
+            plugins: { legend: { display: false } },
             scales: {
-              x: {
-                ticks: { color: textColor, font: { family: 'Cairo', size: 10 } },
-                grid: { display: false }
-              },
-              y: {
-                beginAtZero: true,
-                ticks: { color: textColor, font: { family: 'Cairo' } },
-                grid: { color: gridColor }
-              }
+              x: { ticks: { color: textColor, font: { family: 'Cairo', size: 10 } }, grid: { display: false } },
+              y: { beginAtZero: true, ticks: { color: textColor, font: { family: 'Cairo' } }, grid: { color: gridColor } }
             }
           }
         });
@@ -2311,19 +2416,10 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-              legend: { display: false }
-            },
+            plugins: { legend: { display: false } },
             scales: {
-              x: {
-                ticks: { color: textColor, font: { family: 'Cairo', size: 10 } },
-                grid: { display: false }
-              },
-              y: {
-                beginAtZero: true,
-                ticks: { color: textColor, font: { family: 'Cairo' }, stepSize: 1 },
-                grid: { color: gridColor }
-              }
+              x: { ticks: { color: textColor, font: { family: 'Cairo', size: 10 } }, grid: { display: false } },
+              y: { beginAtZero: true, ticks: { color: textColor, font: { family: 'Cairo' }, stepSize: 1 }, grid: { color: gridColor } }
             }
           }
         });
@@ -2367,19 +2463,10 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-              legend: { display: false }
-            },
+            plugins: { legend: { display: false } },
             scales: {
-              x: {
-                ticks: { color: textColor, font: { family: 'Cairo', size: 11 } },
-                grid: { display: false }
-              },
-              y: {
-                beginAtZero: true,
-                ticks: { color: textColor, font: { family: 'Cairo' }, stepSize: 1 },
-                grid: { color: gridColor }
-              }
+              x: { ticks: { color: textColor, font: { family: 'Cairo', size: 11 } }, grid: { display: false } },
+              y: { beginAtZero: true, ticks: { color: textColor, font: { family: 'Cairo' }, stepSize: 1 }, grid: { color: gridColor } }
             }
           }
         });
@@ -2391,7 +2478,6 @@
       const canvas = document.getElementById(canvasId);
       if (!canvas) return;
 
-      // Create a temporary canvas with dark background for clean export
       const exportCanvas = document.createElement('canvas');
       exportCanvas.width = canvas.width;
       exportCanvas.height = canvas.height;
@@ -2409,14 +2495,16 @@
       notify('تم تحميل الرسم البياني', 'تم حفظ الصورة بصيغة PNG عالية الجودة');
     }
 
-    // Function to download all 5 charts
+    // Function to download all 7 charts
     function downloadAllChartsAsImages() {
       const chartIds = [
-        ['chart1Canvas', '1_تقرير_مفصل_لاستطلاع_رأي_العملاء_للخدمات'],
-        ['chart2Canvas', '2_استطلاع_رأي_العملاء_للخدمات_راضي_وغير_راضي'],
-        ['chart3Canvas', '3_استطلاع_رأي_العملاء_حسب_الفرع'],
-        ['chart4Canvas', '4_استطلاع_رأي_العملاء_الغير_راضين'],
-        ['chart5Canvas', '5_تقرير_شكر_العملاء_الاسبوعي']
+        ['chart6Canvas', '1_تقرير_مفصل_لعدد_المكالمات'],
+        ['chart7Canvas', '2_عدد_اوامر_الشغل_للخدمات'],
+        ['chart1Canvas', '3_تقرير_مفصل_لاستطلاع_رأي_العملاء_للخدمات'],
+        ['chart2Canvas', '4_استطلاع_رأي_العملاء_للخدمات_راضي_وغير_راضي'],
+        ['chart3Canvas', '5_استطلاع_رأي_العملاء_حسب_الفرع'],
+        ['chart4Canvas', '6_استطلاع_رأي_العملاء_الغير_راضين'],
+        ['chart5Canvas', '7_تقرير_شكر_العملاء_الاسبوعي']
       ];
 
       chartIds.forEach(([id, name], idx) => {
