@@ -1,5 +1,5 @@
 // The Hack Analytics - Offline Progressive Web App Service Worker
-const CACHE_NAME = 'the-hack-pwa-v5';
+const CACHE_NAME = 'the-hack-pwa-v6';
 
 const STATIC_ASSETS = [
   './',
@@ -9,7 +9,8 @@ const STATIC_ASSETS = [
   './icon-192.png',
   './icon-512.png',
   './apple-touch-icon.png',
-  './pwa-maskable.png'
+  './pwa-maskable.png',
+  './html2pdf.bundle.min.js'
 ];
 
 const CDN_ASSETS = [
