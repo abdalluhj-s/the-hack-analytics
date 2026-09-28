@@ -544,12 +544,12 @@
 <body class="min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white">
 
   <!-- Minimal Header -->
-  <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-30">
+  <header class="border-b border-slate-800 bg-[#0d1527]/95 backdrop-blur-md sticky top-0 z-30">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
       
       <!-- Brand & Title -->
       <div class="flex items-center gap-3.5">
-        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 via-indigo-600 to-cyan-500 flex items-center justify-center text-white shadow-xl shadow-brand-500/20 text-xl font-black">
+        <div class="w-12 h-12 rounded-2xl bg-[#16223b] border border-[#23314d] flex items-center justify-center text-blue-400 shadow-lg text-xl font-black">
           <i class="fa-solid fa-wrench"></i>
         </div>
         <div>
@@ -557,17 +557,17 @@
             <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
               <span>The Hack</span>
             </h1>
-            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-indigo-950/90 text-indigo-300 border border-indigo-700/60 shadow-sm">
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#16223b] text-blue-300 border border-[#23314d]">
               بوابة تحليلات الجودة ورضا العملاء
             </span>
           </div>
-          <p class="text-xs text-slate-300 font-semibold mt-0.5">منظومة تحليل استبيانات ومكالمات رضا العملاء وإسطمبات الإدارة المعتمدة</p>
+          <p class="text-xs text-slate-400 font-medium mt-0.5">منظومة تحليل استبيانات ومكالمات رضا العملاء وإسطمبات الإدارة المعتمدة</p>
           <div class="flex items-center gap-2 mt-1 flex-wrap">
-            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-800/90 text-amber-300 border border-slate-700/80 flex items-center gap-1">
+            <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-[#162035] text-amber-300 border border-[#23314d] flex items-center gap-1.5">
               <i class="fa-regular fa-calendar-days text-amber-400"></i>
               <span id="headerPeriodBadge">الفترة الحالية: 14 إلى 20 سبتمبر 2026</span>
             </span>
-            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-800/90 text-emerald-300 border border-slate-700/80 flex items-center gap-1">
+            <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-[#162035] text-emerald-300 border border-[#23314d] flex items-center gap-1.5">
               <i class="fa-solid fa-file-excel text-emerald-400"></i>
               <span id="headerOrdersBadge">الشيت المعتمد: 975 أمر شغل</span>
             </span>
@@ -576,46 +576,46 @@
           </div>
         </div>
       </div>
-      </div>
 
-      <!-- Quick Actions -->
-      <div class="flex items-center gap-3">
-        <!-- DIRECT PDF DOWNLOAD BUTTON (ONE CLICK DOWNLOAD) -->
-        <button onclick="downloadReportPDF()" class="px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-gradient-to-r from-rose-600 via-rose-500 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-black text-xs flex items-center gap-2 shadow-lg shadow-rose-950/40 border border-rose-400/40 transition-all cursor-pointer" title="تحميل التقرير الأسبوعي الرسمي بصيغة PDF فورياً بدون طابعة">
-          <i class="fa-solid fa-file-pdf text-sm sm:text-base animate-pulse"></i>
-          <span class="hidden sm:inline">تحميل التقرير PDF مباشر</span>
-          <span class="sm:hidden">PDF مباشر</span>
+      <!-- Quick Actions (Cohesive & Harmonious) -->
+      <div class="flex items-center gap-2.5 flex-wrap">
+        
+        <!-- Primary Action: Direct Print / PDF -->
+        <button onclick="printExecutiveReport()" class="px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center gap-2 shadow-lg shadow-emerald-950/40 border border-emerald-400/30 transition-all cursor-pointer" title="طباعة التقرير الأسبوعي الرسمي الموحد مباشرة">
+          <i class="fa-solid fa-print text-sm"></i>
+          <span class="hidden sm:inline">طباعة التقرير الموحد</span>
+          <span class="sm:hidden">طباعة</span>
+        </button>
+
+        <!-- PDF Preview Action -->
+        <button onclick="openPdfLivePreview()" class="px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-[#16223b] hover:bg-[#1d2b47] text-slate-200 hover:text-white font-bold text-xs flex items-center gap-2 border border-[#23314d] transition-all cursor-pointer" title="معاينة التقرير وتنزيل ملف PDF">
+          <i class="fa-solid fa-file-pdf text-rose-400 text-sm"></i>
+          <span class="hidden md:inline">معاينة وتحميل PDF</span>
+          <span class="md:hidden">PDF</span>
         </button>
 
         <!-- Interactive Charts Gallery Button -->
-        <button onclick="openModal('modalInteractiveCharts')" class="px-3.5 py-2.5 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-700/60 text-indigo-300 font-bold text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer" title="عرض الإسطمبات والرسوم البيانية المعتمدة">
+        <button onclick="openModal('modalInteractiveCharts')" class="px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-[#16223b] hover:bg-[#1d2b47] text-slate-200 hover:text-white font-bold text-xs flex items-center gap-2 border border-[#23314d] transition-all cursor-pointer" title="عرض الإسطمبات والرسوم البيانية المعتمدة">
           <i class="fa-solid fa-chart-column text-indigo-400 text-sm"></i>
-          <span class="hidden md:inline">الإسطمبات البيانية (الـ 7 رسوم)</span>
+          <span class="hidden md:inline">الإسطمبات (الـ 7 رسوم)</span>
           <span class="md:hidden">الإسطمبات</span>
         </button>
 
         <!-- PWA Mobile Install Button -->
-        <button id="pwaInstallBtn" onclick="handlePwaInstall()" class="px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer" title="تثبيت التطبيق على هاتفك">
-          <i class="fa-solid fa-download text-sm animate-bounce"></i>
-          <span class="hidden sm:inline">تثبيت التطبيق</span>
-          <span class="sm:hidden">تثبيت</span>
+        <button id="pwaInstallBtn" onclick="handlePwaInstall()" class="px-3 py-2 rounded-xl bg-[#16223b] hover:bg-[#1d2b47] text-slate-300 hover:text-white font-bold text-xs flex items-center gap-1.5 border border-[#23314d] transition-all cursor-pointer" title="تثبيت التطبيق على هاتفك">
+          <i class="fa-solid fa-download text-emerald-400 text-sm"></i>
+          <span class="hidden lg:inline">تثبيت التطبيق</span>
         </button>
-
-        <!-- Offline Status Badge -->
-        <div id="offlineIndicator" class="hidden px-2.5 py-1.5 rounded-xl text-[11px] font-bold bg-amber-950/90 text-amber-300 border border-amber-800 flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-          <span class="hidden sm:inline">وضع أوفلاين</span>
-        </div>
 
         <!-- Sun & Moon Theme Toggle Button -->
-        <button id="themeToggleBtn" onclick="toggleTheme()" class="px-3.5 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 flex items-center gap-2 text-xs font-bold transition-all shadow-sm cursor-pointer" title="التبديل إلى الوضع النهاري (Light Mode)">
-          <i id="themeToggleIcon" class="fa-solid fa-sun text-amber-400 text-base transition-transform duration-300"></i>
-          <span id="themeToggleText" class="hidden sm:inline">الوضع النهاري</span>
+        <button id="themeToggleBtn" onclick="toggleTheme()" class="px-3 py-2 rounded-xl bg-[#16223b] hover:bg-[#1d2b47] border border-[#23314d] text-slate-300 flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer" title="التبديل إلى الوضع النهاري (Light Mode)">
+          <i id="themeToggleIcon" class="fa-solid fa-sun text-amber-400 text-sm"></i>
         </button>
 
-        <button onclick="openModal('modalSurveyLogger')" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-brand-600/30 transition-all">
-          <i class="fa-solid fa-plus"></i>
-          <span>تسجيل استبيان جديد</span>
+        <!-- Quick Survey Button -->
+        <button onclick="openModal('modalSurveyLogger')" class="px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-blue-950/40 border border-blue-400/30 transition-all cursor-pointer">
+          <i class="fa-solid fa-plus text-xs"></i>
+          <span>استبيان جديد</span>
         </button>
       </div>
 
@@ -625,28 +625,30 @@
   <!-- Main Clean Content Area -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-8">
     
-    <!-- Top Row: Upload File & Active Stats Strip -->
+    <!-- =====================================================================
+         الجزئية الأولى: شريط رفع الشيت وحالة الملف المحمّل
+         ===================================================================== -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
       
       <!-- Drag & Drop Excel Box -->
-      <div class="lg:col-span-8 relative border-2 border-dashed border-slate-700 hover:border-brand-500/70 rounded-3xl p-6 bg-slate-900/40 hover:bg-slate-900/70 transition-all flex flex-col sm:flex-row items-center justify-between gap-5 group">
+      <div class="lg:col-span-8 relative border-2 border-dashed border-[#23314d] hover:border-blue-500/70 rounded-3xl p-6 bg-[#111a2e]/90 hover:bg-[#16223b] transition-all flex flex-col sm:flex-row items-center justify-between gap-5 group">
         <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
         
         <div class="flex items-center gap-4 pointer-events-none">
-          <div class="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-brand-400 flex items-center justify-center text-3xl group-hover:scale-105 transition-transform shrink-0">
+          <div class="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-3xl group-hover:scale-105 transition-transform shrink-0">
             <i class="fa-solid fa-file-excel"></i>
           </div>
           <div>
             <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
               <span>رفع شيت إكسيل جديد</span>
-              <span class="text-[11px] font-normal px-2 py-0.5 rounded-md bg-slate-800 text-slate-300">.xlsx / .xls / .csv</span>
+              <span class="text-[11px] font-normal px-2 py-0.5 rounded-md bg-[#162035] text-slate-300 border border-[#23314d]">.xlsx / .xls / .csv</span>
             </h3>
             <p class="text-xs text-slate-400 mt-1">اسحب الشيت هنا لتحليله فورياً وتوليد الإسطمبة الرسمية والتحليلات آلياً</p>
           </div>
         </div>
 
         <div class="flex items-center gap-2 shrink-0 z-20">
-          <button onclick="loadDefaultData()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5 transition-all">
+          <button onclick="loadDefaultData()" class="px-3.5 py-2 rounded-xl bg-[#162035] hover:bg-[#1d2b47] text-slate-300 text-xs font-bold border border-[#23314d] flex items-center gap-1.5 transition-all cursor-pointer">
             <i class="fa-solid fa-rotate text-emerald-400"></i>
             <span>إعادة تعيين البيانات الافتراضية</span>
           </button>
@@ -654,7 +656,7 @@
       </div>
 
       <!-- Quick Snapshot Info Card -->
-      <div class="lg:col-span-4 border border-slate-800 rounded-3xl p-5 bg-slate-900/50 flex flex-col justify-between">
+      <div class="lg:col-span-4 border border-[#23314d] rounded-3xl p-5 bg-[#111a2e]/90 flex flex-col justify-between">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">حالة الشيت المحمّل</span>
           <span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-400">
@@ -664,18 +666,18 @@
         </div>
         
         <div class="my-3">
-          <div class="text-base font-black text-white truncate" id="hubFileName">SUR 25-5-2026 Morgan.xlsx</div>
-          <div class="text-xs text-slate-400 mt-1 font-mono" id="hubFileMeta">271 عميل | 12 فرع مسجل</div>
+          <div class="text-base font-black text-white truncate" id="hubFileName">SUR 25-5-2026 Morgan (975 أوردر).xlsx</div>
+          <div class="text-xs text-slate-400 mt-1 font-mono" id="hubFileMeta">975 أمر شغل | 11 فرع مسجل</div>
         </div>
 
-        <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-800 text-xs">
+        <div class="grid grid-cols-2 gap-2 pt-3 border-t border-[#23314d] text-xs">
           <div>
-            <span class="text-slate-500 block text-[10px]">معدل الرد</span>
-            <span class="font-bold text-emerald-400 text-sm" id="hubResponseRate">47.1%</span>
+            <span class="text-slate-400 block text-[10px]">معدل الرد</span>
+            <span class="font-bold text-emerald-400 text-sm" id="hubResponseRate">49.4%</span>
           </div>
           <div>
-            <span class="text-slate-500 block text-[10px]">نسبة الرضا (CSAT)</span>
-            <span class="font-bold text-indigo-400 text-sm" id="hubCsatRate">82.5%</span>
+            <span class="text-slate-400 block text-[10px]">نسبة الرضا (CSAT)</span>
+            <span class="font-bold text-blue-400 text-sm" id="hubCsatRate">94.6%</span>
           </div>
         </div>
       </div>
@@ -683,37 +685,43 @@
     </div>
 
     <!-- =====================================================================
-         LIVE ANALYTICS OVERVIEW DASHBOARD (MAIN PAGE INLINE)
+         الجزئية الثانية: لوحة التحليلات المباشرة ومؤشرات الأداء (الـ 4 كروت فقط)
          ===================================================================== -->
-    <section class="space-y-6 bg-slate-900/60 border border-slate-800/80 rounded-3xl p-5 sm:p-7 shadow-xl">
+    <section class="space-y-5 bg-[#111a2e]/90 border border-[#23314d] rounded-3xl p-5 sm:p-7 shadow-xl">
       
       <!-- Section Header with Quick Actions -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#23314d]">
         <div>
           <div class="flex items-center gap-2.5 flex-wrap">
-            <span class="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
             <h2 class="text-xl sm:text-2xl font-black text-white">لوحة التحليلات المباشرة ومؤشرات الأداء</h2>
-            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-800">بيانات الفترة الحالية (975 أمر شغل)</span>
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#16223b] text-blue-300 border border-[#23314d]">بيانات الفترة الحالية (975 أمر شغل)</span>
           </div>
           <p class="text-xs text-slate-400 mt-1">تحليل فوري لمخرجات الاتصال، حجم العمليات للخدمات، ونسب الرضا والشكاوى</p>
         </div>
 
-        <div class="flex items-center gap-2 flex-wrap">
-          <!-- Direct PDF Download Button -->
-          <button onclick="downloadReportPDF()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-black text-xs flex items-center gap-1.5 shadow-md shadow-rose-950/30 transition-all cursor-pointer">
-            <i class="fa-solid fa-file-pdf text-sm"></i>
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <!-- Print Official Unified Report Button -->
+          <button onclick="printExecutiveReport()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center gap-1.5 shadow-md shadow-emerald-950/40 border border-emerald-400/30 transition-all cursor-pointer" title="طباعة التقرير الأسبوعي الرسمي الموحد بكل أقسامه">
+            <i class="fa-solid fa-print text-sm"></i>
+            <span>طباعة التقرير الموحد</span>
+          </button>
+
+          <!-- Direct PDF Download & Preview Button -->
+          <button onclick="openPdfLivePreview()" class="px-3.5 py-2 rounded-xl bg-[#162035] hover:bg-[#1d2b47] text-slate-200 hover:text-white font-bold text-xs flex items-center gap-1.5 border border-[#23314d] transition-all cursor-pointer" title="معاينة التقرير وتنزيل PDF">
+            <i class="fa-solid fa-file-pdf text-rose-400 text-sm"></i>
             <span>تحميل التقرير PDF</span>
           </button>
 
           <!-- Open 7 Charts Button -->
-          <button onclick="openModal('modalInteractiveCharts')" class="px-3.5 py-2 rounded-xl bg-indigo-950 hover:bg-indigo-900 border border-indigo-700/60 text-indigo-200 font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer">
+          <button onclick="openModal('modalInteractiveCharts')" class="px-3.5 py-2 rounded-xl bg-[#162035] hover:bg-[#1d2b47] text-slate-200 hover:text-white font-bold text-xs flex items-center gap-1.5 border border-[#23314d] transition-all cursor-pointer">
             <i class="fa-solid fa-chart-column text-indigo-400"></i>
             <span>معرض الإسطمبات الـ 7</span>
           </button>
 
           <!-- Open Weekly Report Button -->
-          <button onclick="openModal('modalExecutiveReport')" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer">
-            <i class="fa-solid fa-file-invoice text-emerald-400"></i>
+          <button onclick="openModal('modalExecutiveReport')" class="px-3.5 py-2 rounded-xl bg-[#162035] hover:bg-[#1d2b47] text-slate-200 hover:text-white font-bold text-xs flex items-center gap-1.5 border border-[#23314d] transition-all cursor-pointer">
+            <i class="fa-solid fa-file-invoice text-blue-400"></i>
             <span>التقرير الأسبوعي الرسمي</span>
           </button>
         </div>
@@ -722,130 +730,64 @@
       <!-- 4 Core Executive Metric Cards -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         
-        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-inner">
+        <!-- Card 1: Total Work Orders -->
+        <div class="bg-[#0b111e] border border-[#1e2b45] hover:border-blue-500/40 rounded-2xl p-4 sm:p-5 transition-all">
           <div class="flex items-center justify-between text-slate-400 text-xs mb-2">
             <span class="font-bold">إجمالي أوامر الشغل</span>
-            <div class="w-8 h-8 rounded-lg bg-indigo-950/80 text-indigo-400 flex items-center justify-center text-sm">
+            <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center text-sm border border-blue-500/20">
               <i class="fa-solid fa-list-check"></i>
             </div>
           </div>
           <div class="text-2xl sm:text-3xl font-black text-white tracking-tight" id="mainKpiTotalOrders">975</div>
-          <div class="text-[11px] text-slate-400 mt-2 flex items-center justify-between border-t border-slate-800/80 pt-2 font-mono">
-            <span>زوايا: <b class="text-indigo-400" id="mainKpiZawaya">599</b></span>
+          <div class="text-[11px] text-slate-400 mt-2 flex items-center justify-between border-t border-[#1e2b45] pt-2 font-mono">
+            <span>زوايا: <b class="text-blue-400" id="mainKpiZawaya">599</b></span>
             <span>استعدال: <b class="text-amber-400" id="mainKpiEstedal">207</b></span>
             <span>ترصيص: <b class="text-cyan-400" id="mainKpiTarsees">169</b></span>
           </div>
         </div>
 
-        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-inner">
+        <!-- Card 2: Answered Calls -->
+        <div class="bg-[#0b111e] border border-[#1e2b45] hover:border-emerald-500/40 rounded-2xl p-4 sm:p-5 transition-all">
           <div class="flex items-center justify-between text-slate-400 text-xs mb-2">
             <span class="font-bold">المكالمات المستجاب لها</span>
-            <div class="w-8 h-8 rounded-lg bg-emerald-950/80 text-emerald-400 flex items-center justify-center text-sm">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-sm border border-emerald-500/20">
               <i class="fa-solid fa-phone-volume"></i>
             </div>
           </div>
           <div class="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight" id="mainKpiAnswered">482</div>
-          <div class="text-[11px] text-slate-400 mt-2 flex items-center justify-between border-t border-slate-800/80 pt-2">
+          <div class="text-[11px] text-slate-400 mt-2 flex items-center justify-between border-t border-[#1e2b45] pt-2">
             <span>معدل الرد: <b class="text-emerald-400 font-bold" id="mainKpiAnswerRate">49.4%</b></span>
             <span class="text-slate-500">من 975 اتصال</span>
           </div>
         </div>
 
-        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-inner">
+        <!-- Card 3: CSAT Rate -->
+        <div class="bg-[#0b111e] border border-[#1e2b45] hover:border-emerald-500/40 rounded-2xl p-4 sm:p-5 transition-all">
           <div class="flex items-center justify-between text-slate-400 text-xs mb-2">
             <span class="font-bold">مستوى رضا العملاء (CSAT)</span>
-            <div class="w-8 h-8 rounded-lg bg-emerald-950/80 text-emerald-400 flex items-center justify-center text-sm">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-sm border border-emerald-500/20">
               <i class="fa-solid fa-face-smile"></i>
             </div>
           </div>
           <div class="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight" id="mainKpiCsat">94.6%</div>
-          <div class="text-[11px] text-slate-400 mt-2 flex items-center justify-between border-t border-slate-800/80 pt-2">
+          <div class="text-[11px] text-slate-400 mt-2 flex items-center justify-between border-t border-[#1e2b45] pt-2">
             <span>عملاء راضون: <b class="text-emerald-400 font-bold" id="mainKpiSatCount">454</b></span>
             <span class="text-slate-500">من 480 مقيّم</span>
           </div>
         </div>
 
-        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-inner">
+        <!-- Card 4: Unsatisfied Complaints -->
+        <div class="bg-[#0b111e] border border-[#1e2b45] hover:border-rose-500/40 rounded-2xl p-4 sm:p-5 transition-all">
           <div class="flex items-center justify-between text-slate-400 text-xs mb-2">
             <span class="font-bold">الشكاوى غير الراضين</span>
-            <div class="w-8 h-8 rounded-lg bg-rose-950/80 text-rose-400 flex items-center justify-center text-sm">
+            <div class="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center text-sm border border-rose-500/20">
               <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
           </div>
           <div class="text-2xl sm:text-3xl font-black text-rose-400 tracking-tight" id="mainKpiComplaints">26</div>
-          <div class="text-[11px] text-slate-400 mt-2 flex items-center justify-between border-t border-slate-800/80 pt-2">
+          <div class="text-[11px] text-slate-400 mt-2 flex items-center justify-between border-t border-[#1e2b45] pt-2">
             <span>نسبة عدم الرضا: <b class="text-rose-400 font-bold" id="mainKpiUnsatRate">5.4%</b></span>
-            <button onclick="openModal('modalComplaints')" class="text-indigo-400 hover:underline font-bold">متابعة الفحص &larr;</button>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- 3 Direct Visual Charts on Main Page -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        
-        <!-- Live Chart 1: Call Outcomes -->
-        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-            <div>
-              <h4 class="font-black text-xs text-white flex items-center gap-1.5">
-                <i class="fa-solid fa-phone text-amber-400"></i>
-                <span>مخرجات المكالمات الإجمالية</span>
-              </h4>
-              <p class="text-[10px] text-slate-400">تقرير مفصل لعدد المكالمات (975)</p>
-            </div>
-            <span class="text-[10px] font-bold text-amber-400 bg-amber-950/80 border border-amber-800/60 px-2 py-0.5 rounded-full">إسطمبة 1</span>
-          </div>
-          <div class="relative h-56 w-full my-2">
-            <canvas id="mainChartCallsCanvas"></canvas>
-          </div>
-          <div class="text-[10px] text-slate-400 pt-2 border-t border-slate-800/80 flex items-center justify-between font-mono">
-            <span>تم الرد: <b class="text-emerald-400">482</b></span>
-            <span>لم يتم الرد: <b class="text-amber-400">232</b></span>
-            <span>ممتنع: <b class="text-slate-300">197</b></span>
-          </div>
-        </div>
-
-        <!-- Live Chart 2: Services Operations Breakdown -->
-        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-            <div>
-              <h4 class="font-black text-xs text-white flex items-center gap-1.5">
-                <i class="fa-solid fa-gears text-indigo-400"></i>
-                <span>أوامر الشغل للخدمات</span>
-              </h4>
-              <p class="text-[10px] text-slate-400">حجم العمليات المنفذة (975 أمر)</p>
-            </div>
-            <span class="text-[10px] font-bold text-indigo-400 bg-indigo-950/80 border border-indigo-800/60 px-2 py-0.5 rounded-full">إسطمبة 2</span>
-          </div>
-          <div class="relative h-56 w-full my-2">
-            <canvas id="mainChartServicesCanvas"></canvas>
-          </div>
-          <div class="text-[10px] text-slate-400 pt-2 border-t border-slate-800/80 flex items-center justify-between font-mono">
-            <span>زوايا: <b class="text-indigo-400">599</b></span>
-            <span>استعدال: <b class="text-amber-400">207</b></span>
-            <span>ترصيص: <b class="text-cyan-400">169</b></span>
-          </div>
-        </div>
-
-        <!-- Live Chart 3: CSAT Comparison -->
-        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-            <div>
-              <h4 class="font-black text-xs text-white flex items-center gap-1.5">
-                <i class="fa-solid fa-chart-pie text-emerald-400"></i>
-                <span>مؤشر رضا العملاء والشكاوى</span>
-              </h4>
-              <p class="text-[10px] text-slate-400">راضي مقابل غير راضي (480 استبيان)</p>
-            </div>
-            <span class="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-800/60 px-2 py-0.5 rounded-full">إسطمبة 4</span>
-          </div>
-          <div class="relative h-56 w-full my-2">
-            <canvas id="mainChartCsatCanvas"></canvas>
-          </div>
-          <div class="text-[10px] text-slate-400 pt-2 border-t border-slate-800/80 flex items-center justify-between font-mono">
-            <span>راضي: <b class="text-emerald-400">454 (94.6%)</b></span>
-            <span>غير راضي: <b class="text-rose-400">26 (5.4%)</b></span>
+            <button onclick="openModal('modalComplaints')" class="text-blue-400 hover:underline font-bold cursor-pointer">متابعة الفحص &larr;</button>
           </div>
         </div>
 
@@ -853,208 +795,222 @@
 
     </section>
 
-    <!-- Section Heading -->
-    <div class="flex items-center justify-between pt-2">
-      <div>
-        <h2 class="text-xl font-black text-white">وحدات التحليل والتقارير الإدارية</h2>
-        <p class="text-xs text-slate-400 mt-0.5">انقر على أي وحدة لفتح التقرير التفصيلي الخاص بها في نافذة كاملة</p>
-      </div>
-      <span class="text-xs text-slate-500 font-mono">5 بوابات متخصصة</span>
-    </div>
-
-    <!-- Grid of Executive Buttons / Tiles -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
+    <!-- =====================================================================
+         الجزئية الثالثة: معرض الإسطمبات التفاعلية وبطاقات البوابات الستة
+         ===================================================================== -->
+    <div class="space-y-6 pt-2">
       
-      <!-- TILE 7: Interactive Executive Charts (The 5 Templates) -->
-      <div onclick="openModal('modalInteractiveCharts')" class="group relative bg-[#0d1424] hover:bg-[#10192d] border border-indigo-500/40 hover:border-indigo-400 rounded-3xl p-6 sm:p-7 cursor-pointer transition-all duration-300 shadow-lg shadow-black/40 hover:shadow-indigo-500/20 flex flex-col justify-between overflow-hidden md:col-span-2 lg:col-span-3">
-        <div class="absolute -top-16 -right-16 w-48 h-48 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none group-hover:bg-indigo-600/25 transition-all"></div>
-        
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div class="flex items-center gap-4">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600/30 to-brand-500/20 border border-indigo-500/40 text-indigo-300 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shrink-0 shadow-lg shadow-indigo-600/20">
-              <i class="fa-solid fa-chart-pie"></i>
-            </div>
-            <div>
-              <div class="flex items-center gap-2 mb-1">
-                <h3 class="text-xl font-black text-white group-hover:text-indigo-300 transition-colors">
-                  معرض الإسطمبات والرسوم البيانية التفاعلية
-                </h3>
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-950 text-indigo-300 border border-indigo-800">
-                  الـ 7 إسطمبات الرسمية
-                </span>
+      <!-- Top Section Heading -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-black text-white">وحدات التحليل والتقارير الإدارية المعتمدة</h2>
+          <p class="text-xs text-slate-400 mt-0.5">انقر على أي وحدة لفتح التقرير الإداري المفصل الخاص بها في نافذة كاملة</p>
+        </div>
+        <span class="text-xs text-slate-400 font-mono px-3 py-1 rounded-xl bg-[#111a2e] border border-[#1e2b45]">6 بوابات متخصصة + معرض الإسطمبات</span>
+      </div>
+
+      <!-- Grid of Executive Buttons / Tiles -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <!-- TILE 7: Interactive Executive Charts (The 7 Templates Banner) -->
+        <div onclick="openModal('modalInteractiveCharts')" class="group relative bg-[#111a2e] hover:bg-[#16223b] border border-[#1e2b45] hover:border-blue-500/60 rounded-3xl p-6 sm:p-7 cursor-pointer transition-all duration-300 shadow-lg shadow-black/40 flex flex-col justify-between overflow-hidden md:col-span-2 lg:col-span-3">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+              <div class="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-3xl group-hover:scale-105 transition-transform shrink-0">
+                <i class="fa-solid fa-chart-pie"></i>
               </div>
-              <p class="text-xs text-slate-400 leading-relaxed max-w-3xl">
-                الرسوم البيانية الخمسة المعتمدة لإدارة الجودة: (1) استطلاع الخدمات وحالات التواصل • (2) استطلاع الخدمات راضي وغير راضي • (3) استطلاع الفروع وتوزيع الخدمات • (4) حصر العملاء غير الراضين والشكاوى • (5) تقرير شكر العملاء وإشادات الفروع، مع إمكانية التحميل الفوري للرسوم كصور PNG عالية الدقة.
-              </p>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <h3 class="text-xl font-black text-white group-hover:text-blue-400 transition-colors">
+                    معرض الإسطمبات والرسوم البيانية التفاعلية
+                  </h3>
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#162035] text-blue-300 border border-[#23314d]">
+                    الـ 7 إسطمبات الرسمية
+                  </span>
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed max-w-3xl">
+                  الرسوم البيانية السبعة المعتمدة لإدارة الجودة: (1) تقرير مخرجات المكالمات • (2) أوامر الشغل للخدمات • (3) استطلاع الخدمات وحالات التواصل • (4) استطلاع الخدمات راضي وغير راضي • (5) استطلاع الفروع • (6) حصر الشكاوى غير الراضين • (7) تقرير شكر العملاء، مع ميزة التحميل الفوري للرسوم كصور PNG عالية الدقة.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 shrink-0">
+              <span class="px-5 py-3 rounded-2xl bg-blue-600 group-hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-2 shadow-md transition-all">
+                <span>فتح معرض الإسطمبات البيانية</span>
+                <i class="fa-solid fa-arrow-left"></i>
+              </span>
             </div>
           </div>
-
-          <div class="flex items-center gap-3 shrink-0">
-            <span class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition-all">
-              <span>فتح معرض الإسطمبات البيانية</span>
-              <i class="fa-solid fa-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
-            </span>
-          </div>
         </div>
-      </div>
 
-      <!-- TILE 1: Executive Standard Report (The Requested Template) -->
-      <div onclick="openModal('modalExecutiveReport')" class="group relative bg-[#0d1424] hover:bg-[#10192d] border border-indigo-500/30 hover:border-indigo-500/80 rounded-3xl p-6 sm:p-7 cursor-pointer transition-all duration-300 shadow-lg shadow-black/40 hover:shadow-indigo-500/10 flex flex-col justify-between overflow-hidden">
-        <div class="absolute -top-12 -left-12 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-indigo-500/20 transition-all"></div>
-        
-        <div>
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-14 h-14 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-              <i class="fa-solid fa-file-invoice"></i>
+        <!-- TILE 1: Executive Standard Report (The Requested Template) -->
+        <div class="group relative bg-[#111a2e] hover:bg-[#16223b] border border-[#1e2b45] hover:border-emerald-500/60 rounded-3xl p-6 sm:p-7 transition-all duration-300 shadow-lg shadow-black/40 flex flex-col justify-between overflow-hidden">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl group-hover:scale-105 transition-transform">
+                <i class="fa-solid fa-file-invoice"></i>
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-black bg-[#162035] text-emerald-300 border border-[#23314d]">
+                الإسطمبة الرسمية
+              </span>
             </div>
-            <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-indigo-950 text-indigo-300 border border-indigo-800">
-              الإسطمبة الرسمية
-            </span>
+            
+            <h3 class="text-xl font-black text-white group-hover:text-emerald-400 transition-colors">
+              التقرير الأسبوعي الرسمي (الموحد)
+            </h3>
+            
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              التقرير الإداري الكامل بالـ 4 أقسام المعتمدة: إجمالي مكالمات الفروع، نسب الاستبيان، الشكاوى والخدمات، وجدول الفنيين مع خيارات الطباعة المباشرة وتحميل PDF والنسخ.
+            </p>
           </div>
-          
-          <h3 class="text-lg font-black text-white group-hover:text-indigo-300 transition-colors">
-            التقرير الأسبوعي الرسمي (الموحد)
-          </h3>
-          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-            التقرير الإداري الكامل بالـ 4 أقسام المعتمدة: إجمالي مكالمات الفروع، نسب الاستبيان، الشكاوى والخدمات، وجدول الفنيين مع خياري النسخ والطباعة.
-          </p>
+
+          <div class="pt-5 mt-4 border-t border-[#1e2b45] flex items-center justify-between gap-2">
+            <button onclick="openModal('modalExecutiveReport')" class="text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer">
+              <span>فتح التقرير الإداري</span>
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <button onclick="printExecutiveReport()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer" title="طباعة فورية للتقرير الموحد">
+              <i class="fa-solid fa-print"></i>
+              <span>طباعة التقرير</span>
+            </button>
+          </div>
         </div>
 
-        <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-indigo-400">
-          <span>فتح التقرير الإداري</span>
-          <i class="fa-solid fa-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
-        </div>
-      </div>
-
-      <!-- TILE 2: Branch Analytics Hub -->
-      <div onclick="openModal('modalBranchHub')" class="group relative bg-[#0d1424] hover:bg-[#10192d] border border-slate-800 hover:border-emerald-500/80 rounded-3xl p-6 sm:p-7 cursor-pointer transition-all duration-300 shadow-lg shadow-black/40 hover:shadow-emerald-500/10 flex flex-col justify-between overflow-hidden">
-        <div>
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-14 h-14 rounded-2xl bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-              <i class="fa-solid fa-code-branch"></i>
+        <!-- TILE 2: Branch Analytics Hub -->
+        <div onclick="openModal('modalBranchHub')" class="group relative bg-[#111a2e] hover:bg-[#16223b] border border-[#1e2b45] hover:border-emerald-500/60 rounded-3xl p-6 sm:p-7 cursor-pointer transition-all duration-300 shadow-lg shadow-black/40 flex flex-col justify-between overflow-hidden">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl group-hover:scale-105 transition-transform">
+                <i class="fa-solid fa-code-branch"></i>
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-black bg-[#162035] text-emerald-300 border border-[#23314d]" id="badgeTotalBranches">
+                11 فرع
+              </span>
             </div>
-            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300" id="badgeTotalBranches">
-              12 فرع
-            </span>
+            
+            <h3 class="text-xl font-black text-white group-hover:text-emerald-400 transition-colors">
+              تحليل ومقارنة أداء الفروع
+            </h3>
+            
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              مقارنة الفروع حسب نسبة الرضا (CSAT)، معدل استجابة العملاء، وفحص تفاصيل كل فرع والخدمات المنفذة داخله (زوايا، استعدال، ترصيص).
+            </p>
           </div>
-          
-          <h3 class="text-lg font-black text-white group-hover:text-emerald-300 transition-colors">
-            تحليل ومقارنة أداء الفروع
-          </h3>
-          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-            مقارنة الفروع حسب نسبة الرضا (CSAT)، معدل استجابة العملاء، وفحص تفاصيل كل فرع والخدمات المنفذة داخله (زوايا، استعدال، ترصيص).
-          </p>
+
+          <div class="pt-5 mt-4 border-t border-[#1e2b45] flex items-center justify-between text-xs font-bold text-emerald-400">
+            <span>استعراض الفروع</span>
+            <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
+          </div>
         </div>
 
-        <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-emerald-400">
-          <span>استعراض الفروع</span>
-          <i class="fa-solid fa-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
-        </div>
-      </div>
-
-      <!-- TILE 3: Technicians & Quality -->
-      <div onclick="openModal('modalTechHub')" class="group relative bg-[#0d1424] hover:bg-[#10192d] border border-slate-800 hover:border-amber-500/80 rounded-3xl p-6 sm:p-7 cursor-pointer transition-all duration-300 shadow-lg shadow-black/40 hover:shadow-amber-500/10 flex flex-col justify-between overflow-hidden">
-        <div>
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-14 h-14 rounded-2xl bg-amber-600/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-              <i class="fa-solid fa-wrench"></i>
+        <!-- TILE 3: Technicians & Quality -->
+        <div onclick="openModal('modalTechHub')" class="group relative bg-[#111a2e] hover:bg-[#16223b] border border-[#1e2b45] hover:border-amber-500/60 rounded-3xl p-6 sm:p-7 cursor-pointer transition-all duration-300 shadow-lg shadow-black/40 flex flex-col justify-between overflow-hidden">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-2xl group-hover:scale-105 transition-transform">
+                <i class="fa-solid fa-wrench"></i>
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-black bg-[#162035] text-amber-300 border border-[#23314d]">
+                تقييم الجودة
+              </span>
             </div>
-            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-950/80 text-amber-400 border border-amber-800/60">
-              تقييم الجودة
-            </span>
+            
+            <h3 class="text-xl font-black text-white group-hover:text-amber-400 transition-colors">
+              تحليل أداء الفنيين والجودة
+            </h3>
+            
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              جدول أداء الفنيين في كل الفروع، حصر عدد العمليات ونسبة الشكاوى الموجهة لكل فني لاكتشاف فرص التطوير والتدريب الفني.
+            </p>
           </div>
-          
-          <h3 class="text-lg font-black text-white group-hover:text-amber-300 transition-colors">
-            تحليل أداء الفنيين والجودة
-          </h3>
-          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-            جدول أداء الفنيين في كل الفروع، حصر عدد العمليات ونسبة الشكاوى الموجهة لكل فني لاكتشاف فرص التطوير والتدريب.
-          </p>
+
+          <div class="pt-5 mt-4 border-t border-[#1e2b45] flex items-center justify-between text-xs font-bold text-amber-400">
+            <span>كشف حساب الفنيين</span>
+            <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
+          </div>
         </div>
 
-        <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-amber-400">
-          <span>كشف حساب الفنيين</span>
-          <i class="fa-solid fa-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
-        </div>
-      </div>
-
-      <!-- TILE 4: Complaints & Escalation Desk -->
-      <div onclick="openModal('modalComplaintsHub')" class="group relative bg-[#0d1424] hover:bg-[#10192d] border border-rose-900/40 hover:border-rose-500/80 rounded-3xl p-6 sm:p-7 cursor-pointer transition-all duration-300 shadow-lg shadow-black/40 hover:shadow-rose-500/10 flex flex-col justify-between overflow-hidden">
-        <div>
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-14 h-14 rounded-2xl bg-rose-600/15 border border-rose-500/30 text-rose-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-              <i class="fa-solid fa-triangle-exclamation"></i>
+        <!-- TILE 4: Complaints & Escalation Desk -->
+        <div onclick="openModal('modalComplaints')" class="group relative bg-[#111a2e] hover:bg-[#16223b] border border-[#1e2b45] hover:border-rose-500/60 rounded-3xl p-6 sm:p-7 cursor-pointer transition-all duration-300 shadow-lg shadow-black/40 flex flex-col justify-between overflow-hidden">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center text-2xl group-hover:scale-105 transition-transform">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-black bg-[#162035] text-rose-300 border border-[#23314d]" id="tileComplaintsCount">
+                26 شكوى عاجلة
+              </span>
             </div>
-            <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-950 text-rose-400 border border-rose-800 animate-pulse" id="tileComplaintsCount">
-              7 شكاوى عاجلة
-            </span>
+            
+            <h3 class="text-xl font-black text-white group-hover:text-rose-400 transition-colors">
+              مكتب متابعة الشكاوى الفورية
+            </h3>
+            
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              حصر العملاء غير الراضين، نص المشكلة الفنية (حدفة، اهتزاز الطارة، مقصات)، أرقام التواصل، وتحديث حالة المعالجة بضغطة زر.
+            </p>
           </div>
-          
-          <h3 class="text-lg font-black text-white group-hover:text-rose-300 transition-colors">
-            مكتب متابعة الشكاوى الفورية
-          </h3>
-          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-            حصر العملاء غير الراضين، نص المشكلة الفنية (حدفة، اهتزاز الطارة، مقصات)، أرقام التواصل، وتحديث حالة المعالجة بضغطة زر.
-          </p>
+
+          <div class="pt-5 mt-4 border-t border-[#1e2b45] flex items-center justify-between text-xs font-bold text-rose-400">
+            <span>معالجة الشكاوى</span>
+            <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
+          </div>
         </div>
 
-        <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-rose-400">
-          <span>معالجة الشكاوى</span>
-          <i class="fa-solid fa-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
-        </div>
-      </div>
-
-      <!-- TILE 5: Data Explorer & Log -->
-      <div onclick="openModal('modalDataExplorer')" class="group relative bg-[#0d1424] hover:bg-[#10192d] border border-slate-800 hover:border-cyan-500/80 rounded-3xl p-6 sm:p-7 cursor-pointer transition-all duration-300 shadow-lg shadow-black/40 hover:shadow-cyan-500/10 flex flex-col justify-between overflow-hidden">
-        <div>
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-14 h-14 rounded-2xl bg-cyan-600/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-              <i class="fa-solid fa-database"></i>
+        <!-- TILE 5: Data Explorer & Log -->
+        <div onclick="openModal('modalDataExplorer')" class="group relative bg-[#111a2e] hover:bg-[#16223b] border border-[#1e2b45] hover:border-blue-500/60 rounded-3xl p-6 sm:p-7 cursor-pointer transition-all duration-300 shadow-lg shadow-black/40 flex flex-col justify-between overflow-hidden">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-2xl group-hover:scale-105 transition-transform">
+                <i class="fa-solid fa-database"></i>
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-black bg-[#162035] text-blue-300 border border-[#23314d]" id="tileTotalRows">
+                975 سجل
+              </span>
             </div>
-            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300" id="tileTotalRows">
-              271 سجل
-            </span>
+            
+            <h3 class="text-xl font-black text-white group-hover:text-blue-400 transition-colors">
+              مستكشف البيانات والتعديل
+            </h3>
+            
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              الجدول الكامل لكافة المكالمات (تم الرد، لم يتم الرد، ممتنع، قيد الانتظار) مع فلاتر ذكية وإمكانية تعديل أي سجل أو تصديره.
+            </p>
           </div>
-          
-          <h3 class="text-lg font-black text-white group-hover:text-cyan-300 transition-colors">
-            مستكشف البيانات والتعديل
-          </h3>
-          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-            الجدول الكامل لكافة المكالمات (تم الرد، لم يتم الرد، ممتنع، قيد الانتظار) مع فلاتر ذكية وإمكانية تعديل أي سجل أو تصديره.
-          </p>
+
+          <div class="pt-5 mt-4 border-t border-[#1e2b45] flex items-center justify-between text-xs font-bold text-blue-400">
+            <span>فتح مستكشف البيانات</span>
+            <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
+          </div>
         </div>
 
-        <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-cyan-400">
-          <span>فتح مستكشف البيانات</span>
-          <i class="fa-solid fa-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
-        </div>
-      </div>
-
-      <!-- TILE 6: Quick Survey Quick Add Tile -->
-      <div onclick="openModal('modalSurveyLogger')" class="group relative bg-[#0d1424] hover:bg-[#10192d] border border-slate-800 hover:border-indigo-400/80 rounded-3xl p-6 sm:p-7 cursor-pointer transition-all duration-300 shadow-lg shadow-black/40 hover:shadow-indigo-400/10 flex flex-col justify-between overflow-hidden">
-        <div>
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-700 text-indigo-300 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-              <i class="fa-solid fa-headset"></i>
+        <!-- TILE 6: Quick Survey Quick Add Tile -->
+        <div onclick="openModal('modalSurveyLogger')" class="group relative bg-[#111a2e] hover:bg-[#16223b] border border-[#1e2b45] hover:border-cyan-500/60 rounded-3xl p-6 sm:p-7 cursor-pointer transition-all duration-300 shadow-lg shadow-black/40 flex flex-col justify-between overflow-hidden">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center text-2xl group-hover:scale-105 transition-transform">
+                <i class="fa-solid fa-headset"></i>
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-black bg-[#162035] text-cyan-300 border border-[#23314d]">
+                إدخال مباشر
+              </span>
             </div>
-            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300">
-              إدخال مباشر
-            </span>
+            
+            <h3 class="text-xl font-black text-white group-hover:text-cyan-400 transition-colors">
+              تسجيل وتحديث نتيجة مكالمة
+            </h3>
+            
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              نافذة مخصصة لمسؤول الاستبيان لإدخال نتائج مكالمة عميل جديد أو تحديث عميل كان قيد الانتظار لحفظ البيانات فورياً.
+            </p>
           </div>
-          
-          <h3 class="text-lg font-black text-white group-hover:text-indigo-300 transition-colors">
-            تسجيل وتحديث نتيجة مكالمة
-          </h3>
-          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-            نافذة مخصصة لمسؤول الاستبيان لإدخال نتائج مكالمة عميل جديد أو تحديث عميل كان قيد الانتظار لحفظ البيانات فورياً.
-          </p>
+
+          <div class="pt-5 mt-4 border-t border-[#1e2b45] flex items-center justify-between text-xs font-bold text-cyan-400">
+            <span>تسجيل استبيان الآن</span>
+            <i class="fa-solid fa-plus group-hover:rotate-90 transition-transform"></i>
+          </div>
         </div>
 
-        <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-slate-300">
-          <span>تسجيل استبيان الآن</span>
-          <i class="fa-solid fa-plus text-xs group-hover:rotate-90 transition-transform"></i>
-        </div>
       </div>
 
     </div>
